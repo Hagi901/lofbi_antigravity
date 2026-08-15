@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="LOFBI — Sistem Laporan Opname Fisik Barang & Inventarisasi KSOP Kelas I Banten, Kementerian Perhubungan RI">
+    <title>LOFBI — KSOP Kelas I Banten | Sistem Informasi Inventarisasi</title>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5.3 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <!-- LOFBI CSS -->
+    <link rel="stylesheet" href="public/css/lofbi.css">
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
+<div class="app-wrapper">
+
+    <!-- ======================== SIDEBAR NAVIGASI ======================== -->
+    <aside class="app-sidebar" id="appSidebar" role="navigation" aria-label="Navigasi Utama">
+        <div class="sidebar-brand">
+            <div class="sidebar-brand-logo" aria-hidden="true">LB</div>
+            <div class="sidebar-brand-text">
+                <div class="sidebar-brand-title">LOFBI</div>
+                <div class="sidebar-brand-subtitle">KSOP Kelas I Banten</div>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav" aria-label="Menu navigasi">
+            <div class="nav-section-label">Menu Utama</div>
+
+            <a href="#" class="nav-item-link active" data-nav="dashboard">
+                <i class="bi bi-speedometer2" aria-hidden="true"></i>
+                <span class="nav-label">Dashboard</span>
+            </a>
+            <a href="#" class="nav-item-link" data-nav="aset">
+                <i class="bi bi-archive-fill" aria-hidden="true"></i>
+                <span class="nav-label">Manajemen Aset</span>
+            </a>
+            <a href="#" class="nav-item-link" data-nav="persediaan">
+                <i class="bi bi-boxes" aria-hidden="true"></i>
+                <span class="nav-label">Persediaan &amp; Batch</span>
+            </a>
+            <a href="#" class="nav-item-link" data-nav="opname">
+                <i class="bi bi-clipboard2-check-fill" aria-hidden="true"></i>
+                <span class="nav-label">Opname Fisik</span>
+                <span class="nav-badge">3</span>
+            </a>
+            <a href="#" class="nav-item-link" data-nav="monitoring">
+                <i class="bi bi-broadcast" aria-hidden="true"></i>
+                <span class="nav-label">Monitoring</span>
+            </a>
+
+            <div class="nav-section-label">Laporan</div>
+            <a href="#" class="nav-item-link" data-nav="laporan">
+                <i class="bi bi-file-earmark-bar-graph-fill" aria-hidden="true"></i>
+                <span class="nav-label">Laporan BAOP &amp; DBR</span>
+            </a>
+            <a href="#" class="nav-item-link" data-nav="audit">
+                <i class="bi bi-journal-text" aria-hidden="true"></i>
+                <span class="nav-label">Audit Trail</span>
+            </a>
+            <a href="#" class="nav-item-link" data-nav="approval">
+                <i class="bi bi-check2-square" aria-hidden="true"></i>
+                <span class="nav-label">Approval Pengajuan</span>
+                <span class="nav-badge">23</span>
+            </a>
+
+            <div class="nav-section-label">Master Data</div>
+            <a href="#" class="nav-item-link" data-nav="master">
+                <i class="bi bi-geo-alt-fill" aria-hidden="true"></i>
+                <span class="nav-label">Ruangan &amp; Kategori</span>
+            </a>
+
+            <div class="nav-section-label">Sistem</div>
+            <a href="#" class="nav-item-link" data-nav="users">
+                <i class="bi bi-people-fill" aria-hidden="true"></i>
+                <span class="nav-label">Pengguna (Users)</span>
+            </a>
+            <a href="#" class="nav-item-link" data-nav="settings">
+                <i class="bi bi-gear-fill" aria-hidden="true"></i>
+                <span class="nav-label">Pengaturan</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="sidebar-user" id="userProfileBtn" tabindex="0" role="button">
+                <div class="sidebar-user-avatar" id="sidebarAvatar">AL</div>
+                <div class="sidebar-user-info">
+                    <div class="sidebar-user-name" id="sidebarUserName">Admin LOFBI</div>
+                    <div class="sidebar-user-role" id="sidebarUserRole">Role: admin</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ======================== MAIN AREA ======================== -->
+    <div class="app-main" id="appMain" role="main">
+
+        <!-- TOPBAR -->
+        <header class="app-topbar" role="banner">
+            <button class="topbar-toggle" id="sidebarToggle" type="button" aria-label="Toggle sidebar">
+                <i class="bi bi-list" aria-hidden="true"></i>
+            </button>
+
+            <div class="topbar-breadcrumb" aria-label="Breadcrumb">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item">
+                            <a href="#" style="color:var(--kemenhub-blue-mid);font-weight:500;">
+                                <i class="bi bi-house-fill me-1" aria-hidden="true"></i>Beranda
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active" id="breadcrumbActive">Dashboard</li>
+                    </ol>
+                </nav>
+            </div>
+
+            <div class="topbar-clock">
+                <i class="bi bi-clock" style="color:var(--kemenhub-gold-dark)"></i>
+                <span id="topbar-clock">Memuat...</span>
+            </div>
+
+            <div class="topbar-divider"></div>
+
+            <div class="topbar-actions">
+                <button class="topbar-icon-btn" type="button" title="Sync API Backend" onclick="syncWithBackendApi()">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
+
+                <!-- Switch Role Fast Toggle -->
+                <div class="dropdown">
+                    <button class="topbar-user-btn" type="button" id="roleToggleBtn" data-bs-toggle="dropdown">
+                        <i class="bi bi-shield-lock-fill text-gold me-1"></i>
+                        <span id="currentRoleText" class="fw-bold">Role: admin</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                        <li><h6 class="dropdown-header">Simulasi Ganti Role User</h6></li>
+                        <li><a class="dropdown-item py-2 active" href="#" onclick="switchUserRole('admin')"><i class="bi bi-person-badge me-2"></i>Admin LOFBI (Administrator)</a></li>
+                        <li><a class="dropdown-item py-2" href="#" onclick="switchUserRole('operator')"><i class="bi bi-person-workspace me-2"></i>Operator LOFBI (Operator)</a></li>
+                        <li><a class="dropdown-item py-2" href="#" onclick="switchUserRole('validator')"><i class="bi bi-person-check me-2"></i>Validator LOFBI (Validator)</a></li>
+                        <li><a class="dropdown-item py-2" href="#" onclick="switchUserRole('viewer')"><i class="bi bi-eye-fill me-2"></i>Viewer LOFBI (Viewer)</a></li>
+                        <li><a class="dropdown-item py-2" href="#" onclick="switchUserRole('pimpinan')"><i class="bi bi-person-badge-fill me-2"></i>Pimpinan KSOP (Pimpinan)</a></li>
+                    </ul>
+                </div>
+
+                <div class="topbar-divider"></div>
+
+                <div class="dropdown">
+                    <button class="topbar-user-btn" type="button" id="userDropdown" data-bs-toggle="dropdown">
+                        <div class="topbar-avatar" id="topbarAvatar">AL</div>
+                        <span class="topbar-username d-none d-md-inline" id="topbarUserName">Admin LOFBI</span>
+                        <i class="bi bi-chevron-down fs-xs ms-1 text-muted"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                        <li class="px-3 py-2 border-bottom">
+                            <div class="fw-semibold" id="dropdownUserName">Admin LOFBI</div>
+                            <div class="fs-xs text-muted">KSOP Kelas I Banten</div>
+                        </li>
+                        <li><a class="dropdown-item py-2" href="#" onclick="switchSection('dashboard')"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
+                        <li><a class="dropdown-item py-2" href="#" onclick="switchSection('users')"><i class="bi bi-person-circle me-2"></i>Kelola Pengguna</a></li>
+                        <li><hr class="dropdown-divider my-1"></li>
+                        <li><a class="dropdown-item py-2 text-danger" href="#" onclick="alert('Logged out! Token cleared.')"><i class="bi bi-box-arrow-right me-2"></i>Keluar</a></li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+
+        <!-- PAGE CONTENT -->
+        <div class="app-content">
+
+            <!-- STATE SWITCHER DEMO -->
+            <div class="state-switcher mb-4">
+                <span class="state-switcher-label"><i class="bi bi-sliders me-1"></i>Demo State:</span>
+                <button class="state-btn state-btn-success active" data-state="success" type="button"><i class="bi bi-check-circle-fill me-1"></i>Success</button>
+                <button class="state-btn state-btn-loading" data-state="loading" type="button"><i class="bi bi-hourglass-split me-1"></i>Loading</button>
+                <button class="state-btn state-btn-empty" data-state="empty" type="button"><i class="bi bi-inbox me-1"></i>Empty</button>
+                <button class="state-btn state-btn-error" data-state="error" type="button"><i class="bi bi-exclamation-octagon me-1"></i>Error</button>
+                <span class="ms-auto fs-xs text-muted">Backend Status: <span id="apiStatusBadge" class="table-badge success">Online API (lofbi-api)</span></span>
+            </div>
+
+            <!-- STATE LOADING -->
+            <div id="stateLoading" style="display:none;">
+                <div class="panel p-4">
+                    <div class="state-container" role="status">
+                        <div class="state-loading">
+                            <div class="spinner-border" style="width:44px;height:44px;border-width:3px;color:var(--kemenhub-blue-mid);margin-bottom:16px;"></div>
+                        </div>
+                        <div class="state-title">Memuat Data Sistem...</div>
+                        <p class="state-desc">Sedang menyinkronkan data dengan backend lofbi-api.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STATE EMPTY -->
+            <div id="stateEmpty" style="display:none;">
+                <div class="panel">
+                    <div class="state-container" role="status">
+                        <svg class="empty-illustration" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="30" y="60" width="140" height="100" rx="10" fill="#e8edf4"/>
+                            <circle cx="100" cy="38" r="22" fill="#c4cdd8"/>
+                        </svg>
+                        <div class="state-title">Data Halaman Belum Terisi</div>
+                        <p class="state-desc">Tabel di backend belum memiliki record. Mulai tambahkan data baru.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STATE ERROR -->
+            <div id="stateError" style="display:none;">
+                <div class="panel">
+                    <div class="state-container" role="alert">
+                        <i class="bi bi-exclamation-octagon-fill text-danger mb-3" style="font-size:56px;"></i>
+                        <div class="state-title text-danger">Gagal Terhubung ke Backend</div>
+                        <p class="state-desc">Koneksi ke server Laravel (http://127.0.0.1:8000/api) terputus.</p>
+                        <button class="btn-lofbi btn-primary-lofbi" onclick="syncWithBackendApi()"><i class="bi bi-arrow-clockwise"></i> Coba Hubungkan Ulang</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================
+                 SECTION 1: DASHBOARD PAGE
+                 ============================================================ -->
+            <div id="pageSection-dashboard" class="page-section">
+                <div class="page-header fade-in">
+                    <div class="page-header-inner">
+                        <div>
+                            <h1 class="page-title">Dashboard Overview</h1>
+                            <p class="page-subtitle">Selamat datang, <strong id="welcomeUserName">Admin LOFBI</strong> (<span id="welcomeUserRole">Role: admin</span>). Terintegrasi dengan KSOP Kelas I Banten.</p>
+                        </div>
+                        <div class="page-header-actions">
+                            <button class="btn-lofbi btn-outline-lofbi" onclick="syncWithBackendApi()"><i class="bi bi-arrow-clockwise"></i> Sync API</button>
+                            <button class="btn-lofbi btn-gold-lofbi" data-bs-toggle="modal" data-bs-target="#modalExportLaporan"><i class="bi bi-download"></i> Export Laporan</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="filter-bar">
+                    <label for="filterTahun" class="fs-sm fw-semibold">Tahun Anggaran:</label>
+                    <select id="filterTahun" class="filter-select"><option>2024</option><option>2025</option><option selected>2026</option></select>
+                    <label for="filterRuangan" class="fs-sm fw-semibold">Ruangan:</label>
+                    <select id="filterRuangan" class="filter-select"><option value="">Semua Ruangan</option><option value="1" selected>Ruang Tata Usaha</option><option value="2">Gudang Persediaan</option><option value="3">Ruang Kepala</option></select>
+                    <button class="btn-lofbi btn-primary-lofbi"><i class="bi bi-funnel-fill"></i> Terapkan</button>
+                </div>
+
+                <section aria-label="Statistik ringkasan">
+                    <div class="stat-cards-grid">
+                        <div class="stat-card primary" onclick="switchSection('aset')" style="cursor:pointer">
+                            <div class="stat-card-header"><div class="stat-card-icon"><i class="bi bi-archive-fill"></i></div><div class="stat-card-trend up">+34 bulan ini</div></div>
+                            <div class="stat-card-value" id="valTotalAsset">2.847</div>
+                            <div class="stat-card-label">Total Asset</div>
+                        </div>
+                        <div class="stat-card teal" onclick="switchSection('laporan')" style="cursor:pointer">
+                            <div class="stat-card-header"><div class="stat-card-icon"><i class="bi bi-cash-coin"></i></div><div class="stat-card-trend up">Terpenuhi</div></div>
+                            <div class="stat-card-value" id="valNilaiBuku" style="font-size:18px;">Rp 18.420.500.000</div>
+                            <div class="stat-card-label">Total Nilai Buku</div>
+                        </div>
+                        <div class="stat-card warning" onclick="switchSection('approval')" style="cursor:pointer">
+                            <div class="stat-card-header"><div class="stat-card-icon"><i class="bi bi-hourglass-split"></i></div><div class="stat-card-trend down">Status: Menunggu</div></div>
+                            <div class="stat-card-value" id="valPendingApproval">23</div>
+                            <div class="stat-card-label">Pengajuan Menunggu</div>
+                        </div>
+                        <div class="stat-card orange" onclick="switchSection('persediaan')" style="cursor:pointer">
+                            <div class="stat-card-header"><div class="stat-card-icon"><i class="bi bi-exclamation-triangle-fill"></i></div><div class="stat-card-trend up">&lt; Stok Minimum</div></div>
+                            <div class="stat-card-value" id="valStokMenipis">87</div>
+                            <div class="stat-card-label">Stok Menipis</div>
+                        </div>
+                        <div class="stat-card danger" onclick="switchSection('aset')" style="cursor:pointer">
+                            <div class="stat-card-header"><div class="stat-card-icon"><i class="bi bi-tools"></i></div><div class="stat-card-trend flat">Ringan &amp; Berat</div></div>
+                            <div class="stat-card-value" id="valAssetRusak">145</div>
+                            <div class="stat-card-label">Asset Rusak</div>
+                        </div>
+                        <div class="stat-card secondary" onclick="switchSection('persediaan')" style="cursor:pointer">
+                            <div class="stat-card-header"><div class="stat-card-icon"><i class="bi bi-boxes"></i></div><div class="stat-card-trend up">Kategori Aktif</div></div>
+                            <div class="stat-card-value" id="valTotalPersediaan">14</div>
+                            <div class="stat-card-label">Jenis Persediaan</div>
+                        </div>
+                        <div class="stat-card success" onclick="switchSection('aset')" style="cursor:pointer">
+                            <div class="stat-card-header"><div class="stat-card-icon"><i class="bi bi-check-circle-fill"></i></div><div class="stat-card-trend up">94.9% Total</div></div>
+                            <div class="stat-card-value" id="valAssetBaik">2.702</div>
+                            <div class="stat-card-label">Asset Kondisi Baik</div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="d-grid-2 mt-24">
+                    <div class="panel">
+                        <div class="panel-header"><h2 class="panel-title"><i class="bi bi-graph-up"></i>Kondisi Asset</h2></div>
+                        <div class="panel-body"><div class="chart-container"><canvas id="chartTrendAsset"></canvas></div></div>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-header"><h2 class="panel-title"><i class="bi bi-pie-chart-fill"></i>Distribusi Persediaan</h2></div>
+                        <div class="panel-body"><div class="chart-container"><canvas id="chartPersediaan"></canvas></div></div>
+                    </div>
+                </section>
+
+                <section class="d-grid-2 mt-24">
+                    <div class="panel">
+                        <div class="panel-header"><h2 class="panel-title"><i class="bi bi-lightning-charge-fill"></i>Quick Action</h2></div>
+                        <div class="panel-body">
+                            <div class="quick-actions-grid">
+                                <button class="quick-action-btn qa-blue role-action" data-bs-toggle="modal" data-bs-target="#modalBarangMasuk"><i class="bi bi-box-arrow-in-down"></i>Barang Masuk</button>
+                                <button class="quick-action-btn qa-teal role-action" data-bs-toggle="modal" data-bs-target="#modalOpnameBaru"><i class="bi bi-clipboard2-plus-fill"></i>Opname Baru</button>
+                                <button class="quick-action-btn qa-info role-action" data-bs-toggle="modal" data-bs-target="#modalTransferMasuk"><i class="bi bi-arrow-left-right"></i>Transfer Masuk</button>
+                                <button class="quick-action-btn qa-gold role-action" data-bs-toggle="modal" data-bs-target="#modalExportLaporan"><i class="bi bi-file-earmark-arrow-down-fill"></i>Export Laporan</button>
+                                <button class="quick-action-btn qa-success role-action" data-bs-toggle="modal" data-bs-target="#modalTambahAset"><i class="bi bi-plus-circle-fill"></i>Tambah Asset</button>
+                                <button class="quick-action-btn qa-danger" onclick="switchSection('persediaan')"><i class="bi bi-exclamation-triangle-fill"></i>Stok Menipis</button>
+                                <button class="quick-action-btn qa-orange" onclick="switchSection('approval')"><i class="bi bi-check2-all"></i>Approval</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header"><h2 class="panel-title"><i class="bi bi-clock-history"></i>Transaksi Terbaru</h2></div>
+                        <div class="panel-body p-0">
+                            <div class="data-table-wrapper">
+                                <table class="data-table">
+                                    <thead><tr><th>Tanggal</th><th>Pengguna</th><th>Jenis</th><th>Status</th></tr></thead>
+                                    <tbody>
+                                        <tr><td class="fs-xs">04 Agt, 09:41</td><td>Admin LOFBI</td><td class="fs-xs">Barang Masuk</td><td><span class="table-badge success">Disetujui</span></td></tr>
+                                        <tr><td class="fs-xs">04 Agt, 09:15</td><td>Kasubbag LOFBI</td><td class="fs-xs">Opname Fisik</td><td><span class="table-badge success">Disetujui</span></td></tr>
+                                        <tr><td class="fs-xs">04 Agt, 08:53</td><td>Admin LOFBI</td><td class="fs-xs">Pengajuan Keluar</td><td><span class="table-badge warning">Menunggu</span></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- ============================================================
+                 SECTION 2: MANAJEMEN ASET PAGE
+                 ============================================================ -->
+            <div id="pageSection-aset" class="page-section" style="display:none;">
+                <div class="page-header fade-in">
+                    <div class="page-header-inner">
+                        <div>
+                            <h1 class="page-title">Manajemen Aset (KBM &amp; BMN)</h1>
+                            <p class="page-subtitle">Pendataan inventaris barang milik negara berdasarkan kondisi, merk, dan ruangan.</p>
+                        </div>
+                        <div class="page-header-actions">
+                            <button class="btn-lofbi btn-primary-lofbi" data-bs-toggle="modal" data-bs-target="#modalTambahAset"><i class="bi bi-plus-circle me-1"></i> Tambah Aset Baru</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header"><h2 class="panel-title"><i class="bi bi-archive-fill"></i> Daftar Aset (Model: Aset)</h2></div>
+                    <div class="data-table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr><th>Kode Aset</th><th>Jenis Barang</th><th>Merk &amp; Model</th><th>Sub Kategori</th><th>Kondisi</th><th>Ruangan</th><th>Masa Manfaat</th><th>Metode Penyusutan</th><th>Akumulasi Penyusutan</th><th>Nilai Perolehan</th><th>Nilai Buku</th><th>QR Code</th><th>Riwayat</th><th>Dokumen</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="fw-bold">ELK-LAP-001</td>
+                                    <td>Laptop</td>
+                                    <td>Lenovo ThinkPad E14</td>
+                                    <td>Elektronik</td>
+                                    <td><span class="table-badge success">baik</span></td>
+                                    <td>Ruang Tata Usaha</td>
+                                    <td>4 tahun</td>
+                                    <td>Garis Lurus</td>
+                                    <td>Rp 3.000.000</td>
+                                    <td>Rp 12.000.000</td>
+                                    <td class="fw-bold text-kemenhub">Rp 9.000.000</td>
+                                    <td><button class="btn btn-sm btn-outline-secondary py-0 px-2 role-action" data-bs-toggle="modal" data-bs-target="#modalAsetQr" onclick="openAsetQr('ELK-LAP-001')"><i class="bi bi-qr-code"></i></button></td>
+                                    <td><button class="btn btn-sm btn-outline-primary py-0 px-2 role-action" onclick="openAsetMutasi('ELK-LAP-001')">Riwayat Mutasi</button></td>
+                                    <td><button class="btn btn-sm btn-outline-warning py-0 px-2 role-action">Upload Dokumen</button></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">ELK-LAP-002</td>
+                                    <td>Laptop</td>
+                                    <td>ASUS ExpertBook B1</td>
+                                    <td>Elektronik</td>
+                                    <td><span class="table-badge warning">rusak_ringan</span></td>
+                                    <td>Ruang Kepala</td>
+                                    <td>4 tahun</td>
+                                    <td>Saldo Menurun</td>
+                                    <td>Rp 5.250.000</td>
+                                    <td>Rp 10.500.000</td>
+                                    <td class="fw-bold text-kemenhub">Rp 5.250.000</td>
+                                    <td><button class="btn btn-sm btn-outline-secondary py-0 px-2 role-action" data-bs-toggle="modal" data-bs-target="#modalAsetQr" onclick="openAsetQr('ELK-LAP-002')"><i class="bi bi-qr-code"></i></button></td>
+                                    <td><button class="btn btn-sm btn-outline-primary py-0 px-2 role-action" onclick="openAsetMutasi('ELK-LAP-002')">Riwayat Mutasi</button></td>
+                                    <td><button class="btn btn-sm btn-outline-warning py-0 px-2 role-action">Upload Dokumen</button></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">ELK-PRN-001</td>
+                                    <td>Printer</td>
+                                    <td>Canon PIXMA G2020</td>
+                                    <td>Elektronik</td>
+                                    <td><span class="table-badge success">baik</span></td>
+                                    <td>Ruang Tata Usaha</td>
+                                    <td>5 tahun</td>
+                                    <td>Garis Lurus</td>
+                                    <td>Rp 312.500</td>
+                                    <td>Rp 2.500.000</td>
+                                    <td class="fw-bold text-kemenhub">Rp 2.187.500</td>
+                                    <td><button class="btn btn-sm btn-outline-secondary py-0 px-2 role-action" data-bs-toggle="modal" data-bs-target="#modalAsetQr" onclick="openAsetQr('ELK-PRN-001')"><i class="bi bi-qr-code"></i></button></td>
+                                    <td><button class="btn btn-sm btn-outline-primary py-0 px-2 role-action" onclick="openAsetMutasi('ELK-PRN-001')">Riwayat Mutasi</button></td>
+                                    <td><button class="btn btn-sm btn-outline-warning py-0 px-2 role-action">Upload Dokumen</button></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">FUR-MJK-001</td>
+                                    <td>Meja Kerja</td>
+                                    <td>Olympic</td>
+                                    <td>Furnitur</td>
+                                    <td><span class="table-badge success">baik</span></td>
+                                    <td>Ruang Tata Usaha</td>
+                                    <td>8 tahun</td>
+                                    <td>Garis Lurus</td>
+                                    <td>Rp 675.000</td>
+                                    <td>Rp 1.800.000</td>
+                                    <td class="fw-bold text-kemenhub">Rp 1.125.000</td>
+                                    <td><button class="btn btn-sm btn-outline-secondary py-0 px-2 role-action" data-bs-toggle="modal" data-bs-target="#modalAsetQr" onclick="openAsetQr('FUR-MJK-001')"><i class="bi bi-qr-code"></i></button></td>
+                                    <td><button class="btn btn-sm btn-outline-primary py-0 px-2 role-action" onclick="openAsetMutasi('FUR-MJK-001')">Riwayat Mutasi</button></td>
+                                    <td><button class="btn btn-sm btn-outline-warning py-0 px-2 role-action">Upload Dokumen</button></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">FUR-MJK-002</td>
+                                    <td>Meja Kerja</td>
+                                    <td>Olympic</td>
+                                    <td>Furnitur</td>
+                                    <td><span class="table-badge danger">rusak_berat</span></td>
+                                    <td>Ruang Kepala</td>
+                                    <td>8 tahun</td>
+                                    <td>Saldo Menurun</td>
+                                    <td>Rp 1.800.000</td>
+                                    <td>Rp 1.800.000</td>
+                                    <td class="fw-bold text-danger">Rp 0</td>
+                                    <td><button class="btn btn-sm btn-outline-secondary py-0 px-2 role-action" data-bs-toggle="modal" data-bs-target="#modalAsetQr" onclick="openAsetQr('FUR-MJK-002')"><i class="bi bi-qr-code"></i></button></td>
+                                    <td><button class="btn btn-sm btn-outline-primary py-0 px-2 role-action" onclick="openAsetMutasi('FUR-MJK-002')">Riwayat Mutasi</button></td>
+                                    <td><button class="btn btn-sm btn-outline-warning py-0 px-2 role-action">Upload Dokumen</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================
+                 SECTION 3: PERSEDIAAN & BATCH PAGE
+                 ============================================================ -->
+            <div id="pageSection-persediaan" class="page-section" style="display:none;">
+                <div class="page-header fade-in">
+                    <div class="page-header-inner">
+                        <div>
+                            <h1 class="page-title">Manajemen Persediaan &amp; Batch Stok</h1>
+                            <p class="page-subtitle">Pencatatan persediaan konsumsi, nomor batch stok masuk FIFO, dan stok minimum.</p>
+                        </div>
+                        <div class="page-header-actions">
+                            <button class="btn-lofbi btn-primary-lofbi role-action" data-bs-toggle="modal" data-bs-target="#modalBarangMasuk"><i class="bi bi-box-arrow-in-down me-1"></i> Catat Barang Masuk</button>
+                            <button class="btn-lofbi btn-gold-lofbi role-action" data-bs-toggle="modal" data-bs-target="#modalPengajuanKeluar"><i class="bi bi-box-arrow-up-right me-1"></i> Ajukan Barang Keluar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header"><h2 class="panel-title"><i class="bi bi-boxes"></i> Master Persediaan (Model: Persediaan)</h2></div>
+                    <div class="data-table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr><th>Jenis Barang</th><th>Merk</th><th>Satuan</th><th>Stok Minimum</th><th>Total Sisa Stok</th><th>Status</th><th>Aksi</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td class="fw-bold">Pulpen</td><td>—</td><td>pcs</td><td>10 pcs</td><td class="fw-bold">120 pcs</td><td><span class="table-badge success">Stok Aman</span></td><td><button class="btn btn-sm btn-outline-secondary py-0 px-2 role-action" onclick="openBatchHistory('Pulpen')">Lihat Batch</button></td></tr>
+                                <tr><td class="fw-bold">Kertas A4</td><td>Sinar Dunia</td><td>rim</td><td>5 rim</td><td class="fw-bold">8 rim</td><td><span class="table-badge success">Stok Aman</span></td><td><button class="btn btn-sm btn-outline-secondary py-0 px-2 role-action" onclick="openBatchHistory('Kertas A4')">Lihat Batch</button></td></tr>
+                                <tr><td class="fw-bold">Tinta Printer</td><td>Canon</td><td>botol</td><td>2 botol</td><td class="fw-bold text-danger">1 botol</td><td><span class="table-badge warning">&lt; Stok Minimum</span></td><td><button class="btn btn-sm btn-outline-secondary py-0 px-2 role-action" onclick="openBatchHistory('Tinta Printer')">Lihat Batch</button></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================
+                 SECTION 4: OPNAME FISIK PAGE
+                 ============================================================ -->
+            <div id="pageSection-opname" class="page-section" style="display:none;">
+                <div class="page-header fade-in">
+                    <div class="page-header-inner">
+                        <div>
+                            <h1 class="page-title">Opname Fisik Barang &amp; Inventarisasi</h1>
+                            <p class="page-subtitle">Pencocokan jumlah stok sistem dengan fisik barang di lapangan per ruangan.</p>
+                        </div>
+                        <div class="page-header-actions">
+                            <button class="btn-lofbi btn-primary-lofbi" data-bs-toggle="modal" data-bs-target="#modalOpnameBaru"><i class="bi bi-clipboard2-plus-fill me-1"></i> Mulai Sesi Opname</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header"><h2 class="panel-title"><i class="bi bi-clipboard2-check-fill"></i> Sesi Opname (Model: OpnameSesi)</h2></div>
+                    <div class="data-table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr><th>ID Sesi</th><th>Ruangan</th><th>Tanggal</th><th>Petugas</th><th>Status</th><th>Aksi</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td class="fw-bold">OPN-001</td><td>Ruang Tata Usaha</td><td>04 Agt 2026</td><td>Admin LOFBI</td><td><span class="table-badge warning">draft</span></td><td><button class="btn btn-sm btn-primary py-0 px-2 role-action">Input Fisik</button></td></tr>
+                                <tr><td class="fw-bold">OPN-002</td><td>Gudang Persediaan</td><td>02 Agt 2026</td><td>Kasubbag LOFBI</td><td><span class="table-badge success">selesai</span></td><td><button class="btn btn-sm btn-outline-secondary py-0 px-2 role-action">Lihat BAOP</button></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="pageSection-monitoring" class="page-section" style="display:none;">
+                <div class="page-header fade-in">
+                    <h1 class="page-title">Monitoring Aset Real-Time</h1>
+                    <p class="page-subtitle">Melacak lokasi aset, kondisi aktual, dan aktivitas sistem terakhir.</p>
+                </div>
+                <div class="d-grid-2 mt-4">
+                    <div class="panel">
+                        <div class="panel-header"><h2 class="panel-title"><i class="bi bi-geo-alt"></i> Tracking Lokasi Aset</h2></div>
+                        <div class="data-table-wrapper">
+                            <table class="data-table">
+                                <thead><tr><th>Kode Aset</th><th>Ruangan Terakhir</th><th>Terakhir Update</th><th>Status Kondisi</th></tr></thead>
+                                <tbody>
+                                    <tr><td class="fw-bold">ELK-LAP-001</td><td>Ruang Tata Usaha</td><td>05 Agt 2026, 10:22</td><td><span class="table-badge success">Baik</span></td></tr>
+                                    <tr><td class="fw-bold">ELK-PRN-001</td><td>Gudang Persediaan</td><td>05 Agt 2026, 09:58</td><td><span class="table-badge success">Baik</span></td></tr>
+                                    <tr><td class="fw-bold">FUR-MJK-002</td><td>Ruang Kepala</td><td>03 Agt 2026, 16:14</td><td><span class="table-badge danger">Rusak Berat</span></td></tr>
+                                    <tr><td class="fw-bold">ELK-LAP-002</td><td>Ruang Kepala</td><td>28 Jun 2026, 08:07</td><td><span class="table-badge warning">Rusak Ringan</span></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="panel p-4">
+                        <div class="panel-header"><h2 class="panel-title"><i class="bi bi-exclamation-triangle-fill text-warning"></i> Aset Belum Opname &gt; 6 Bulan</h2></div>
+                        <div class="panel-body">
+                            <div class="stat-card warning">
+                                <div class="stat-card-value">24</div>
+                                <div class="stat-card-label">Aset belum di-opname selama lebih dari 6 bulan</div>
+                            </div>
+                            <p class="fs-sm text-muted mt-3">Data dummy peringatan. Pastikan backend memeriksa status `last_opname_date` dan trigger notifikasi.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel mt-4">
+                    <div class="panel-header"><h2 class="panel-title"><i class="bi bi-list-check"></i> Log Aktivitas Sistem Terbaru</h2></div>
+                    <div class="data-table-wrapper">
+                        <table class="data-table">
+                            <thead><tr><th>Waktu</th><th>Pengguna</th><th>Aktivitas</th><th>Detail</th></tr></thead>
+                            <tbody>
+                                <tr><td class="fs-xs">05 Agt 2026, 10:42</td><td>Operator LOFBI</td><td>Update lokasi aset</td><td>ELK-LAP-001 dipindah ke Ruang Tata Usaha</td></tr>
+                                <tr><td class="fs-xs">05 Agt 2026, 09:59</td><td>Validator LOFBI</td><td>Verifikasi kondisi</td><td>FUR-MJK-002 dikategorikan rusak berat</td></tr>
+                                <tr><td class="fs-xs">04 Agt 2026, 16:20</td><td>Admin LOFBI</td><td>Sinkronisasi data</td><td>Baru ditarik dari API backend</td></tr>
+                                <tr><td class="fs-xs">03 Agt 2026, 14:11</td><td>Kasubbag LOFBI</td><td>Perbarui status opname</td><td>OPN-001 status draft</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================
+                 SECTION 5: LAPORAN BAOP & DBR PAGE
+                 ============================================================ -->
+            <div id="pageSection-laporan" class="page-section" style="display:none;">
+                <div class="page-header fade-in">
+                    <h1 class="page-title">Laporan &amp; Export Data</h1>
+                    <p class="page-subtitle">Generasi laporan resmi Berita Acara Opname (BAOP), Daftar Barang Ruangan (DBR), dan Nilai Buku.</p>
+                </div>
+
+                <div class="d-grid-3 mt-4">
+                    <div class="panel p-4 text-center">
+                        <i class="bi bi-file-earmark-text-fill text-kemenhub" style="font-size:48px;"></i>
+                        <h3 class="panel-title justify-content-center mt-3 fs-5">Laporan BAOP</h3>
+                        <p class="fs-xs text-muted mt-2">Berita Acara Opname Fisik hasil rekonsiliasi stok.</p>
+                        <button class="btn-lofbi btn-primary-lofbi w-100 mt-3 justify-content-center" onclick="alert('Generate GET /api/laporan/baop')">Cetak BAOP (PDF)</button>
+                    </div>
+                    <div class="panel p-4 text-center">
+                        <i class="bi bi-door-open-fill text-gold" style="font-size:48px;"></i>
+                        <h3 class="panel-title justify-content-center mt-3 fs-5">Daftar Barang Ruangan (DBR)</h3>
+                        <p class="fs-xs text-muted mt-2">Kartu inventarisasi barang milik negara per ruangan.</p>
+                        <button class="btn-lofbi btn-gold-lofbi w-100 mt-3 justify-content-center" onclick="alert('Generate GET /api/laporan/dbr')">Cetak DBR (PDF)</button>
+                    </div>
+                    <div class="panel p-4 text-center">
+                        <i class="bi bi-calculator-fill text-success" style="font-size:48px;"></i>
+                        <h3 class="panel-title justify-content-center mt-3 fs-5">Rekap Nilai Buku</h3>
+                        <p class="fs-xs text-muted mt-2">Perhitungan nilai perolehan, akumulasi penyusutan, dan nilai buku.</p>
+                        <button class="btn-lofbi btn-outline-lofbi w-100 mt-3 justify-content-center" onclick="alert('Generate GET /api/laporan/nilai-buku')">Export Excel</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="pageSection-audit" class="page-section" style="display:none;">
+                <div class="page-header fade-in">
+                    <h1 class="page-title">Audit Trail Sistem</h1>
+                    <p class="page-subtitle">Rekam jejak semua transaksi dan perubahan data di modul aset, persediaan, opname, dan approval.</p>
+                </div>
+                <div class="panel">
+                    <div class="panel-header"><h2 class="panel-title"><i class="bi bi-journal-text"></i> Log Transaksi Sistem</h2></div>
+                    <div class="data-table-wrapper">
+                        <table class="data-table">
+                            <thead><tr><th>Tanggal & Jam</th><th>Pengguna</th><th>Modul</th><th>Aksi</th><th>Detail Perubahan</th></tr></thead>
+                            <tbody>
+                                <tr><td class="fs-xs">05 Agt 2026, 11:05</td><td>Validator LOFBI</td><td>Aset</td><td>Edit</td><td>Perbarui kondisi ELK-PRN-001 menjadi baik</td></tr>
+                                <tr><td class="fs-xs">05 Agt 2026, 10:42</td><td>Operator LOFBI</td><td>Persediaan</td><td>Tambah</td><td>Stok Pulpen +50 pcs, supplier Sinar Dunia</td></tr>
+                                <tr><td class="fs-xs">05 Agt 2026, 09:59</td><td>Admin LOFBI</td><td>Opname</td><td>Edit</td><td>Update hasil opname OPN-001 Ruang Tata Usaha</td></tr>
+                                <tr><td class="fs-xs">04 Agt 2026, 16:30</td><td>Kasubbag LOFBI</td><td>Approval</td><td>Approve</td><td>Pengajuan barang keluar Seksi Kepegawaian</td></tr>
+                                <tr><td class="fs-xs">04 Agt 2026, 15:10</td><td>Admin LOFBI</td><td>Persediaan</td><td>Hapus</td><td>Batch lama Kertas A4 dihapus</td></tr>
+                                <tr><td class="fs-xs">03 Agt 2026, 14:11</td><td>Kasubbag LOFBI</td><td>Opname</td><td>Tambah</td><td>Buat sesi opname baru OPN-002</td></tr>
+                                <tr><td class="fs-xs">02 Agt 2026, 10:20</td><td>Validator LOFBI</td><td>Aset</td><td>Edit</td><td>Perbarui ruangan FUR-MJK-002 ke Ruang Kepala</td></tr>
+                                <tr><td class="fs-xs">01 Agt 2026, 08:55</td><td>Admin LOFBI</td><td>Persediaan</td><td>Approve</td><td>Terima transfer masuk 20 pcs tinta Canon</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================
+                 SECTION 6: PERSATUAN / APPROVAL PAGE
+                 ============================================================ -->
+            <div id="pageSection-approval" class="page-section" style="display:none;">
+                <div class="page-header fade-in">
+                    <h1 class="page-title">Approval Pengajuan Barang Keluar</h1>
+                    <p class="page-subtitle">Verifikasi dan keputusan persetujuan barang keluar oleh Kasubbag.</p>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title"><i class="bi bi-check2-square"></i> Daftar Pengajuan (Role: Kasubbag)</h2>
+                    </div>
+                    <div class="data-table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr><th>Tanggal</th><th>Unit Kerja Penerima</th><th>Item Diminta</th><th>Jumlah</th><th>Pengaju</th><th>Status</th><th>Aksi Keputusan</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="fs-xs">04 Agt 2026</td>
+                                    <td class="fw-bold">Seksi Kepegawaian</td>
+                                    <td>Pulpen Standard 0.5mm</td>
+                                    <td class="fw-bold">15 pcs</td>
+                                    <td>Admin LOFBI</td>
+                                    <td><span class="table-badge warning">menunggu</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-success py-0 px-2 me-1" onclick="alert('POST /api/persediaan/pengajuan/1/setujui')">Setujui</button>
+                                        <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="alert('POST /api/persediaan/pengajuan/1/tolak')">Tolak</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================
+                 SECTION 7: MASTER DATA PAGE
+                 ============================================================ -->
+            <div id="pageSection-master" class="page-section" style="display:none;">
+                <div class="page-header fade-in">
+                    <h1 class="page-title">Master Data Referensi</h1>
+                    <p class="page-subtitle">Pengelolaan data Ruangan (Ruangan) &amp; Kategori Barang (Kategori).</p>
+                </div>
+
+                <div class="d-grid-2 mt-4">
+                    <div class="panel">
+                        <div class="panel-header"><h2 class="panel-title"><i class="bi bi-geo-alt-fill"></i> Ruangan (App\Models\Ruangan)</h2></div>
+                        <div class="data-table-wrapper">
+                            <table class="data-table">
+                                <thead><tr><th>ID</th><th>Nama Ruangan</th><th>Gedung</th></tr></thead>
+                                <tbody>
+                                    <tr><td>1</td><td class="fw-bold">Ruang Tata Usaha</td><td>Gedung Utama</td></tr>
+                                    <tr><td>2</td><td class="fw-bold">Gudang Persediaan</td><td>Gedung Utama</td></tr>
+                                    <tr><td>3</td><td class="fw-bold">Ruang Kepala</td><td>Gedung Utama</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-header"><h2 class="panel-title"><i class="bi bi-tags-fill"></i> Kategori (App\Models\Kategori)</h2></div>
+                        <div class="data-table-wrapper">
+                            <table class="data-table">
+                                <thead><tr><th>ID</th><th>Nama Kategori</th><th>Tipe</th></tr></thead>
+                                <tbody>
+                                    <tr><td>1</td><td class="fw-bold">ATK</td><td><span class="table-badge secondary">persediaan</span></td></tr>
+                                    <tr><td>2</td><td class="fw-bold">Rumah Tangga</td><td><span class="table-badge secondary">persediaan</span></td></tr>
+                                    <tr><td>3</td><td class="fw-bold">Elektronik</td><td><span class="table-badge primary">aset</span></td></tr>
+                                    <tr><td>4</td><td class="fw-bold">Furnitur</td><td><span class="table-badge primary">aset</span></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================
+                 SECTION 8: PENGGUNA (USERS) PAGE
+                 ============================================================ -->
+            <div id="pageSection-users" class="page-section" style="display:none;">
+                <div class="page-header fade-in">
+                    <h1 class="page-title">Manajemen Pengguna (User Accounts)</h1>
+                    <p class="page-subtitle">Daftar pengguna dengan otorisasi role internal dan simulasi hak akses.</p>
+                </div>
+                <div class="panel">
+                    <div class="panel-header"><h2 class="panel-title"><i class="bi bi-people-fill"></i> User System</h2></div>
+                    <div class="data-table-wrapper">
+                        <table class="data-table">
+                            <thead><tr><th>Nama</th><th>Email</th><th>Role Access</th><th>Status Token</th></tr></thead>
+                            <tbody>
+                                <tr><td class="fw-bold">Admin LOFBI</td><td>admin@lofbi.test</td><td><span class="table-badge primary">Administrator</span></td><td><span class="table-badge success">Aktif (Sanctum)</span></td></tr>
+                                <tr><td class="fw-bold">Operator LOFBI</td><td>operator@lofbi.test</td><td><span class="table-badge warning">Operator</span></td><td><span class="table-badge success">Aktif</span></td></tr>
+                                <tr><td class="fw-bold">Validator LOFBI</td><td>validator@lofbi.test</td><td><span class="table-badge success">Validator</span></td><td><span class="table-badge success">Aktif</span></td></tr>
+                                <tr><td class="fw-bold">Viewer LOFBI</td><td>viewer@lofbi.test</td><td><span class="table-badge secondary">Viewer</span></td><td><span class="table-badge success">Aktif</span></td></tr>
+                                <tr><td class="fw-bold">Pimpinan KSOP</td><td>pimpinan@lofbi.test</td><td><span class="table-badge info">Pimpinan</span></td><td><span class="table-badge success">Aktif</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="pageSection-settings" class="page-section" style="display:none;">
+                <div class="page-header fade-in">
+                    <h1 class="page-title">Pengaturan Sistem</h1>
+                    <p class="page-subtitle">Konfigurasi dasar instansi, preferensi sistem, manajemen role, dan cadangan data.</p>
+                </div>
+                <div class="panel">
+                    <div class="panel-header"><h2 class="panel-title"><i class="bi bi-gear-fill"></i> Pengaturan Utama</h2></div>
+                    <div class="panel-body">
+                        <ul class="nav nav-tabs" id="settingsTab" role="tablist">
+                            <li class="nav-item" role="presentation"><button class="nav-link active" id="tab-profil-tab" data-bs-toggle="tab" data-bs-target="#tab-profil" type="button" role="tab">Profil Instansi</button></li>
+                            <li class="nav-item" role="presentation"><button class="nav-link" id="tab-preferensi-tab" data-bs-toggle="tab" data-bs-target="#tab-preferensi" type="button" role="tab">Preferensi Sistem</button></li>
+                            <li class="nav-item" role="presentation"><button class="nav-link" id="tab-role-tab" data-bs-toggle="tab" data-bs-target="#tab-role" type="button" role="tab">Role &amp; Permission</button></li>
+                            <li class="nav-item" role="presentation"><button class="nav-link" id="tab-backup-tab" data-bs-toggle="tab" data-bs-target="#tab-backup" type="button" role="tab">Backup Data</button></li>
+                        </ul>
+                        <div class="tab-content p-3 border-top">
+                            <div class="tab-pane fade show active" id="tab-profil" role="tabpanel">
+                                <div class="mb-3"><label class="form-label fw-semibold">Nama KSOP</label><input type="text" class="form-control" value="KSOP Kelas I Banten"></div>
+                                <div class="mb-3"><label class="form-label fw-semibold">Alamat Instansi</label><textarea class="form-control" rows="3">Jl. Yos Sudarso No. 1, Bandar Lampung</textarea></div>
+                                <div class="mb-3"><label class="form-label fw-semibold">Logo Instansi</label><input class="form-control" type="text" placeholder="URL atau path logo (dummy)" value="/public/images/logo-ksop.png"></div>
+                                <button class="btn-lofbi btn-primary-lofbi role-action">Simpan Profil Instansi</button>
+                            </div>
+                            <div class="tab-pane fade" id="tab-preferensi" role="tabpanel">
+                                <div class="mb-3"><label class="form-label fw-semibold">Format Tanggal</label><select class="form-select"><option>DD/MM/YYYY</option><option>MM/DD/YYYY</option><option selected>DD MMM YYYY</option></select></div>
+                                <div class="mb-3"><label class="form-label fw-semibold">Tahun Anggaran Aktif</label><select class="form-select"><option>2024</option><option>2025</option><option selected>2026</option></select></div>
+                                <button class="btn-lofbi btn-primary-lofbi role-action">Simpan Preferensi</button>
+                            </div>
+                            <div class="tab-pane fade" id="tab-role" role="tabpanel">
+                                <div class="data-table-wrapper">
+                                    <table class="data-table">
+                                        <thead><tr><th>Role</th><th>Deskripsi</th><th>Permission Contoh</th></tr></thead>
+                                        <tbody>
+                                            <tr><td class="fw-bold">Administrator</td><td>Pengelola penuh sistem</td><td>CRUD aset, persediaan, laporan, users</td></tr>
+                                            <tr><td class="fw-bold">Operator</td><td>Input dan update operasional</td><td>Tambah aset, catat persediaan, monitoring</td></tr>
+                                            <tr><td class="fw-bold">Validator</td><td>Verifikasi data dan laporan</td><td>Approve opname, validasi persediaan</td></tr>
+                                            <tr><td class="fw-bold">Viewer</td><td>Hanya melihat data</td><td>Read-only dashboard, aset, laporan</td></tr>
+                                            <tr><td class="fw-bold">Pimpinan</td><td>Review lengkap dan pengambilan keputusan</td><td>Lihat laporan, audit trail, persetujuan</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="tab-backup" role="tabpanel">
+                                <p class="fs-sm text-muted">Backup data dummy akan memanggil endpoint cadangan data backend.</p>
+                                <button class="btn-lofbi btn-gold-lofbi role-action" onclick="alert('Backup data dijalankan. Endpoint: POST /api/backup');">Backup Sekarang</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /.app-content -->
+
+        <footer class="py-3 px-4 border-top" style="font-size:12px;color:var(--text-muted);background:var(--surface-card);">
+            <div class="d-flex align-items-center justify-content-between">
+                <span>&copy; 2026 <strong style="color:var(--kemenhub-blue-mid)">KSOP Kelas I Banten</strong> &mdash; Kementerian Perhubungan RI</span>
+                <span>LOFBI v1.0.0 &mdash; <em>Pelayanan, Integritas, Keselamatan</em></span>
+            </div>
+        </footer>
+
+    </div>
+</div>
+
+<!-- ============================================================
+     MODALS (FORM INTERAKTIF UNTUK INPUT DATA)
+     ============================================================ -->
+
+<!-- Modal 1: Tambah Aset -->
+<div class="modal fade" id="modalTambahAset" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius:14px;">
+            <div class="modal-header" style="background:var(--kemenhub-blue-dark);color:#fff;">
+                <h5 class="modal-title fs-6 fw-bold"><i class="bi bi-plus-circle me-1"></i> Form Tambah Aset Baru (POST /api/aset)</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body fs-sm">
+                <form id="formTambahAset" onsubmit="event.preventDefault(); alert('Aset berhasil disimpan! Endpoint: POST /api/aset'); bootstrap.Modal.getOrCreateInstance(document.getElementById('modalTambahAset')).hide();">
+                    <div class="row gx-2">
+                        <div class="col-md-7 mb-3">
+                            <label class="form-label fw-semibold">Kode Aset</label>
+                            <input type="text" class="form-control" placeholder="Contoh: ELK-LAP-003" required>
+                        </div>
+                        <div class="col-md-5 mb-3">
+                            <label class="form-label fw-semibold">Jenis Barang</label>
+                            <select class="form-select">
+                                <option>Laptop</option>
+                                <option>Printer</option>
+                                <option>Meja Kerja</option>
+                                <option>Kursi</option>
+                                <option>AC</option>
+                                <option>Lainnya</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Merk &amp; Model</label>
+                        <input type="text" class="form-control" placeholder="Contoh: Dell Latitude 3420" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nilai Perolehan (Rp)</label>
+                        <input type="number" class="form-control" placeholder="15000000" required>
+                    </div>
+                    <div class="row gx-2">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Sub Kategori</label>
+                            <select class="form-select"><option>Elektronik</option><option>Furnitur</option><option>ATK</option><option>Rumah Tangga</option></select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Kondisi Aset</label>
+                            <select class="form-select">
+                                <option value="baik">Baik</option>
+                                <option value="rusak_ringan">Rusak Ringan</option>
+                                <option value="rusak_berat">Rusak Berat</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3 row gx-2">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Masa Manfaat (tahun)</label>
+                            <input type="number" class="form-control" placeholder="5" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Metode Penyusutan</label>
+                            <select class="form-select">
+                                <option>Garis Lurus</option>
+                                <option>Saldo Menurun</option>
+                            </select>
+                            <!-- TODO-BACKEND: perhitungan akumulasi penyusutan otomatis oleh backend -->
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Ruangan Penempatan</label>
+                        <select class="form-select"><option value="1">Ruang Tata Usaha</option><option value="2">Gudang Persediaan</option><option value="3">Ruang Kepala</option></select>
+                    </div>
+                    <button type="submit" class="btn-lofbi btn-primary-lofbi w-100 justify-content-center py-2 role-action">Simpan Aset Baru</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal 2: Barang Masuk -->
+<div class="modal fade" id="modalBarangMasuk" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius:14px;">
+            <div class="modal-header" style="background:var(--kemenhub-blue-dark);color:#fff;">
+                <h5 class="modal-title fs-6 fw-bold"><i class="bi bi-box-arrow-in-down me-1"></i> Catat Barang Masuk (Batch FIFO)</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body fs-sm">
+                <form onsubmit="event.preventDefault(); alert('Barang masuk berhasil dicatat! Endpoint: POST /api/persediaan/{id}/barang-masuk'); bootstrap.Modal.getInstance(document.getElementById('modalBarangMasuk')).hide();">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nomor Referensi</label>
+                        <input type="text" class="form-control" placeholder="REF-2026-001" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nomor Faktur</label>
+                        <input type="text" class="form-control" placeholder="INV-2026-089" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nota Dinas</label>
+                        <input type="text" class="form-control" placeholder="ND/2026/08" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nama Supplier</label>
+                        <input type="text" class="form-control" placeholder="Nama Supplier" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tanggal Masuk</label>
+                        <input type="date" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Jumlah Masuk</label>
+                        <input type="number" class="form-control" placeholder="50" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Harga Satuan (Rp)</label>
+                        <input type="number" class="form-control" placeholder="45000" required>
+                    </div>
+                    <button type="submit" class="btn-lofbi btn-primary-lofbi w-100 justify-content-center py-2 role-action">Simpan Barang Masuk</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal 3: Pengajuan Keluar -->
+<div class="modal fade" id="modalPengajuanKeluar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius:14px;">
+            <div class="modal-header" style="background:var(--kemenhub-blue-dark);color:#fff;">
+                <h5 class="modal-title fs-6 fw-bold"><i class="bi bi-box-arrow-up-right me-1"></i> Form Pengajuan Barang Keluar</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body fs-sm">
+                <form onsubmit="event.preventDefault(); alert('Pengajuan dikirim ke Kasubbag! Endpoint: POST /api/persediaan/{id}/pengajuan-keluar'); bootstrap.Modal.getInstance(document.getElementById('modalPengajuanKeluar')).hide();">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Unit Kerja Penerima</label>
+                        <input type="text" class="form-control" placeholder="Contoh: Seksi Kepegawaian" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Jumlah Diminta</label>
+                        <input type="number" class="form-control" placeholder="10" required>
+                    </div>
+                    <button type="submit" class="btn-lofbi btn-gold-lofbi w-100 justify-content-center py-2">Kirim Pengajuan</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal 4: Opname Baru -->
+<div class="modal fade" id="modalOpnameBaru" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius:14px;">
+            <div class="modal-header" style="background:var(--kemenhub-blue-dark);color:#fff;">
+                <h5 class="modal-title fs-6 fw-bold"><i class="bi bi-clipboard2-plus-fill me-1"></i> Sesi Opname Fisik Baru</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body fs-sm">
+                <form onsubmit="event.preventDefault(); alert('Sesi Opname Dibuat! Endpoint: POST /api/opname'); bootstrap.Modal.getInstance(document.getElementById('modalOpnameBaru')).hide();">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Pilih Ruangan Target</label>
+                        <select class="form-select"><option value="1">Ruang Tata Usaha</option><option value="2">Gudang Persediaan</option></select>
+                    </div>
+                    <button type="submit" class="btn-lofbi btn-primary-lofbi w-100 justify-content-center py-2">Buka Sesi Opname</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal 5: Export Laporan -->
+<div class="modal fade" id="modalExportLaporan" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius:14px;">
+            <div class="modal-header" style="background:var(--kemenhub-blue-dark);color:#fff;">
+                <h5 class="modal-title fs-6 fw-bold"><i class="bi bi-download me-1"></i> Export Laporan Sistem</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body fs-sm text-center py-4">
+                <p>Unduh rekapitulasi data inventarisasi KSOP Kelas I Banten (GET /api/laporan/export):</p>
+                <div class="d-flex gap-2 justify-content-center mt-3">
+                    <button class="btn-lofbi btn-primary-lofbi role-action" onclick="alert('Downloading PDF Laporan BAOP...'); bootstrap.Modal.getInstance(document.getElementById('modalExportLaporan')).hide();"><i class="bi bi-file-pdf"></i> Export PDF</button>
+                    <button class="btn-lofbi btn-gold-lofbi role-action" onclick="alert('Downloading Excel Rekap Nilai Buku...'); bootstrap.Modal.getInstance(document.getElementById('modalExportLaporan')).hide();"><i class="bi bi-file-excel"></i> Export Excel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal 6: Transfer Masuk -->
+<div class="modal fade" id="modalTransferMasuk" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius:14px;">
+            <div class="modal-header" style="background:var(--kemenhub-blue-dark);color:#fff;">
+                <h5 class="modal-title fs-6 fw-bold"><i class="bi bi-arrow-left-right me-1"></i> Transfer Masuk Antar Ruangan</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body fs-sm">
+                <form onsubmit="event.preventDefault(); alert('Transfer masuk dicatat! Endpoint: POST /api/persediaan/transfer-masuk'); bootstrap.Modal.getInstance(document.getElementById('modalTransferMasuk')).hide();">
+                    <div class="mb-3"><label class="form-label fw-semibold">Ruangan Asal</label><select class="form-select"><option>Gudang Persediaan</option><option>Ruang Tata Usaha</option><option>Ruang Kepala</option></select></div>
+                    <div class="mb-3"><label class="form-label fw-semibold">Ruangan Tujuan</label><select class="form-select"><option>Ruang Tata Usaha</option><option>Gudang Persediaan</option><option>Ruang Kepala</option></select></div>
+                    <div class="mb-3"><label class="form-label fw-semibold">Jumlah</label><input type="number" class="form-control" placeholder="20" required></div>
+                    <div class="mb-3"><label class="form-label fw-semibold">Catatan</label><textarea class="form-control" rows="3" placeholder="Catatan transfer"></textarea></div>
+                    <button type="submit" class="btn-lofbi btn-primary-lofbi w-100 justify-content-center py-2 role-action">Simpan Transfer</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal 7: QR Code Aset -->
+<div class="modal fade" id="modalAsetQr" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="border-radius:14px;">
+            <div class="modal-header" style="background:var(--kemenhub-blue-dark);color:#fff;">
+                <h5 class="modal-title fs-6 fw-bold"><i class="bi bi-qr-code me-1"></i> QR Code Aset</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body fs-sm">
+                <div class="row gy-3">
+                    <div class="col-md-5">
+                        <div class="p-4 text-center" style="border:1px dashed #c4cdd8;background:#f7f8fb;min-height:240px;display:flex;align-items:center;justify-content:center;">
+                            <div>
+                                <div class="fs-4 text-muted mb-2">QR Code Placeholder</div>
+                                <div class="fs-xs text-muted">// TODO-BACKEND: generate QR asli dari library QR di backend</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-7">
+                        <h5 id="modalAsetQrTitle">ELK-LAP-001</h5>
+                        <p class="mb-2"><strong>Kode Aset:</strong> <span id="modalAsetQrKode">ELK-LAP-001</span></p>
+                        <p class="mb-2"><strong>Nama:</strong> Laptop Lenovo ThinkPad E14</p>
+                        <p class="mb-2"><strong>Lokasi:</strong> Ruang Tata Usaha</p>
+                        <p class="mb-2"><strong>Kondisi:</strong> Baik</p>
+                        <p class="mb-2"><strong>Riwayat Mutasi Terakhir:</strong> Dipindah dari Gudang Persediaan pada 02 Agt 2026</p>
+                        <button class="btn-lofbi btn-primary-lofbi role-action" onclick="alert('Cetak Label QR dijalankan.');">Cetak Label QR</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal 8: Riwayat Mutasi Aset -->
+<div class="modal fade" id="modalAsetMutasi" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="border-radius:14px;">
+            <div class="modal-header" style="background:var(--kemenhub-blue-dark);color:#fff;">
+                <h5 class="modal-title fs-6 fw-bold"><i class="bi bi-clock-history me-1"></i> Riwayat Mutasi Aset</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body fs-sm">
+                <div class="data-table-wrapper">
+                    <table class="data-table">
+                        <thead><tr><th>Tanggal</th><th>Lokasi</th><th>Kondisi</th><th>Keterangan</th></tr></thead>
+                        <tbody id="modalAsetMutasiBody">
+                            <tr><td class="fs-xs">02 Agt 2026</td><td>Gudang Persediaan</td><td>baik</td><td>Masuk awal ke gudang</td></tr>
+                            <tr><td class="fs-xs">03 Agt 2026</td><td>Ruang Tata Usaha</td><td>baik</td><td>Dipindahkan oleh Operator</td></tr>
+                            <tr><td class="fs-xs">05 Agt 2026</td><td>Ruang Tata Usaha</td><td>baik</td><td>Verifikasi kondisi terakhir</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal 9: Riwayat Batch FIFO -->
+<div class="modal fade" id="modalBatchHistory" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="border-radius:14px;">
+            <div class="modal-header" style="background:var(--kemenhub-blue-dark);color:#fff;">
+                <h5 class="modal-title fs-6 fw-bold"><i class="bi bi-stack"></i> Riwayat Batch FIFO</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body fs-sm">
+                <p class="mb-3">Daftar batch masuk diurutkan FIFO (batch tertua keluar duluan).</p>
+                <div class="data-table-wrapper">
+                    <table class="data-table">
+                        <thead><tr><th>Tanggal</th><th>Supplier</th><th>Jumlah Masuk</th><th>Sisa Stok Batch</th><th>Harga per Batch</th></tr></thead>
+                        <tbody id="modalBatchHistoryBody">
+                            <tr><td class="fs-xs">01 Mei 2026</td><td>Sinar Dunia</td><td class="fw-bold">50</td><td>12</td><td>Rp 45.000</td></tr>
+                            <tr><td class="fs-xs">15 Mei 2026</td><td>Sinar Dunia</td><td class="fw-bold">40</td><td>5</td><td>Rp 45.000</td></tr>
+                            <tr><td class="fs-xs">05 Jun 2026</td><td>Sinar Dunia</td><td class="fw-bold">30</td><td>0</td><td>Rp 45.000</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap 5 JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Chart.js 4 -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<!-- LOFBI API Bridge & Main JS -->
+<script src="public/js/lofbi-api.js"></script>
+<script src="public/js/lofbi.js"></script>
+
+<!-- SPA Navigation Script -->
+<script>
+function switchSection(targetNav) {
+    document.querySelectorAll('.page-section').forEach(sec => sec.style.display = 'none');
+    const targetEl = document.getElementById(`pageSection-${targetNav}`);
+    if (targetEl) {
+        targetEl.style.display = 'block';
+        targetEl.classList.add('fade-in');
+    }
+
+    document.querySelectorAll('.nav-item-link').forEach(link => {
+        link.classList.remove('active');
+        if (link.dataset.nav === targetNav) link.classList.add('active');
+    });
+
+    const titleMap = {
+        'dashboard': 'Dashboard',
+        'aset': 'Manajemen Aset',
+        'persediaan': 'Persediaan & Batch',
+        'opname': 'Opname Fisik',
+        'monitoring': 'Monitoring Aset',
+        'laporan': 'Laporan BAOP & DBR',
+        'audit': 'Audit Trail',
+        'approval': 'Approval Pengajuan',
+        'master': 'Master Data',
+        'users': 'Pengguna (Users)',
+        'settings': 'Pengaturan Sistem'
+    };
+    const bc = document.getElementById('breadcrumbActive');
+    if (bc) bc.textContent = titleMap[targetNav] || 'Dashboard';
+}
+
+document.querySelectorAll('[data-nav]').forEach(link => {
+    link.addEventListener('click', function(e) {
+        e.preventDefault();
+        switchSection(this.dataset.nav);
+    });
+});
+
+function openAsetQr(code) {
+    document.getElementById('modalAsetQrTitle').textContent = `QR Code Aset ${code}`;
+    document.getElementById('modalAsetQrKode').textContent = code;
+    // TODO-BACKEND: replace placeholder content with asset QR code image and proper metadata.
+}
+
+function openAsetMutasi(code) {
+    // TODO-BACKEND: GET /api/aset/{code}/mutasi — fetch riwayat mutasi aset dari database
+    const dummyData = {
+        'ELK-LAP-001': [
+            ['01 Jul 2026', 'Gudang Persediaan', 'baik', 'Masuk awal ke gudang'],
+            ['03 Agt 2026', 'Ruang Tata Usaha', 'baik', 'Dipindahkan oleh Operator LOFBI'],
+            ['05 Agt 2026', 'Ruang Tata Usaha', 'baik', 'Verifikasi kondisi terakhir']
+        ],
+        'ELK-LAP-002': [
+            ['15 Jun 2026', 'Gudang Persediaan', 'baik', 'Masuk ke gudang'],
+            ['20 Jul 2026', 'Ruang Kepala', 'baik', 'Dipindahkan ke Ruang Kepala'],
+            ['01 Agt 2026', 'Ruang Kepala', 'rusak_ringan', 'Terdeteksi kerusakan baterai']
+        ],
+        'ELK-PRN-001': [
+            ['10 Mei 2026', 'Gudang Persediaan', 'baik', 'Masuk ke gudang dari pengadaan'],
+            ['12 Jun 2026', 'Ruang Tata Usaha', 'baik', 'Dipindahkan untuk kebutuhan TU']
+        ],
+        'FUR-MJK-001': [
+            ['01 Jan 2024', 'Ruang Tata Usaha', 'baik', 'Pengadaan aset baru'],
+            ['05 Agt 2026', 'Ruang Tata Usaha', 'baik', 'Verifikasi tahunan']
+        ],
+        'FUR-MJK-002': [
+            ['01 Jan 2024', 'Ruang Tata Usaha', 'baik', 'Pengadaan aset baru'],
+            ['15 Feb 2026', 'Ruang Kepala', 'baik', 'Dipindah ke Ruang Kepala'],
+            ['02 Agt 2026', 'Ruang Kepala', 'rusak_berat', 'Kerusakan struktural dilaporkan oleh Validator']
+        ]
+    };
+    const rows = dummyData[code] || [['—', '—', '—', 'Data tidak ditemukan']];
+    document.querySelector('#modalAsetMutasi .modal-title').textContent = `Riwayat Mutasi ${code}`;
+    document.getElementById('modalAsetMutasiBody').innerHTML = rows.map(r =>
+        `<tr><td class="fs-xs">${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`
+    ).join('');
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalAsetMutasi')).show();
+}
+
+function openBatchHistory(itemName) {
+    // TODO-BACKEND: GET /api/persediaan/{id}/batch — fetch riwayat batch dari database (FIFO order)
+    const batchData = {
+        'Pulpen': [
+            ['01 Mei 2026', 'Sinar Dunia', 50, 12, 'Rp 2.500'],
+            ['15 Jun 2026', 'Fajar Abadi', 40, 38, 'Rp 2.600'],
+            ['05 Agu 2026', 'Sinar Dunia', 60, 60, 'Rp 2.550']
+        ],
+        'Kertas A4': [
+            ['10 Apr 2026', 'Kertas Nusantara', 20, 2, 'Rp 48.000'],
+            ['01 Jun 2026', 'Sinar Dunia', 15, 6, 'Rp 50.000'],
+            ['20 Jul 2026', 'Kertas Nusantara', 10, 10, 'Rp 49.000']
+        ],
+        'Tinta Printer': [
+            ['05 Mar 2026', 'Canon Authorized', 6, 0, 'Rp 85.000'],
+            ['10 Jun 2026', 'Canon Authorized', 4, 0, 'Rp 88.000'],
+            ['01 Agu 2026', 'Toko ATK Mandiri', 3, 1, 'Rp 90.000']
+        ]
+    };
+    const rows = batchData[itemName] || [['—', '—', '—', '—', '—']];
+    document.querySelector('#modalBatchHistory .modal-title').textContent = `Riwayat Batch FIFO: ${itemName}`;
+    document.getElementById('modalBatchHistoryBody').innerHTML = rows.map(r =>
+        `<tr><td class="fs-xs">${r[0]}</td><td>${r[1]}</td><td class="fw-bold">${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td></tr>`
+    ).join('');
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalBatchHistory')).show();
+}
+
+function switchUserRole(role) {
+    const roleMap = {
+        admin: { label: 'Administrator', badge: 'primary', name: 'Admin LOFBI', avatar: 'AL' },
+        operator: { label: 'Operator', badge: 'warning', name: 'Operator LOFBI', avatar: 'OP' },
+        validator: { label: 'Validator', badge: 'success', name: 'Validator LOFBI', avatar: 'VL' },
+        viewer: { label: 'Viewer', badge: 'secondary', name: 'Viewer LOFBI', avatar: 'VW' },
+        pimpinan: { label: 'Pimpinan', badge: 'info', name: 'Pimpinan KSOP', avatar: 'PK' }
+    };
+    const info = roleMap[role] || roleMap.admin;
+    const roleText = `Role: ${info.label}`;
+
+    document.getElementById('currentRoleText').textContent = roleText;
+    document.getElementById('sidebarUserName').textContent = info.name;
+    document.getElementById('sidebarUserRole').textContent = roleText;
+    document.getElementById('topbarUserName').textContent = info.name;
+    document.getElementById('dropdownUserName').textContent = info.name;
+    document.getElementById('welcomeUserName').textContent = info.name;
+    document.getElementById('welcomeUserRole').textContent = roleText;
+
+    document.getElementById('sidebarAvatar').textContent = info.avatar;
+    document.getElementById('topbarAvatar').textContent = info.avatar;
+
+    document.querySelectorAll('.role-action').forEach(el => {
+        el.style.display = role === 'viewer' ? 'none' : '';
+    });
+}
+</script>
+
+</body>
+</html>
