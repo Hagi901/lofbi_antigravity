@@ -260,44 +260,29 @@ function initCharts() {
     initPersediaanChart();
 }
 
-/* --- 7a. Line Chart: Tren Asset (Kondisi: Baik vs Rusak) --- */
+/* --- 7a. Bar Chart: Kondisi Asset Saat Ini (data real dari database) --- */
 function initTrendAssetChart() {
     const ctx = document.getElementById('chartTrendAsset');
     if (!ctx) return;
 
-    // Backend models: Aset (kondisi: 'baik', 'rusak_ringan', 'rusak_berat')
-    const labels = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
-    const dataAssetBaik = [2580, 2612, 2640, 2658, 2675, 2690, 2702, 2710, 2718, 2730, 2741, 2702];
-    const dataAssetRusak = [148, 152, 149, 155, 151, 148, 145, 143, 147, 144, 142, 145];
+    // Data disuntik dari Blade (window.LOFBI_DASHBOARD_DATA), fallback ke 0 jika kosong
+    const kondisi = (window.LOFBI_DASHBOARD_DATA && window.LOFBI_DASHBOARD_DATA.distribusiKondisi) || {};
+    const labelMap = { baik: 'Baik', rusak_ringan: 'Rusak Ringan', rusak_berat: 'Rusak Berat' };
+    const labels = Object.keys(labelMap).map(k => labelMap[k]);
+    const data = Object.keys(labelMap).map(k => kondisi[k] || 0);
+    const colors = ['#1a9e6b', '#f5a800', '#d93025'];
 
     window.chartTrendAsset = new Chart(ctx, {
-        type: 'line',
+        type: 'bar',
         data: {
             labels: labels,
             datasets: [
                 {
-                    label: 'Asset Baik',
-                    data: dataAssetBaik,
-                    borderColor: '#1a9e6b',
-                    backgroundColor: 'rgba(26,158,107,.1)',
-                    borderWidth: 2.5,
-                    pointRadius: 4,
-                    pointHoverRadius: 6,
-                    pointBackgroundColor: '#1a9e6b',
-                    fill: true,
-                    tension: 0.4
-                },
-                {
-                    label: 'Asset Rusak (Ringan/Berat)',
-                    data: dataAssetRusak,
-                    borderColor: '#d93025',
-                    backgroundColor: 'rgba(217,48,37,.07)',
-                    borderWidth: 2.5,
-                    pointRadius: 4,
-                    pointHoverRadius: 6,
-                    pointBackgroundColor: '#d93025',
-                    fill: true,
-                    tension: 0.4
+                    label: 'Jumlah Aset',
+                    data: data,
+                    backgroundColor: colors,
+                    borderRadius: 6,
+                    maxBarThickness: 64
                 }
             ]
         },
@@ -354,9 +339,10 @@ function initPersediaanChart() {
     const ctx = document.getElementById('chartPersediaan');
     if (!ctx) return;
 
-    // Backend models: Kategori (ATK, Rumah Tangga, Elektronik, Furnitur)
-    const kategori = ['ATK (Alat Tulis Kantor)', 'Rumah Tangga', 'Perlengkapan Pelabuhan', 'Spare Part', 'Bahan Kimia', 'Lainnya'];
-    const jumlah   = [3840, 2105, 4210, 2680, 895, 662];
+    // Data disuntik dari Blade (window.LOFBI_DASHBOARD_DATA), fallback ke array kosong jika belum ada data
+    const distribusi = (window.LOFBI_DASHBOARD_DATA && window.LOFBI_DASHBOARD_DATA.distribusiPersediaan) || {};
+    const kategori = Object.keys(distribusi);
+    const jumlah   = Object.values(distribusi);
 
     const kemenhubColors = [
         '#1e4fa0', // Kemenhub Blue

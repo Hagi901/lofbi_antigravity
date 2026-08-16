@@ -4,7 +4,7 @@
         <div class="page-header-inner">
             <div>
                 <h1 class="page-title">Dashboard Overview</h1>
-                <p class="page-subtitle">Selamat datang, <strong id="welcomeUserName">Admin LOFBI</strong> (<span id="welcomeUserRole">Role: Administrator</span>). Terintegrasi dengan KSOP Kelas I Banten.</p>
+                <p class="page-subtitle">Selamat datang 123, <strong id="welcomeUserName">Admin LOFBI</strong> (<span id="welcomeUserRole">Role: Administrator</span>). Terintegrasi dengan KSOP Kelas I Banten.</p>
             </div>
             <div class="page-header-actions">
                 <button class="btn-lofbi btn-outline-lofbi" onclick="syncWithBackendApi()"><i class="bi bi-arrow-clockwise"></i> Sync API</button>
@@ -24,38 +24,38 @@
     <section aria-label="Statistik ringkasan">
         <div class="stat-cards-grid">
             <div class="stat-card primary" onclick="switchSection('aset')" style="cursor:pointer">
-                <div class="stat-card-header"><div class="stat-card-icon"><i class="bi bi-archive-fill"></i></div><div class="stat-card-trend up">+34 bulan ini</div></div>
-                <div class="stat-card-value" id="valTotalAsset">2.847</div>
+                <div class="stat-card-header"><div class="stat-card-icon"><i class="bi bi-archive-fill"></i></div><div class="stat-card-trend up">Total tercatat</div></div>
+                <div class="stat-card-value" id="valTotalAsset">{{ number_format($totalAset, 0, ',', '.') }}</div>
                 <div class="stat-card-label">Total Asset</div>
             </div>
             <div class="stat-card teal" onclick="switchSection('laporan')" style="cursor:pointer">
-                <div class="stat-card-header"><div class="stat-card-icon"><i class="bi bi-cash-coin"></i></div><div class="stat-card-trend up">Terpenuhi</div></div>
-                <div class="stat-card-value" id="valNilaiBuku" style="font-size:18px;">Rp 18.420.500.000</div>
+                <div class="stat-card-header"><div class="stat-card-icon"><i class="bi bi-cash-coin"></i></div><div class="stat-card-trend up">Nilai buku saat ini</div></div>
+                <div class="stat-card-value" id="valNilaiBuku" style="font-size:18px;">Rp {{ number_format($totalNilaiBuku, 0, ',', '.') }}</div>
                 <div class="stat-card-label">Total Nilai Buku</div>
             </div>
             <div class="stat-card warning" onclick="switchSection('approval')" style="cursor:pointer">
                 <div class="stat-card-header"><div class="stat-card-icon"><i class="bi bi-hourglass-split"></i></div><div class="stat-card-trend down">Status: Menunggu</div></div>
-                <div class="stat-card-value" id="valPendingApproval">23</div>
+                <div class="stat-card-value" id="valPendingApproval">{{ $pengajuanMenunggu }}</div>
                 <div class="stat-card-label">Pengajuan Menunggu</div>
             </div>
             <div class="stat-card orange" onclick="switchSection('persediaan')" style="cursor:pointer">
                 <div class="stat-card-header"><div class="stat-card-icon"><i class="bi bi-exclamation-triangle-fill"></i></div><div class="stat-card-trend up">&lt; Stok Minimum</div></div>
-                <div class="stat-card-value" id="valStokMenipis">87</div>
+                <div class="stat-card-value" id="valStokMenipis">{{ $stokMenipis }}</div>
                 <div class="stat-card-label">Stok Menipis</div>
             </div>
             <div class="stat-card danger" onclick="switchSection('aset')" style="cursor:pointer">
                 <div class="stat-card-header"><div class="stat-card-icon"><i class="bi bi-tools"></i></div><div class="stat-card-trend flat">Ringan &amp; Berat</div></div>
-                <div class="stat-card-value" id="valAssetRusak">145</div>
+                <div class="stat-card-value" id="valAssetRusak">{{ $asetRusak }}</div>
                 <div class="stat-card-label">Asset Rusak</div>
             </div>
             <div class="stat-card secondary" onclick="switchSection('persediaan')" style="cursor:pointer">
                 <div class="stat-card-header"><div class="stat-card-icon"><i class="bi bi-boxes"></i></div><div class="stat-card-trend up">Kategori Aktif</div></div>
-                <div class="stat-card-value" id="valTotalPersediaan">14</div>
+                <div class="stat-card-value" id="valTotalPersediaan">{{ $totalJenisPersediaan }}</div>
                 <div class="stat-card-label">Jenis Persediaan</div>
             </div>
             <div class="stat-card success" onclick="switchSection('aset')" style="cursor:pointer">
-                <div class="stat-card-header"><div class="stat-card-icon"><i class="bi bi-check-circle-fill"></i></div><div class="stat-card-trend up">94.9% Total</div></div>
-                <div class="stat-card-value" id="valAssetBaik">2.702</div>
+                <div class="stat-card-header"><div class="stat-card-icon"><i class="bi bi-check-circle-fill"></i></div><div class="stat-card-trend up">{{ $persenAsetBaik }}% Total</div></div>
+                <div class="stat-card-value" id="valAssetBaik">{{ number_format($asetBaik, 0, ',', '.') }}</div>
                 <div class="stat-card-label">Asset Kondisi Baik</div>
             </div>
         </div>
@@ -93,11 +93,18 @@
             <div class="panel-body p-0">
                 <div class="data-table-wrapper">
                     <table class="data-table">
-                        <thead><tr><th>Tanggal</th><th>Pengguna</th><th>Jenis</th><th>Status</th></tr></thead>
+                        <thead><tr><th>Tanggal</th><th>Pengguna</th><th>Aksi</th><th>Modul</th></tr></thead>
                         <tbody>
-                            <tr><td class="fs-xs">04 Agt, 09:41</td><td>Admin LOFBI</td><td class="fs-xs">Barang Masuk</td><td><span class="table-badge success">Disetujui</span></td></tr>
-                            <tr><td class="fs-xs">04 Agt, 09:15</td><td>Kasubbag LOFBI</td><td class="fs-xs">Opname Fisik</td><td><span class="table-badge success">Disetujui</span></td></tr>
-                            <tr><td class="fs-xs">04 Agt, 08:53</td><td>Admin LOFBI</td><td class="fs-xs">Pengajuan Keluar</td><td><span class="table-badge warning">Menunggu</span></td></tr>
+                            @forelse($transaksiTerbaru as $log)
+                            <tr>
+                                <td class="fs-xs">{{ $log->created_at->translatedFormat('d M, H:i') }}</td>
+                                <td>{{ $log->user_name }}</td>
+                                <td class="fs-xs">{{ $log->aksi }}</td>
+                                <td><span class="table-badge">{{ $log->modul }}</span></td>
+                            </tr>
+                            @empty
+                            <tr><td colspan="4" class="text-center fs-xs text-muted py-3">Belum ada aktivitas tercatat.</td></tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
@@ -105,3 +112,10 @@
         </div>
     </section>
 </div>
+
+<script>
+    window.LOFBI_DASHBOARD_DATA = {
+        distribusiKondisi: @json($distribusiKondisi),
+        distribusiPersediaan: @json($distribusiPersediaan)
+    };
+</script>
