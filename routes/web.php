@@ -9,6 +9,7 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\OpnameController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ReportController;
 
 /*
 |--------------------------------------------------------------------------
