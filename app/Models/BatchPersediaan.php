@@ -18,4 +18,31 @@ class BatchPersediaan extends Model
             'harga_satuan' => 'decimal:2',
         ];
     }
+
+    public function persediaan()
+    {
+        return $this->belongsTo(Persediaan::class);
+    }
+
+    // ── Accessors Kompatibilitas ──────────────────────────────────────
+
+    public function getQtyReceivedAttribute(): int
+    {
+        return (int) $this->jumlah_masuk;
+    }
+
+    public function getQtyRemainingAttribute(): int
+    {
+        return (int) $this->sisa_stok;
+    }
+
+    public function getPurchasePriceAttribute()
+    {
+        return $this->harga_satuan;
+    }
+
+    public function getBatchNumberAttribute(): string
+    {
+        return $this->no_batch ?? '';
+    }
 }

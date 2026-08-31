@@ -2,82 +2,200 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Aset;
+use App\Models\JenisBarang;
+use App\Models\Kategori;
+use App\Models\Ruangan;
+use App\Models\AuditLog;
 use Illuminate\Http\Request;
-use App\Models\Asset;
-use App\Models\Category;
-use App\Models\SubCategory;
-use App\Models\Room;
+use Illuminate\Support\Facades\Auth;
 
 class AssetController extends Controller
 {
     /**
-     * 1. Menampilkan daftar aset (yang sudah kita buat sebelumnya)
+     * Menampilkan daftar seluruh aset
      */
     public function index()
     {
-        // Ambil data aset dari database (sesuaikan dengan query milikmu)
-        $assets = \App\Models\Asset::with(['category', 'room'])->get(); 
-
-        // UBAH BARIS INI: Gunakan 'assets.index' bukan 'assets'
-        return view('assets.index', compact('assets')); 
+        $assets = Aset::with(['jenisBarang.kategori', 'ruangan'])->latest()->get();
+        return view('assets.index', compact('assets'));
     }
 
     /**
-     * 2. Menyiapkan data dan membuka halaman Form Tambah Aset
+     * Membuka form pendaftaran aset baru
      */
     public function create()
     {
-        // Ambil data dari database untuk mengisi dropdown (pilihan) di form
-        $categories = Category::all();
-        $subCategories = SubCategory::all();
-        $rooms = Room::all();
+        $categories = Kategori::all();
+        $subCategories = collect([
+            (object)['id' => 'Peralatan Kantor', 'name' => 'Peralatan Kantor'],
+            (object)['id' => 'Elektronik & IT', 'name' => 'Elektronik & IT'],
+            (object)['id' => 'Kendaraan Dinas', 'name' => 'Kendaraan Dinas'],
+            (object)['id' => 'Meubelair', 'name' => 'Meubelair'],
+        ]);
+        $rooms = Ruangan::all();
 
         return view('assets.create', compact('categories', 'subCategories', 'rooms'));
     }
 
-    // Menampilkan form edit
-    public function edit($id)
-    {
-        $asset = \App\Models\Asset::findOrFail($id);
-        $categories = \App\Models\Category::all(); // Sesuaikan modelmu
-        $subCategories = \App\Models\SubCategory::all(); // Sesuaikan modelmu
-        $rooms = \App\Models\Room::all(); // Sesuaikan modelmu
-
-        return view('assets.edit', compact('asset', 'categories', 'subCategories', 'rooms'));
-    }
-
-    // Memproses pembaruan data
-    public function update(Request $request, $id)
-    {
-        // Lakukan validasi dan simpan perubahan...
-        
-        return redirect()->route('assets.index')->with('success', 'Data aset berhasil diperbarui!');
-    }
-
     /**
-     * 3. Menerima data dari Form dan menyimpannya ke Database
+     * Menyimpan aset baru ke database
      */
     public function store(Request $request)
     {
-        // Validasi input: pastikan data yang dimasukkan benar dan kode aset tidak dobel
-        $validatedData = $request->validate([
-            'asset_code' => 'required|unique:assets,asset_code',
+        $request->validate([
+            'asset_code' => 'required|unique:asets,kode_aset',
             'name' => 'required|string|max:255',
-            'category_id' => 'required|exists:categories,id',
-            'sub_category_id' => 'required|exists:sub_categories,id',
-            'room_id' => 'required|exists:rooms,id',
-            'condition' => 'required|in:Baik,Rusak Ringan,Rusak Berat',
+            'category_id' => 'required|exists:kategoris,id',
+            'room_id' => 'required|exists:ruangans,id',
+            'condition' => 'required',
             'acquisition_value' => 'required|numeric|min:0',
             'useful_life_years' => 'required|integer|min:1',
         ]);
 
-        // Nilai Buku (book_value) otomatis disamakan dengan Nilai Perolehan saat pertama kali dibeli
-        $validatedData['book_value'] = $validatedData['acquisition_value'];
+        $kondisi = match (strtolower(str_replace(' ', '_', $request->condition))) {
+            'rusak_ringan' => 'rusak_ringan',
+            'rusak_berat' => 'rusak_berat',
+            default => 'baik',
+        };
 
-        // Simpan ke database
-        Asset::create($validatedData);
+        // Temukan atau buat JenisBarang
+        $jenisBarang = JenisBarang::firstOrCreate(
+            ['nama_generik' => $request->name, 'kategori_id' => $request->category_id]
+        );
 
-        // Kembalikan ke halaman daftar aset dengan pesan sukses
-        return redirect()->route('assets.index')->with('success', 'Aset baru berhasil ditambahkan!');
+        $subKategori = $request->sub_category_name ?: ($request->sub_category_id ?: 'Peralatan Kantor');
+
+        $aset = Aset::create([
+            'kode_aset' => $request->asset_code,
+            'jenis_barang_id' => $jenisBarang->id,
+            'sub_kategori' => $subKategori,
+            'merk' => $request->name,
+            'model' => $request->model ?? '',
+            'kondisi' => $kondisi,
+            'ruangan_id' => $request->room_id,
+            'nilai_perolehan' => $request->acquisition_value,
+            'tanggal_perolehan' => $request->tanggal_perolehan ?? now()->toDateString(),
+            'masa_manfaat' => $request->useful_life_years,
+            'metode_penyusutan' => 'Garis Lurus',
+            'akumulasi_penyusutan' => 0,
+            'nilai_buku' => $request->acquisition_value,
+            'terakhir_dihitung_semester' => date('Y') . '-' . (date('n') <= 6 ? '1' : '2'),
+        ]);
+
+        AuditLog::create([
+            'user_id' => Auth::id() ?? 1,
+            'action' => 'CREATE_ASET',
+            'table_name' => 'asets',
+            'record_id' => $aset->id,
+            'old_values' => null,
+            'new_values' => $aset->toArray(),
+        ]);
+
+        return redirect()->route('assets.index')->with('success', 'Aset baru (' . $aset->kode_aset . ') berhasil didaftarkan!');
+    }
+
+    /**
+     * Menampilkan detail informasi dan riwayat aset
+     */
+    public function show($id)
+    {
+        $asset = Aset::with(['jenisBarang.kategori', 'ruangan', 'riwayat'])->findOrFail($id);
+        return view('assets.show', compact('asset'));
+    }
+
+    /**
+     * Menampilkan form edit data aset
+     */
+    public function edit($id)
+    {
+        $asset = Aset::with(['jenisBarang.kategori', 'ruangan'])->findOrFail($id);
+        $categories = Kategori::all();
+        $subCategories = collect([
+            (object)['id' => 'Peralatan Kantor', 'name' => 'Peralatan Kantor'],
+            (object)['id' => 'Elektronik & IT', 'name' => 'Elektronik & IT'],
+            (object)['id' => 'Kendaraan Dinas', 'name' => 'Kendaraan Dinas'],
+            (object)['id' => 'Meubelair', 'name' => 'Meubelair'],
+        ]);
+        $rooms = Ruangan::all();
+
+        return view('assets.edit', compact('asset', 'categories', 'subCategories', 'rooms'));
+    }
+
+    /**
+     * Memproses pembaruan data aset
+     */
+    public function update(Request $request, $id)
+    {
+        $aset = Aset::findOrFail($id);
+
+        $request->validate([
+            'asset_code' => 'required|unique:asets,kode_aset,' . $aset->id,
+            'name' => 'required|string|max:255',
+            'category_id' => 'required|exists:kategoris,id',
+            'room_id' => 'required|exists:ruangans,id',
+            'condition' => 'required',
+            'acquisition_value' => 'required|numeric|min:0',
+            'useful_life_years' => 'required|integer|min:1',
+        ]);
+
+        $kondisi = match (strtolower(str_replace(' ', '_', $request->condition))) {
+            'rusak_ringan' => 'rusak_ringan',
+            'rusak_berat' => 'rusak_berat',
+            default => 'baik',
+        };
+
+        $oldValues = $aset->toArray();
+
+        // Update jenis barang
+        if ($aset->jenisBarang) {
+            $aset->jenisBarang->update([
+                'nama_generik' => $request->name,
+                'kategori_id' => $request->category_id,
+            ]);
+        }
+
+        $aset->update([
+            'kode_aset' => $request->asset_code,
+            'sub_kategori' => $request->sub_category_id ?? $aset->sub_kategori,
+            'merk' => $request->name,
+            'kondisi' => $kondisi,
+            'ruangan_id' => $request->room_id,
+            'nilai_perolehan' => $request->acquisition_value,
+            'masa_manfaat' => $request->useful_life_years,
+        ]);
+
+        AuditLog::create([
+            'user_id' => Auth::id() ?? 1,
+            'action' => 'UPDATE_ASET',
+            'table_name' => 'asets',
+            'record_id' => $aset->id,
+            'old_values' => $oldValues,
+            'new_values' => $aset->toArray(),
+        ]);
+
+        return redirect()->route('assets.index')->with('success', 'Data aset (' . $aset->kode_aset . ') berhasil diperbarui!');
+    }
+
+    /**
+     * Menghapus data aset
+     */
+    public function destroy($id)
+    {
+        $aset = Aset::findOrFail($id);
+        $kode = $aset->kode_aset;
+
+        AuditLog::create([
+            'user_id' => Auth::id() ?? 1,
+            'action' => 'DELETE_ASET',
+            'table_name' => 'asets',
+            'record_id' => $aset->id,
+            'old_values' => $aset->toArray(),
+            'new_values' => null,
+        ]);
+
+        $aset->delete();
+
+        return redirect()->route('assets.index')->with('success', 'Aset (' . $kode . ') berhasil dihapus!');
     }
 }

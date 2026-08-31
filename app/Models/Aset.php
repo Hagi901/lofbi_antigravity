@@ -36,4 +36,57 @@ class Aset extends Model
     {
         return $this->hasMany(RiwayatAset::class);
     }
+
+    // ── Accessors Kompatibilitas Blade Views ───────────────────────────
+
+    public function getAssetCodeAttribute(): string
+    {
+        return $this->kode_aset ?? '';
+    }
+
+    public function getNameAttribute(): string
+    {
+        $namaGenerik = $this->jenisBarang?->nama_generik ?? '';
+        $detail = trim(($this->merk ?? '') . ' ' . ($this->model ?? ''));
+        return trim($namaGenerik . ($detail ? ' ' . $detail : '')) ?: ($this->kode_aset ?? 'Aset');
+    }
+
+    public function getCategoryAttribute()
+    {
+        return $this->jenisBarang?->kategori;
+    }
+
+    public function getSubCategoryAttribute()
+    {
+        return (object) ['name' => $this->sub_kategori ?? '-'];
+    }
+
+    public function getRoomAttribute()
+    {
+        return $this->ruangan;
+    }
+
+    public function getConditionAttribute(): string
+    {
+        return match ($this->kondisi) {
+            'rusak_ringan' => 'Rusak Ringan',
+            'rusak_berat'  => 'Rusak Berat',
+            default        => 'Baik',
+        };
+    }
+
+    public function getAcquisitionValueAttribute()
+    {
+        return $this->nilai_perolehan;
+    }
+
+    public function getUsefulLifeYearsAttribute()
+    {
+        return $this->masa_manfaat;
+    }
+
+    public function getBookValueAttribute()
+    {
+        return $this->nilai_buku;
+    }
 }

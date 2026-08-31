@@ -13,6 +13,16 @@ class OpnameSesi extends Model
         return ['tanggal' => 'date'];
     }
 
+    public function ruangan()
+    {
+        return $this->belongsTo(Ruangan::class);
+    }
+
+    public function admin()
+    {
+        return $this->belongsTo(User::class, 'admin_id');
+    }
+
     public function details()
     {
         return $this->hasMany(OpnameDetail::class);

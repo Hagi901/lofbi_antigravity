@@ -8,7 +8,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\OpnameController;
-use App\Http\Controllers\ReportController;
+use App\Http\Controllers\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -33,9 +33,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // 1. Dashboard Overview
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // 2. Modul Manajemen Aset
     Route::get('/assets', [AssetController::class, 'index'])->name('assets.index');
@@ -56,6 +54,7 @@ Route::middleware(['auth'])->group(function () {
     // 4. Modul Opname Fisik
     Route::get('/opname', [OpnameController::class, 'index'])->name('opname.index');
     Route::get('/opname/create', [OpnameController::class, 'create'])->name('opname.create');
+    Route::post('/opname', [OpnameController::class, 'store'])->name('opname.store');
 
     // 5. Modul Laporan & Export
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');

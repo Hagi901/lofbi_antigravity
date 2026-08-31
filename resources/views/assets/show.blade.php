@@ -12,9 +12,9 @@
                     <a href="{{ route('assets.index') }}" class="btn btn-light btn-sm rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 32px; height: 32px;">
                         <i class="fa-solid fa-arrow-left"></i>
                     </a>
-                    <button class="btn btn-outline-primary btn-sm fw-bold rounded-pill shadow-sm px-3">
+                    <a href="{{ route('assets.edit', $asset->id) }}" class="btn btn-outline-primary btn-sm fw-bold rounded-pill shadow-sm px-3">
                         <i class="fa-solid fa-pen-to-square me-1"></i> Edit Aset
-                    </button>
+                    </a>
                 </div>
 
                 <!-- Ikon Aset -->
@@ -22,21 +22,23 @@
                     <i class="fa-solid fa-laptop text-primary" style="font-size: 4rem;"></i>
                 </div>
 
-                <h5 class="fw-bold text-dark mb-1">Laptop Asus ROG</h5>
-                <p class="text-muted small mb-3">Elektronik - LAP-001</p>
-                <span class="badge bg-success-subtle text-success border border-success px-3 py-2 rounded-pill mb-4"><i class="fa-solid fa-check me-1"></i> Kondisi Baik</span>
+                <h5 class="fw-bold text-dark mb-1">{{ $asset->name }}</h5>
+                <p class="text-muted small mb-3">{{ $asset->category->name ?? 'Aset' }} — <span class="fw-bold text-primary">{{ $asset->asset_code }}</span></p>
+                <span class="badge {{ $asset->kondisi === 'baik' ? 'bg-success-subtle text-success border border-success' : ($asset->kondisi === 'rusak_ringan' ? 'bg-warning-subtle text-warning border border-warning' : 'bg-danger-subtle text-danger border border-danger') }} px-3 py-2 rounded-pill mb-4">
+                    <i class="fa-solid fa-circle-info me-1"></i> Kondisi: {{ $asset->condition }}
+                </span>
 
-                <!-- Bagian Baru: Indikator Umur Ekonomis -->
+                <!-- Indikator Umur Ekonomis -->
                 <div class="border-top pt-4 text-start">
                     <h6 class="fw-bold text-secondary mb-3 small"><i class="fa-solid fa-chart-pie text-primary me-2"></i>Status Nilai & Umur Aset</h6>
                     <div class="mb-2 d-flex justify-content-between small">
-                        <span class="fw-bold text-muted">Sisa Umur Ekonomis</span>
-                        <span class="fw-bold text-primary">100% (5 Tahun)</span>
+                        <span class="fw-bold text-muted">Masa Manfaat</span>
+                        <span class="fw-bold text-primary">{{ $asset->useful_life_years ?? 5 }} Tahun</span>
                     </div>
                     <div class="progress shadow-sm" style="height: 12px;">
                         <div class="progress-bar bg-primary" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
                     </div>
-                    <p class="small text-muted mt-3 mb-0" style="line-height: 1.5;">Aset ini baru didaftarkan. Nilai buku saat ini masih utuh dan belum mengalami pemotongan beban penyusutan tahunan.</p>
+                    <p class="small text-muted mt-3 mb-0" style="line-height: 1.5;">Metode perhitungan depresiasi: <strong>{{ $asset->metode_penyusutan ?? 'Garis Lurus' }}</strong> (Kemenhub BMN Standard).</p>
                 </div>
             </div>
         </div>
@@ -62,11 +64,11 @@
                     <div class="row mb-4">
                         <div class="col-md-6 mb-3">
                             <p class="small text-muted mb-1 fw-bold">Lokasi Penempatan Saat Ini</p>
-                            <h6 class="fw-bold text-dark"><i class="fa-solid fa-location-dot text-danger me-2"></i>Ruang Server / IT</h6>
+                            <h6 class="fw-bold text-dark"><i class="fa-solid fa-location-dot text-danger me-2"></i>{{ $asset->room->name ?? 'Gudang Utama' }}</h6>
                         </div>
                         <div class="col-md-6 mb-3">
                             <p class="small text-muted mb-1 fw-bold">Tanggal Perolehan</p>
-                            <h6 class="fw-bold text-dark"><i class="fa-regular fa-calendar-check text-success me-2"></i>15 Agustus 2026</h6>
+                            <h6 class="fw-bold text-dark"><i class="fa-regular fa-calendar-check text-success me-2"></i>{{ $asset->tanggal_perolehan ? \Carbon\Carbon::parse($asset->tanggal_perolehan)->format('d F Y') : '-' }}</h6>
                         </div>
                     </div>
 
@@ -74,24 +76,24 @@
                     <div class="row bg-light rounded-3 p-3 mb-4 mx-0 shadow-sm">
                         <div class="col-md-3 text-center border-end mb-3 mb-md-0">
                             <p class="small text-muted mb-1 fw-bold">Nilai Perolehan</p>
-                            <h6 class="fw-bold text-dark mb-0">Rp 15.000.000</h6>
+                            <h6 class="fw-bold text-dark mb-0">Rp {{ number_format($asset->acquisition_value ?? 0, 0, ',', '.') }}</h6>
                         </div>
                         <div class="col-md-3 text-center border-end mb-3 mb-md-0">
-                            <p class="small text-muted mb-1 fw-bold">Umur Ekonomis</p>
-                            <h6 class="fw-bold text-dark mb-0">5 Tahun</h6>
+                            <p class="small text-muted mb-1 fw-bold">Umur Manfaat</p>
+                            <h6 class="fw-bold text-dark mb-0">{{ $asset->useful_life_years ?? 5 }} Tahun</h6>
                         </div>
                         <div class="col-md-3 text-center border-end mb-3 mb-md-0">
                             <p class="small text-muted mb-1 fw-bold">Beban Susut / Thn</p>
-                            <h6 class="fw-bold text-danger mb-0">Rp 3.000.000</h6>
+                            <h6 class="fw-bold text-danger mb-0">Rp {{ number_format(($asset->useful_life_years > 0 ? $asset->acquisition_value / $asset->useful_life_years : 0), 0, ',', '.') }}</h6>
                         </div>
                         <div class="col-md-3 text-center">
                             <p class="small text-muted mb-1 fw-bold">Nilai Buku Terkini</p>
-                            <h6 class="fw-bold text-primary mb-0">Rp 15.000.000</h6>
+                            <h6 class="fw-bold text-primary mb-0">Rp {{ number_format($asset->book_value ?? 0, 0, ',', '.') }}</h6>
                         </div>
                     </div>
 
                     <!-- Tabel Proyeksi Penyusutan -->
-                    <h6 class="fw-bold text-secondary mb-3 small"><i class="fa-solid fa-table-list text-secondary me-2"></i>Tabel Proyeksi Penyusutan (5 Tahun)</h6>
+                    <h6 class="fw-bold text-secondary mb-3 small"><i class="fa-solid fa-table-list text-secondary me-2"></i>Tabel Proyeksi Penyusutan ({{ $asset->useful_life_years ?? 5 }} Tahun)</h6>
                     <div class="table-responsive border rounded-3 shadow-sm">
                         <table class="table table-sm table-hover align-middle mb-0">
                             <thead class="table-light">
@@ -103,42 +105,25 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td class="text-center fw-bold bg-primary bg-opacity-10">0 (2026)</td>
-                                    <td class="bg-primary bg-opacity-10">-</td>
-                                    <td class="bg-primary bg-opacity-10">-</td>
-                                    <td class="text-end fw-bold text-primary bg-primary bg-opacity-10">Rp 15.000.000</td>
-                                </tr>
-                                <tr>
-                                    <td class="text-center text-muted">1 (2027)</td>
-                                    <td class="text-danger small">Rp 3.000.000</td>
-                                    <td class="text-muted small">Rp 3.000.000</td>
-                                    <td class="text-end fw-bold text-dark">Rp 12.000.000</td>
-                                </tr>
-                                <tr>
-                                    <td class="text-center text-muted">2 (2028)</td>
-                                    <td class="text-danger small">Rp 3.000.000</td>
-                                    <td class="text-muted small">Rp 6.000.000</td>
-                                    <td class="text-end fw-bold text-dark">Rp 9.000.000</td>
-                                </tr>
-                                <tr>
-                                    <td class="text-center text-muted">3 (2029)</td>
-                                    <td class="text-danger small">Rp 3.000.000</td>
-                                    <td class="text-muted small">Rp 9.000.000</td>
-                                    <td class="text-end fw-bold text-dark">Rp 6.000.000</td>
-                                </tr>
-                                <tr>
-                                    <td class="text-center text-muted">4 (2030)</td>
-                                    <td class="text-danger small">Rp 3.000.000</td>
-                                    <td class="text-muted small">Rp 12.000.000</td>
-                                    <td class="text-end fw-bold text-dark">Rp 3.000.000</td>
-                                </tr>
-                                <tr>
-                                    <td class="text-center text-muted">5 (2031)</td>
-                                    <td class="text-danger small">Rp 3.000.000</td>
-                                    <td class="text-muted small">Rp 15.000.000</td>
-                                    <td class="text-end fw-bold text-danger">Rp 0 (Habis)</td>
-                                </tr>
+                                @php
+                                    $tahunPerolehan = $asset->tanggal_perolehan ? (int)date('Y', strtotime($asset->tanggal_perolehan)) : (int)date('Y');
+                                    $umur = (int) ($asset->useful_life_years ?: 5);
+                                    $nilaiAwal = (float) ($asset->acquisition_value ?: 0);
+                                    $susutPerTahun = $umur > 0 ? $nilaiAwal / $umur : 0;
+                                @endphp
+                                @for($i = 0; $i <= $umur; $i++)
+                                    @php
+                                        $beban = $i == 0 ? 0 : $susutPerTahun;
+                                        $akumulasi = $susutPerTahun * $i;
+                                        $sisa = max(0, $nilaiAwal - $akumulasi);
+                                    @endphp
+                                    <tr class="{{ $i == 0 ? 'bg-primary bg-opacity-10' : '' }}">
+                                        <td class="text-center {{ $i == 0 ? 'fw-bold bg-primary bg-opacity-10' : 'text-muted' }}">{{ $i }} ({{ $tahunPerolehan + $i }})</td>
+                                        <td class="{{ $i == 0 ? 'bg-primary bg-opacity-10' : 'text-danger small' }}">{{ $i == 0 ? '-' : 'Rp ' . number_format($beban, 0, ',', '.') }}</td>
+                                        <td class="{{ $i == 0 ? 'bg-primary bg-opacity-10' : 'text-muted small' }}">{{ $i == 0 ? '-' : 'Rp ' . number_format($akumulasi, 0, ',', '.') }}</td>
+                                        <td class="text-end fw-bold {{ $i == 0 ? 'text-primary bg-primary bg-opacity-10' : 'text-dark' }}">Rp {{ number_format($sisa, 0, ',', '.') }}</td>
+                                    </tr>
+                                @endfor
                             </tbody>
                         </table>
                     </div>
@@ -146,27 +131,19 @@
 
                 <!-- Tab Riwayat Mutasi -->
                 <div class="tab-pane fade" id="history" role="tabpanel">
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item px-0 py-3 border-light">
-                            <div class="d-flex align-items-start">
-                                <div class="bg-success-subtle text-success rounded-circle p-2 me-3"><i class="fa-solid fa-download"></i></div>
-                                <div>
-                                    <p class="mb-0 fw-bold small text-dark">Aset Didaftarkan ke Sistem</p>
-                                    <p class="mb-1 text-muted" style="font-size: 13px;">Oleh: M. Rivaldo Firdaus (Operator Sistem)</p>
-                                    <small class="text-secondary" style="font-size: 11px;">15 Agustus 2026, 10:00 WIB</small>
-                                </div>
+                    <div class="timeline p-3">
+                        <div class="d-flex align-items-start mb-3">
+                            <div class="bg-primary text-white rounded-circle p-2 me-3 d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;"><i class="fa-solid fa-plus"></i></div>
+                            <div>
+                                <h6 class="fw-bold mb-1 text-dark">Pendaftaran Perdana Aset</h6>
+                                <p class="small text-muted mb-0">Dicatat pada sistem LOFBI di lokasi {{ $asset->room->name ?? 'Gudang Utama' }}.</p>
+                                <small class="text-secondary">{{ $asset->created_at ? $asset->created_at->diffForHumans() : 'Baru saja' }}</small>
                             </div>
-                        </li>
-                    </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-<style>
-    .nav-tabs .nav-link { border: none; border-bottom: 3px solid transparent; color: #6c757d; }
-    .nav-tabs .nav-link.active { border-color: #0d6efd; color: #0d6efd !important; background: transparent; }
-    .nav-tabs .nav-link:hover { border-color: #e9ecef; }
-</style>
 @endsection

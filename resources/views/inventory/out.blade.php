@@ -32,11 +32,11 @@
                             @foreach($items as $item)
                                 @php
                                     // Hitung sisa stok untuk ditampilkan di dropdown
-                                    $sisaStok = $item->batches()->sum('qty_remaining');
+                                    $sisaStok = $item->total_stok ?? $item->batches()->sum('sisa_stok');
                                 @endphp
                                 <option value="{{ $item->id }}">
                                     {{ $item->item_code ?? 'INV-'.$item->id }} - {{ $item->name }} 
-                                    (Stok Tersedia: {{ $sisaStok }} {{ $item->unit }})
+                                    (Stok Tersedia: {{ $sisaStok }} {{ $item->satuan ?? 'Unit' }})
                                 </option>
                             @endforeach
                         </select>

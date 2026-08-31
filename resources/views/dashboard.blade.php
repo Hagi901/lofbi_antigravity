@@ -45,7 +45,7 @@
                     </div>
                     <div>
                         <p class="text-muted small fw-bold mb-1">Total Aset Aktif</p>
-                        <h3 class="fw-bold mb-0 text-dark transition-color">1,284</h3>
+                        <h3 class="fw-bold mb-0 text-dark transition-color">{{ number_format($totalAset ?? 0) }}</h3>
                     </div>
                 </div>
             </div>
@@ -61,34 +61,34 @@
                         <i class="fa-solid fa-box-open text-success fs-4"></i>
                     </div>
                     <div>
-                        <p class="text-muted small fw-bold mb-1">Persediaan (Baru)</p>
-                        <h3 class="fw-bold mb-0 text-dark transition-color">450</h3>
+                        <p class="text-muted small fw-bold mb-1">Total Stok Persediaan</p>
+                        <h3 class="fw-bold mb-0 text-dark transition-color">{{ number_format($totalStokPersediaan ?? 0) }} <span class="fs-6 text-muted fw-normal">Unit</span></h3>
                     </div>
                 </div>
             </div>
         </a>
     </div>
 
-    <!-- Kartu 3: Opname Selesai -> Mengarah ke Opname Fisik -->
+    <!-- Kartu 3: Nilai Buku Total -> Mengarah ke Laporan Nilai Buku -->
     <div class="col-md-3 mb-3 mb-md-0">
-        <a href="{{ url('/opname') }}" class="card-link-wrapper">
+        <a href="{{ url('/reports') }}" class="card-link-wrapper">
             <div class="card border-0 shadow-sm rounded-4 h-100 border-start border-warning border-4">
                 <div class="card-body d-flex align-items-center">
                     <div class="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
-                        <i class="fa-solid fa-clipboard-check text-warning fs-4"></i>
+                        <i class="fa-solid fa-rupiah-sign text-warning fs-4"></i>
                     </div>
                     <div>
-                        <p class="text-muted small fw-bold mb-1">Opname Selesai</p>
-                        <h3 class="fw-bold mb-0 text-dark transition-color">12 <span class="fs-6 text-muted fw-normal">Sesi</span></h3>
+                        <p class="text-muted small fw-bold mb-1">Total Nilai Buku</p>
+                        <h3 class="fw-bold mb-0 text-dark transition-color" style="font-size: 1.15rem;">Rp {{ number_format($totalNilaiBuku ?? 0, 0, ',', '.') }}</h3>
                     </div>
                 </div>
             </div>
         </a>
     </div>
 
-    <!-- Kartu 4: Barang Rusak -> Mengarah ke Laporan (atau halaman filter khusus) -->
+    <!-- Kartu 4: Barang Rusak -> Mengarah ke Laporan / Aset Rusak -->
     <div class="col-md-3">
-        <a href="{{ url('/reports') }}" class="card-link-wrapper">
+        <a href="{{ url('/assets') }}" class="card-link-wrapper">
             <div class="card border-0 shadow-sm rounded-4 h-100 border-start border-danger border-4">
                 <div class="card-body d-flex align-items-center">
                     <div class="bg-danger bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
@@ -96,7 +96,7 @@
                     </div>
                     <div>
                         <p class="text-muted small fw-bold mb-1">Barang Rusak</p>
-                        <h3 class="fw-bold mb-0 text-dark transition-color">18</h3>
+                        <h3 class="fw-bold mb-0 text-dark transition-color">{{ number_format($asetRusak ?? 0) }} <span class="fs-6 text-muted fw-normal">Unit</span></h3>
                     </div>
                 </div>
             </div>

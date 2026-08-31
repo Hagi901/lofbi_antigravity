@@ -12,4 +12,9 @@ class Kategori extends Model
     {
         return $this->hasOne(MasaManfaatKategori::class);
     }
+
+    public function getNameAttribute(): string
+    {
+        return $this->nama ?? '';
+    }
 }

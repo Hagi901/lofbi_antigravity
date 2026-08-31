@@ -85,36 +85,36 @@
                 <div class="dropdown">
                     <button class="btn btn-light dropdown-toggle border-0 fw-bold shadow-sm rounded-pill px-3 py-2 bg-white" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <div class="d-inline-flex align-items-center justify-content-center bg-primary text-white rounded-circle me-2 fw-bold" style="width: 30px; height: 30px; font-size: 13px;">
-                            RF
+                            {{ strtoupper(substr(Auth::user()->name ?? 'AD', 0, 2)) }}
                         </div>
-                        Rivaldo
+                        {{ explode(' ', Auth::user()->name ?? 'Admin')[0] }}
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2" style="width: 250px;">
                         <li class="px-3 py-3 bg-light border-bottom text-center">
-                            <p class="mb-0 fw-bold text-dark">M. Rivaldo Firdaus</p>
-                            <small class="text-muted">Operator Sistem</small>
+                            <p class="mb-0 fw-bold text-dark">{{ Auth::user()->name ?? 'Pengguna LOFBI' }}</p>
+                            <small class="text-muted text-capitalize">{{ Auth::user()->role ?? 'Administrator' }} — KSOP Banten</small>
                         </li>
                         
                         <!-- Menu Profil -->
                         <li>
                             <a class="dropdown-item py-2 mt-2" href="{{ route('profile.index') }}">
-                                <i class="fa-solid fa-id-card me-2 text-primary"></i> Profil Operator
+                                <i class="fa-solid fa-user-gear me-2 text-primary"></i> Data Profil
                             </a>
                         </li>
                         
-                        <!-- TAMBAHAN: Menu Pengaturan Sistem -->
+                        <!-- Menu Pengaturan -->
                         <li>
                             <a class="dropdown-item py-2" href="{{ route('settings.index') }}">
-                                <i class="fa-solid fa-gear me-2 text-secondary"></i> Pengaturan Sistem
+                                <i class="fa-solid fa-sliders me-2 text-secondary"></i> Pengaturan
                             </a>
                         </li>
                         
                         <li><hr class="dropdown-divider my-2"></li>
                         
-                        <!-- Menu Logout (Diperbarui sesuai web.php milikmu) -->
+                        <!-- Menu Logout -->
                         <li>
-                            <a class="dropdown-item py-2 text-danger fw-bold" href="{{ route('logout') }}">
-                                <i class="fa-solid fa-arrow-right-from-bracket me-2"></i> Keluar (Logout)
+                            <a class="dropdown-item py-2 text-danger" href="{{ route('logout') }}">
+                                <i class="fa-solid fa-right-from-bracket me-2"></i> Keluar (Logout)
                             </a>
                         </li>
                     </ul>
