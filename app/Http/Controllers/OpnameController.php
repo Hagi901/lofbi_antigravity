@@ -62,17 +62,14 @@ class OpnameController extends Controller
                 $aset->update(['last_opname_date' => $request->tanggal]);
             }
 
+            $namaRuangan = Ruangan::find($request->ruangan_id)?->nama ?? 'Ruangan #' . $request->ruangan_id;
+
             AuditLog::create([
                 'user_id' => Auth::id() ?? 1,
-                'action' => 'OPNAME_FISIK',
-                'table_name' => 'opname_sesis',
-                'record_id' => $sesi->id,
-                'old_values' => null,
-                'new_values' => [
-                    'ruangan_id' => $request->ruangan_id,
-                    'jumlah_aset_diverifikasi' => $asets->count(),
-                    'tanggal' => $request->tanggal,
-                ],
+                'user_name' => Auth::user()->name ?? 'Administrator',
+                'modul' => 'Opname',
+                'aksi' => 'Opname Fisik',
+                'detail' => 'Verifikasi fisik ' . $asets->count() . ' unit aset di ' . $namaRuangan . ' pada ' . $request->tanggal,
             ]);
         });
 

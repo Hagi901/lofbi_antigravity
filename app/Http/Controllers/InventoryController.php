@@ -63,23 +63,20 @@ class InventoryController extends Controller
             // 2. Catat Log Transaksi Masuk
             TransaksiPersediaan::create([
                 'persediaan_id' => $persediaan->id,
-                'user_id' => Auth::id() ?? 1,
+                'diajukan_oleh' => Auth::id() ?? 1,
                 'jenis' => 'masuk',
                 'jumlah' => $request->qty_received,
-                'harga_satuan' => $request->purchase_price,
                 'tanggal' => now()->toDateString(),
                 'status' => 'disetujui',
-                'no_referensi' => 'IN-' . date('YmdHis'),
-                'keterangan' => 'Barang Masuk ke ' . $batchNumber,
+                'unit_kerja_penerima' => 'Gudang Utama KSOP',
             ]);
 
             AuditLog::create([
                 'user_id' => Auth::id() ?? 1,
-                'action' => 'BARANG_MASUK',
-                'table_name' => 'batch_persediaans',
-                'record_id' => $batch->id,
-                'old_values' => null,
-                'new_values' => $batch->toArray(),
+                'user_name' => Auth::user()->name ?? 'Administrator',
+                'modul' => 'Persediaan',
+                'aksi' => 'Barang Masuk',
+                'detail' => 'Menambahkan ' . $request->qty_received . ' unit ' . $persediaan->name . ' (No Batch: ' . $batchNumber . ')',
             ]);
         });
 
@@ -144,24 +141,20 @@ class InventoryController extends Controller
             // Catat Transaksi Pengeluaran
             TransaksiPersediaan::create([
                 'persediaan_id' => $persediaan->id,
-                'user_id' => Auth::id() ?? 1,
+                'diajukan_oleh' => Auth::id() ?? 1,
                 'jenis' => 'keluar',
                 'jumlah' => $qtyDiminta,
-                'harga_satuan' => $batches->first()?->harga_satuan ?? 0,
                 'tanggal' => now()->toDateString(),
                 'status' => 'disetujui',
-                'no_referensi' => 'OUT-' . date('YmdHis'),
-                'keterangan' => 'Pemotongan FIFO: ' . implode(', ', $rincianPemotongan),
-                'unit_kerja_penerima' => $request->unit_kerja_penerima ?? 'Operasional KSOP',
+                'unit_kerja_penerima' => $request->unit_kerja_penerima ?? 'Operasional KSOP Banten',
             ]);
 
             AuditLog::create([
                 'user_id' => Auth::id() ?? 1,
-                'action' => 'BARANG_KELUAR_FIFO',
-                'table_name' => 'persediaans',
-                'record_id' => $persediaan->id,
-                'old_values' => ['stok_sebelumnya' => $totalStok],
-                'new_values' => ['qty_keluar' => $qtyDiminta, 'rincian_batch' => $rincianPemotongan],
+                'user_name' => Auth::user()->name ?? 'Administrator',
+                'modul' => 'Persediaan',
+                'aksi' => 'Barang Keluar',
+                'detail' => 'Pengeluaran ' . $qtyDiminta . ' unit ' . $persediaan->name . ' (FIFO: ' . implode(', ', $rincianPemotongan) . ')',
             ]);
         });
 

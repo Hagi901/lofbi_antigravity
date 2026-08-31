@@ -85,11 +85,10 @@ class AssetController extends Controller
 
         AuditLog::create([
             'user_id' => Auth::id() ?? 1,
-            'action' => 'CREATE_ASET',
-            'table_name' => 'asets',
-            'record_id' => $aset->id,
-            'old_values' => null,
-            'new_values' => $aset->toArray(),
+            'user_name' => Auth::user()->name ?? 'Administrator',
+            'modul' => 'Aset',
+            'aksi' => 'Tambah',
+            'detail' => 'Mendaftarkan aset baru: ' . $aset->kode_aset . ' (' . $aset->merk . ')',
         ]);
 
         return redirect()->route('assets.index')->with('success', 'Aset baru (' . $aset->kode_aset . ') berhasil didaftarkan!');
@@ -145,8 +144,6 @@ class AssetController extends Controller
             default => 'baik',
         };
 
-        $oldValues = $aset->toArray();
-
         // Update jenis barang
         if ($aset->jenisBarang) {
             $aset->jenisBarang->update([
@@ -167,11 +164,10 @@ class AssetController extends Controller
 
         AuditLog::create([
             'user_id' => Auth::id() ?? 1,
-            'action' => 'UPDATE_ASET',
-            'table_name' => 'asets',
-            'record_id' => $aset->id,
-            'old_values' => $oldValues,
-            'new_values' => $aset->toArray(),
+            'user_name' => Auth::user()->name ?? 'Administrator',
+            'modul' => 'Aset',
+            'aksi' => 'Edit',
+            'detail' => 'Memperbarui data aset: ' . $aset->kode_aset . ' (' . $aset->merk . ')',
         ]);
 
         return redirect()->route('assets.index')->with('success', 'Data aset (' . $aset->kode_aset . ') berhasil diperbarui!');
@@ -184,17 +180,17 @@ class AssetController extends Controller
     {
         $aset = Aset::findOrFail($id);
         $kode = $aset->kode_aset;
+        $merk = $aset->merk;
+
+        $aset->delete();
 
         AuditLog::create([
             'user_id' => Auth::id() ?? 1,
-            'action' => 'DELETE_ASET',
-            'table_name' => 'asets',
-            'record_id' => $aset->id,
-            'old_values' => $aset->toArray(),
-            'new_values' => null,
+            'user_name' => Auth::user()->name ?? 'Administrator',
+            'modul' => 'Aset',
+            'aksi' => 'Hapus',
+            'detail' => 'Menghapus aset: ' . $kode . ' (' . $merk . ')',
         ]);
-
-        $aset->delete();
 
         return redirect()->route('assets.index')->with('success', 'Aset (' . $kode . ') berhasil dihapus!');
     }
