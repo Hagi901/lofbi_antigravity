@@ -12,4 +12,14 @@ class JenisBarang extends Model
     {
         return $this->belongsTo(Kategori::class);
     }
+
+    public function persediaans()
+    {
+        return $this->hasMany(Persediaan::class);
+    }
+
+    public function asets()
+    {
+        return $this->hasMany(Aset::class);
+    }
 }

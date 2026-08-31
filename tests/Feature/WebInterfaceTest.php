@@ -121,6 +121,55 @@ class WebInterfaceTest extends TestCase
         $this->assertNull(Aset::find($aset->id));
     }
 
+    public function test_authenticated_user_can_crud_master_persediaan(): void
+    {
+        $this->seed();
+        $user = User::where('role', 'admin')->first() ?? User::first();
+        $kategori = Kategori::where('tipe', 'persediaan')->first() ?? Kategori::first();
+
+        // 1. Create Form
+        $response = $this->actingAs($user)->get('/inventory/create');
+        $response->assertStatus(200);
+
+        // 2. Store Master
+        $response = $this->actingAs($user)->post('/inventory', [
+            'name' => 'Buku Pelaut Uji Coba',
+            'category_id' => $kategori->id,
+            'satuan' => 'BUAH',
+            'merk' => 'Standar Hubla',
+            'stok_minimum' => 50,
+            'initial_qty' => 100,
+            'initial_price' => 50000,
+        ]);
+        $response->assertRedirect('/inventory');
+
+        $item = Persediaan::with('jenisBarang')->get()->last();
+        $this->assertNotNull($item);
+        $this->assertStringContainsString('Buku Pelaut Uji Coba', $item->name);
+
+        // 3. Show Inventory Card
+        $response = $this->actingAs($user)->get('/inventory/' . $item->id);
+        $response->assertStatus(200);
+
+        // 4. Edit Form
+        $response = $this->actingAs($user)->get('/inventory/' . $item->id . '/edit');
+        $response->assertStatus(200);
+
+        // 5. Update Master
+        $response = $this->actingAs($user)->put('/inventory/' . $item->id, [
+            'name' => 'Buku Pelaut Uji Coba Updated',
+            'category_id' => $kategori->id,
+            'satuan' => 'BUAH',
+            'merk' => 'Standar Hubla Baru',
+            'stok_minimum' => 60,
+        ]);
+        $response->assertRedirect('/inventory');
+
+        // 6. Delete Master
+        $response = $this->actingAs($user)->delete('/inventory/' . $item->id);
+        $response->assertRedirect('/inventory');
+    }
+
     public function test_authenticated_user_can_record_inventory_in_and_out(): void
     {
         $this->seed();
@@ -139,6 +188,7 @@ class WebInterfaceTest extends TestCase
         $response = $this->actingAs($user)->post('/inventory/out', [
             'inventory_item_id' => $persediaan->id,
             'qty_out' => 5,
+            'unit_kerja_penerima' => 'Seksi Operasional',
         ]);
         $response->assertRedirect('/inventory');
 

@@ -52,12 +52,17 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/assets/{id}', [AssetController::class, 'show'])->name('assets.show');
 
     // ── 3. Persediaan & FIFO ──────────────────────────────────────────────
-    // Input barang masuk → admin & operator
+    // Tambah master, input masuk/keluar, edit, hapus → admin & operator
     Route::middleware('role:admin,operator')->group(function () {
+        Route::get('/inventory/create', [InventoryController::class, 'create'])->name('inventory.create');
+        Route::post('/inventory', [InventoryController::class, 'store'])->name('inventory.store');
         Route::get('/inventory/in', [InventoryController::class, 'createIn'])->name('inventory.in.create');
         Route::post('/inventory/in', [InventoryController::class, 'storeIn'])->name('inventory.in.store');
         Route::get('/inventory/out', [InventoryController::class, 'createOut'])->name('inventory.out.create');
         Route::post('/inventory/out', [InventoryController::class, 'storeOut'])->name('inventory.out.store');
+        Route::get('/inventory/{id}/edit', [InventoryController::class, 'edit'])->name('inventory.edit');
+        Route::put('/inventory/{id}', [InventoryController::class, 'update'])->name('inventory.update');
+        Route::delete('/inventory/{id}', [InventoryController::class, 'destroy'])->name('inventory.destroy');
     });
 
     // Validasi pengajuan → hanya admin & validator
@@ -67,8 +72,9 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('/inventory/{id}/reject', [InventoryController::class, 'reject'])->name('inventory.reject');
     });
 
-    // Lihat kartu stok → semua role boleh
+    // Lihat kartu stok & detail buku persediaan → semua role boleh
     Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
+    Route::get('/inventory/{id}', [InventoryController::class, 'show'])->name('inventory.show');
 
     // ── 4. Opname Fisik ───────────────────────────────────────────────────
     // Buat sesi opname → hanya admin & operator (create sebelum {id})

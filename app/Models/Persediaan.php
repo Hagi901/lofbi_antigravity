@@ -28,6 +28,11 @@ class Persediaan extends Model
         return $this->hasMany(TransaksiPersediaan::class);
     }
 
+    public function transaksis()
+    {
+        return $this->hasMany(TransaksiPersediaan::class);
+    }
+
     // ── Accessors Kompatibilitas Blade Views ───────────────────────────
 
     public function getNameAttribute(): string
