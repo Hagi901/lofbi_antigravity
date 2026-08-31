@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class Aset extends Model
@@ -88,5 +89,80 @@ class Aset extends Model
     public function getBookValueAttribute()
     {
         return $this->nilai_buku;
+    }
+
+    // ── Kalkulasi Penyusutan Garis Lurus (Dinamis) ─────────────────────────
+
+    /**
+     * Hitung penyusutan aktual berdasarkan tanggal hari ini (Garis Lurus).
+     * Mengembalikan array: [tahun_berjalan, susut_per_tahun, akumulasi, nilai_buku, persen_susut]
+     */
+    public function hitungPenyusutanGarisLurus(): array
+    {
+        $nilaiPerolehan = (float) ($this->nilai_perolehan ?? 0);
+        $masaManfaat    = (int)   ($this->masa_manfaat ?? 0);
+
+        if ($nilaiPerolehan <= 0 || $masaManfaat <= 0) {
+            return [
+                'tahun_berjalan' => 0,
+                'susut_per_tahun' => 0,
+                'akumulasi'      => 0,
+                'nilai_buku'     => $nilaiPerolehan,
+                'persen_susut'   => 0,
+            ];
+        }
+
+        // Hitung tahun yang sudah berjalan (bulat ke bawah, maks = masa manfaat)
+        $tglPerolehan  = $this->tanggal_perolehan
+            ? Carbon::parse($this->tanggal_perolehan)
+            : Carbon::now();
+        $tahunBerjalan = min(
+            (int) $tglPerolehan->diffInYears(Carbon::now()),
+            $masaManfaat
+        );
+
+        // Rumus Garis Lurus
+        $susutPerTahun = $nilaiPerolehan / $masaManfaat;
+        $akumulasi     = min($susutPerTahun * $tahunBerjalan, $nilaiPerolehan);
+        $nilaiBuku     = max($nilaiPerolehan - $akumulasi, 0);
+        $persenSusut   = round(($akumulasi / $nilaiPerolehan) * 100, 1);
+
+        return [
+            'tahun_berjalan'  => $tahunBerjalan,
+            'susut_per_tahun' => $susutPerTahun,
+            'akumulasi'       => $akumulasi,
+            'nilai_buku'      => $nilaiBuku,
+            'persen_susut'    => $persenSusut,
+        ];
+    }
+
+    /** Nilai Buku dinamis (hasil kalkulasi hari ini) */
+    public function getNilaiBukuDinamisAttribute(): float
+    {
+        return $this->hitungPenyusutanGarisLurus()['nilai_buku'];
+    }
+
+    /** Akumulasi penyusutan dinamis (hasil kalkulasi hari ini) */
+    public function getAkumulasiDinamisAttribute(): float
+    {
+        return $this->hitungPenyusutanGarisLurus()['akumulasi'];
+    }
+
+    /** Penyusutan per tahun */
+    public function getSusutPerTahunAttribute(): float
+    {
+        return $this->hitungPenyusutanGarisLurus()['susut_per_tahun'];
+    }
+
+    /** Persentase sudah terdepresiasi (0–100) */
+    public function getPersenSusutAttribute(): float
+    {
+        return $this->hitungPenyusutanGarisLurus()['persen_susut'];
+    }
+
+    /** Tahun ke berapa dari masa manfaat */
+    public function getTahunBerjalanAttribute(): int
+    {
+        return $this->hitungPenyusutanGarisLurus()['tahun_berjalan'];
     }
 }

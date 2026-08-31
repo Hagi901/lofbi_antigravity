@@ -36,6 +36,7 @@
                         <th class="text-secondary small fw-bold border-0">NAMA BARANG</th>
                         <th class="text-secondary small fw-bold border-0">KATEGORI</th>
                         <th class="text-secondary small fw-bold border-0">LOKASI RUANGAN</th>
+                        <th class="text-secondary small fw-bold border-0 text-center">PENYUSUTAN</th>
                         <th class="text-secondary small fw-bold border-0 text-center">KONDISI</th>
                         <th class="text-secondary small fw-bold border-0 text-center">AKSI</th>
                     </tr>
@@ -59,6 +60,33 @@
                             <td class="text-muted small">
                                 <i class="fa-solid fa-location-dot text-danger me-1"></i> 
                                 {{ $asset->room->name ?? 'Belum Dialokasikan' }}
+                            </td>
+                            @php
+                                $nilaiPerolehan = (float) ($asset->nilai_perolehan ?? 0);
+                                $susut          = $asset->hitungPenyusutanGarisLurus();
+                                $akumulasi      = $susut['akumulasi'];
+                                $nilaiBuku      = $susut['nilai_buku'];
+                                $pctSusut       = $susut['persen_susut'];
+                                $tahunBerjalan  = $susut['tahun_berjalan'];
+                                $masaManfaat    = (int) ($asset->masa_manfaat ?? 0);
+                                $barColor       = $pctSusut < 50 ? 'bg-success' : ($pctSusut < 80 ? 'bg-warning' : 'bg-danger');
+                            @endphp
+                            <td style="min-width: 170px;">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="small fw-bold text-dark">
+                                        Rp {{ number_format($nilaiBuku, 0, ',', '.') }}
+                                    </span>
+                                    <span class="badge {{ $pctSusut >= 80 ? 'bg-danger-subtle text-danger' : ($pctSusut >= 50 ? 'bg-warning-subtle text-warning' : 'bg-success-subtle text-success') }} border px-1" style="font-size: 10px;">
+                                        {{ $pctSusut }}%
+                                    </span>
+                                </div>
+                                <div class="progress rounded-pill" style="height: 6px;" title="Terdepresiasi {{ $pctSusut }}% — Tahun ke-{{ $tahunBerjalan }} dari {{ $masaManfaat }} tahun">
+                                    <div class="progress-bar {{ $barColor }}" style="width: {{ $pctSusut }}%"></div>
+                                </div>
+                                <div class="text-muted mt-1" style="font-size: 10px;">
+                                    Akum: Rp {{ number_format($akumulasi, 0, ',', '.') }}
+                                    &nbsp;·&nbsp; Thn ke-{{ $tahunBerjalan }}/{{ $masaManfaat }}
+                                </div>
                             </td>
                             <td class="text-center">
                                 @php

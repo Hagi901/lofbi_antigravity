@@ -18,7 +18,10 @@ class InventoryController extends Controller
     public function index()
     {
         $items = Persediaan::with(['jenisBarang.kategori', 'batches'])->get();
-        return view('inventory', compact('items'));
+        $pengajuanMenunggu = TransaksiPersediaan::where('jenis', 'keluar')
+            ->where('status', 'menunggu')
+            ->count();
+        return view('inventory', compact('items', 'pengajuanMenunggu'));
     }
 
     /**
@@ -45,9 +48,8 @@ class InventoryController extends Controller
 
         DB::transaction(function () use ($persediaan, $request) {
             $batchNumber = 'BATCH-' . date('YmdHis');
-            
-            // 1. Buat Batch Baru
-            $batch = BatchPersediaan::create([
+
+            BatchPersediaan::create([
                 'persediaan_id' => $persediaan->id,
                 'no_batch' => $batchNumber,
                 'no_referensi' => $request->no_referensi ?? ('REF-' . date('YmdHis')),
@@ -60,7 +62,6 @@ class InventoryController extends Controller
                 'sisa_stok' => $request->qty_received,
             ]);
 
-            // 2. Catat Log Transaksi Masuk
             TransaksiPersediaan::create([
                 'persediaan_id' => $persediaan->id,
                 'diajukan_oleh' => Auth::id() ?? 1,
@@ -84,7 +85,7 @@ class InventoryController extends Controller
     }
 
     /**
-     * Menampilkan form pengeluaran barang
+     * Menampilkan form pengeluaran barang (buat PENGAJUAN dulu, tunggu validasi)
      */
     public function createOut()
     {
@@ -93,7 +94,7 @@ class InventoryController extends Controller
     }
 
     /**
-     * Memproses pengeluaran barang dengan algoritma FIFO murni
+     * Simpan PENGAJUAN barang keluar — status "menunggu" dulu sebelum divalidasi
      */
     public function storeOut(Request $request)
     {
@@ -105,7 +106,6 @@ class InventoryController extends Controller
         $persediaan = Persediaan::findOrFail($request->inventory_item_id);
         $qtyDiminta = (int) $request->qty_out;
 
-        // Hitung total ketersediaan stok
         $totalStok = (int) $persediaan->batches()->where('sisa_stok', '>', 0)->sum('sisa_stok');
 
         if ($qtyDiminta > $totalStok) {
@@ -114,8 +114,67 @@ class InventoryController extends Controller
             ]);
         }
 
-        DB::transaction(function () use ($persediaan, $qtyDiminta, $request) {
-            // Urutkan batch dari yang paling awal masuk (FIFO)
+        TransaksiPersediaan::create([
+            'persediaan_id' => $persediaan->id,
+            'diajukan_oleh' => Auth::id() ?? 1,
+            'jenis' => 'keluar',
+            'jumlah' => $qtyDiminta,
+            'tanggal' => now()->toDateString(),
+            'status' => 'menunggu',
+            'unit_kerja_penerima' => $request->unit_kerja_penerima ?? 'Operasional KSOP Banten',
+        ]);
+
+        AuditLog::create([
+            'user_id' => Auth::id() ?? 1,
+            'user_name' => Auth::user()->name ?? 'Administrator',
+            'modul' => 'Persediaan',
+            'aksi' => 'Pengajuan Keluar',
+            'detail' => 'Mengajukan pengeluaran ' . $qtyDiminta . ' unit ' . $persediaan->name . ' — menunggu persetujuan Validator.',
+        ]);
+
+        return redirect()->route('inventory.index')->with('success', 'Pengajuan barang keluar sebanyak ' . $qtyDiminta . ' unit berhasil diajukan! Menunggu persetujuan Validator.');
+    }
+
+    // ── FITUR VALIDATOR ─────────────────────────────────────────────────────
+
+    /**
+     * Halaman antrian pengajuan barang keluar untuk Validator
+     */
+    public function pengajuan()
+    {
+        $pengajuan = TransaksiPersediaan::with(['persediaan.jenisBarang', 'diajukanOleh'])
+            ->where('jenis', 'keluar')
+            ->where('status', 'menunggu')
+            ->latest()
+            ->get();
+
+        $riwayat = TransaksiPersediaan::with(['persediaan.jenisBarang', 'diajukanOleh', 'diputuskanOleh'])
+            ->where('jenis', 'keluar')
+            ->whereIn('status', ['disetujui', 'ditolak'])
+            ->latest()
+            ->take(20)
+            ->get();
+
+        return view('inventory.pengajuan', compact('pengajuan', 'riwayat'));
+    }
+
+    /**
+     * Validator menyetujui pengajuan → eksekusi potong stok FIFO
+     */
+    public function approve($id)
+    {
+        $transaksi = TransaksiPersediaan::where('status', 'menunggu')->findOrFail($id);
+        $persediaan = $transaksi->persediaan;
+        $qtyDiminta = (int) $transaksi->jumlah;
+
+        $totalStok = (int) $persediaan->batches()->where('sisa_stok', '>', 0)->sum('sisa_stok');
+
+        if ($qtyDiminta > $totalStok) {
+            return back()->withErrors(['approve' => 'Stok tidak mencukupi! Sisa stok: ' . $totalStok . ' unit. Tidak dapat disetujui.']);
+        }
+
+        DB::transaction(function () use ($transaksi, $persediaan, $qtyDiminta) {
+            // Potong stok FIFO
             $batches = $persediaan->batches()
                 ->where('sisa_stok', '>', 0)
                 ->orderBy('tanggal_masuk', 'asc')
@@ -127,37 +186,54 @@ class InventoryController extends Controller
             $rincianPemotongan = [];
 
             foreach ($batches as $batch) {
-                if ($sisaKebutuhan <= 0) {
-                    break;
-                }
-
+                if ($sisaKebutuhan <= 0) break;
                 $ambil = min($batch->sisa_stok, $sisaKebutuhan);
                 $batch->decrement('sisa_stok', $ambil);
                 $sisaKebutuhan -= $ambil;
-
                 $rincianPemotongan[] = $batch->no_batch . " (-{$ambil})";
             }
 
-            // Catat Transaksi Pengeluaran
-            TransaksiPersediaan::create([
-                'persediaan_id' => $persediaan->id,
-                'diajukan_oleh' => Auth::id() ?? 1,
-                'jenis' => 'keluar',
-                'jumlah' => $qtyDiminta,
-                'tanggal' => now()->toDateString(),
+            // Update status transaksi
+            $transaksi->update([
                 'status' => 'disetujui',
-                'unit_kerja_penerima' => $request->unit_kerja_penerima ?? 'Operasional KSOP Banten',
+                'diputuskan_oleh' => Auth::id(),
+                'tanggal_keputusan' => now(),
             ]);
 
             AuditLog::create([
                 'user_id' => Auth::id() ?? 1,
-                'user_name' => Auth::user()->name ?? 'Administrator',
+                'user_name' => Auth::user()->name ?? 'Validator',
                 'modul' => 'Persediaan',
-                'aksi' => 'Barang Keluar',
-                'detail' => 'Pengeluaran ' . $qtyDiminta . ' unit ' . $persediaan->name . ' (FIFO: ' . implode(', ', $rincianPemotongan) . ')',
+                'aksi' => 'Setujui Keluar',
+                'detail' => 'Menyetujui pengeluaran ' . $qtyDiminta . ' unit ' . $persediaan->name . '. FIFO: ' . implode(', ', $rincianPemotongan),
             ]);
         });
 
-        return redirect()->route('inventory.index')->with('success', 'Pengeluaran ' . $qtyDiminta . ' unit barang berhasil diproses dengan metode FIFO!');
+        return redirect()->route('inventory.pengajuan')->with('success', 'Pengajuan berhasil disetujui dan stok telah dikurangi secara FIFO!');
+    }
+
+    /**
+     * Validator menolak pengajuan
+     */
+    public function reject(Request $request, $id)
+    {
+        $transaksi = TransaksiPersediaan::where('status', 'menunggu')->findOrFail($id);
+
+        $transaksi->update([
+            'status' => 'ditolak',
+            'diputuskan_oleh' => Auth::id(),
+            'tanggal_keputusan' => now(),
+            'catatan_penolakan' => $request->alasan ?? 'Ditolak oleh Validator.',
+        ]);
+
+        AuditLog::create([
+            'user_id' => Auth::id() ?? 1,
+            'user_name' => Auth::user()->name ?? 'Validator',
+            'modul' => 'Persediaan',
+            'aksi' => 'Tolak Keluar',
+            'detail' => 'Menolak pengajuan pengeluaran ' . $transaksi->jumlah . ' unit ' . ($transaksi->persediaan?->name ?? '#' . $transaksi->persediaan_id) . '. Alasan: ' . ($request->alasan ?? '-'),
+        ]);
+
+        return redirect()->route('inventory.pengajuan')->with('success', 'Pengajuan berhasil ditolak.');
     }
 }

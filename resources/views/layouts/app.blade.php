@@ -32,9 +32,21 @@
             <a href="{{ url('/assets') }}" class="{{ request()->is('assets*') ? 'active' : '' }}">
                 <i class="fa-solid fa-boxes-stacked me-2"></i> Manajemen Aset
             </a>
-            <a href="{{ url('/inventory') }}" class="{{ request()->is('inventory*') ? 'active' : '' }}">
+            <a href="{{ url('/inventory') }}" class="{{ request()->is('inventory') || request()->is('inventory/in*') || request()->is('inventory/out*') ? 'active' : '' }}">
                 <i class="fa-solid fa-box-open me-2"></i> Persediaan (FIFO)
             </a>
+            @if(in_array(Auth::user()->role ?? '', ['validator', 'admin']))
+            @php
+                $pendingCount = \App\Models\TransaksiPersediaan::where('jenis','keluar')->where('status','menunggu')->count();
+            @endphp
+            <a href="{{ route('inventory.pengajuan') }}" class="{{ request()->is('inventory/pengajuan') ? 'active' : '' }}" style="padding-left: 36px;">
+                <i class="fa-solid fa-stamp me-2 text-warning"></i>
+                <span class="small">Validasi Barang Keluar</span>
+                @if($pendingCount > 0)
+                    <span class="badge bg-warning text-dark ms-1 rounded-pill" style="font-size: 10px;">{{ $pendingCount }}</span>
+                @endif
+            </a>
+            @endif
             <a href="{{ url('/opname') }}" class="{{ request()->is('opname*') ? 'active' : '' }}">
                 <i class="fa-solid fa-clipboard-check me-2"></i> Opname Fisik
             </a>
@@ -43,6 +55,7 @@
             </a>
         </div>
     </div>
+
 
     <!-- KONTEN UTAMA KANAN -->
     <div class="main-content">
