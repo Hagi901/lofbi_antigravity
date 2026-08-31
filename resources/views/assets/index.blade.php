@@ -10,10 +10,12 @@
     <div class="card-header bg-white py-3 border-bottom-0 d-flex justify-content-between align-items-center">
         <h6 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-boxes-stacked text-primary me-2"></i>Daftar Aset Aktif</h6>
         
+        @if(in_array(Auth::user()->role ?? '', ['admin', 'operator']))
         <!-- Tombol Tambah Aset Aktif -->
         <a href="{{ route('assets.create') }}" class="btn btn-primary btn-sm fw-bold px-3 shadow-sm rounded-pill">
             <i class="fa-solid fa-plus me-1"></i> Tambah Aset Baru
         </a>
+        @endif
     </div>
     
     <div class="card-body p-4 pt-0">
@@ -100,12 +102,17 @@
                             </td>
                             <td class="text-center">
                                 <div class="d-flex justify-content-center gap-2">
-                                    <!-- Tombol Edit -->
+                                    {{-- Tombol Detail (semua role) --}}
+                                    <a href="{{ route('assets.show', $asset->id) }}" class="btn btn-light btn-sm text-secondary shadow-sm" title="Lihat Detail">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </a>
+                                    @if(in_array(Auth::user()->role ?? '', ['admin', 'operator']))
+                                    {{-- Tombol Edit --}}
                                     <a href="{{ route('assets.edit', $asset->id) }}" class="btn btn-light btn-sm text-primary shadow-sm" title="Edit Aset">
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </a>
-                                    
-                                    <!-- Tombol Hapus -->
+                                    {{-- Tombol Hapus (admin saja) --}}
+                                    @if((Auth::user()->role ?? '') === 'admin')
                                     <form action="{{ route('assets.destroy', $asset->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus aset ini secara permanen?');">
                                         @csrf
                                         @method('DELETE')
@@ -113,6 +120,8 @@
                                             <i class="fa-solid fa-trash"></i>
                                         </button>
                                     </form>
+                                    @endif
+                                    @endif
                                 </div>
                             </td>
                         </tr>

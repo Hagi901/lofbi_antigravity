@@ -17,25 +17,63 @@
         box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
     }
     .card-link-wrapper:hover h3 {
-        color: #0d6efd !important; /* Angka berubah biru saat disentuh */
+        color: #0d6efd !important;
     }
 </style>
 
+<!-- Banner Sambutan -->
 <div class="row mb-4">
     <div class="col-12">
         <div class="card border-0 shadow-sm rounded-4 overflow-hidden" style="background: linear-gradient(135deg, #0d6efd, #0dcaf0);">
             <div class="card-body p-4 text-white position-relative">
                 <i class="fa-solid fa-ship position-absolute top-50 end-0 translate-middle-y me-4" style="font-size: 8rem; opacity: 0.1;"></i>
-                <h4 class="fw-bold mb-1">Selamat Datang, Operator Sistem!</h4>
-                <p class="mb-0 opacity-75">Sistem Informasi Layanan Operasional Fisik Barang & Inventaris (LOFBI) - KSOP Kelas I Banten.</p>
+                <h4 class="fw-bold mb-1">Selamat Datang, {{ Auth::user()->name ?? 'Pengguna Sistem' }}!</h4>
+                <p class="mb-0 opacity-75">
+                    Sistem Informasi Layanan Operasional Fasilitas &amp; Barang Inventaris (LOFBI) &mdash; <strong>KSOP Kelas I Banten</strong>.
+                    <span class="badge bg-white text-primary text-capitalize ms-2 fw-bold">{{ Auth::user()->role ?? 'Operator' }}</span>
+                </p>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Kartu Ringkasan Statistik (Sekarang Bisa Diklik) -->
+<!-- Alert Peringatan Jika Ada Pengajuan / Stok Menipis -->
+@if(($pengajuanMenunggu ?? 0) > 0 || ($stokMenipis ?? 0) > 0)
 <div class="row mb-4">
-    <!-- Kartu 1: Aset Aktif -> Mengarah ke Manajemen Aset -->
+    <div class="col-12">
+        <div class="alert alert-warning border-0 shadow-sm rounded-4 py-3 px-4 mb-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+            <div class="d-flex align-items-center">
+                <i class="fa-solid fa-triangle-exclamation fs-3 text-warning me-3"></i>
+                <div>
+                    <h6 class="fw-bold mb-0 text-dark">Perhatian Sistem Terkini</h6>
+                    <small class="text-muted">
+                        @if(($pengajuanMenunggu ?? 0) > 0)
+                            Terdapat <strong>{{ $pengajuanMenunggu }} pengajuan barang keluar</strong> yang menunggu validasi.
+                        @endif
+                        @if(($stokMenipis ?? 0) > 0)
+                            Terdapat <strong>{{ $stokMenipis }} item persediaan</strong> dengan stok mendekati / di bawah batas minimum.
+                        @endif
+                    </small>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                @if(($pengajuanMenunggu ?? 0) > 0 && in_array(Auth::user()->role ?? '', ['validator', 'admin']))
+                    <a href="{{ route('inventory.pengajuan') }}" class="btn btn-warning btn-sm fw-bold px-3 shadow-sm">
+                        <i class="fa-solid fa-stamp me-1"></i> Validasi Pengajuan
+                    </a>
+                @endif
+                <a href="{{ route('notifications.index') }}" class="btn btn-outline-dark btn-sm fw-bold px-3">
+                    Lihat Semua &rarr;
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
+<!-- Kartu Ringkasan Statistik -->
+<div class="row mb-4">
+    <!-- Kartu 1: Aset Aktif -->
     <div class="col-md-3 mb-3 mb-md-0">
         <a href="{{ url('/assets') }}" class="card-link-wrapper">
             <div class="card border-0 shadow-sm rounded-4 h-100 border-start border-primary border-4">
@@ -52,7 +90,7 @@
         </a>
     </div>
 
-    <!-- Kartu 2: Persediaan -> Mengarah ke Persediaan FIFO -->
+    <!-- Kartu 2: Persediaan -->
     <div class="col-md-3 mb-3 mb-md-0">
         <a href="{{ url('/inventory') }}" class="card-link-wrapper">
             <div class="card border-0 shadow-sm rounded-4 h-100 border-start border-success border-4">
@@ -69,7 +107,7 @@
         </a>
     </div>
 
-    <!-- Kartu 3: Nilai Buku Total -> Mengarah ke Laporan Nilai Buku -->
+    <!-- Kartu 3: Nilai Buku Total -->
     <div class="col-md-3 mb-3 mb-md-0">
         <a href="{{ url('/reports') }}" class="card-link-wrapper">
             <div class="card border-0 shadow-sm rounded-4 h-100 border-start border-warning border-4">
@@ -78,15 +116,15 @@
                         <i class="fa-solid fa-rupiah-sign text-warning fs-4"></i>
                     </div>
                     <div>
-                        <p class="text-muted small fw-bold mb-1">Total Nilai Buku</p>
-                        <h3 class="fw-bold mb-0 text-dark transition-color" style="font-size: 1.15rem;">Rp {{ number_format($totalNilaiBuku ?? 0, 0, ',', '.') }}</h3>
+                        <p class="text-muted small fw-bold mb-1">Total Nilai Buku Aset</p>
+                        <h3 class="fw-bold mb-0 text-dark transition-color" style="font-size: 1.1rem;">Rp {{ number_format($totalNilaiBuku ?? 0, 0, ',', '.') }}</h3>
                     </div>
                 </div>
             </div>
         </a>
     </div>
 
-    <!-- Kartu 4: Barang Rusak -> Mengarah ke Laporan / Aset Rusak -->
+    <!-- Kartu 4: Barang Rusak -->
     <div class="col-md-3">
         <a href="{{ url('/assets') }}" class="card-link-wrapper">
             <div class="card border-0 shadow-sm rounded-4 h-100 border-start border-danger border-4">
@@ -95,7 +133,7 @@
                         <i class="fa-solid fa-screwdriver-wrench text-danger fs-4"></i>
                     </div>
                     <div>
-                        <p class="text-muted small fw-bold mb-1">Barang Rusak</p>
+                        <p class="text-muted small fw-bold mb-1">Aset Rusak</p>
                         <h3 class="fw-bold mb-0 text-dark transition-color">{{ number_format($asetRusak ?? 0) }} <span class="fs-6 text-muted fw-normal">Unit</span></h3>
                     </div>
                 </div>
@@ -109,57 +147,57 @@
     <div class="col-lg-8 mb-4">
         <div class="card border-0 shadow-sm rounded-4 h-100">
             <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
-                <h6 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-chart-line text-primary me-2"></i>Tren Mutasi Barang (2026)</h6>
-                <button class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-download"></i> Unduh</button>
+                <h6 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-chart-line text-primary me-2"></i>Tren Mutasi Persediaan Barang ({{ date('Y') }})</h6>
+                <a href="{{ route('reports.index') }}" class="btn btn-sm btn-outline-secondary fw-bold"><i class="fa-solid fa-file-pdf me-1"></i> Laporan</a>
             </div>
             <div class="card-body">
-                <canvas id="mutasiChart" height="100"></canvas>
+                <canvas id="mutasiChart" height="110"></canvas>
             </div>
         </div>
     </div>
 
-    <!-- Aktivitas Terbaru -->
+    <!-- Aktivitas Terbaru Real dari AuditLog -->
     <div class="col-lg-4 mb-4">
         <div class="card border-0 shadow-sm rounded-4 h-100">
-            <div class="card-header bg-white py-3 border-0">
+            <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
                 <h6 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-clock-rotate-left text-success me-2"></i>Aktivitas Terbaru</h6>
+                <a href="{{ route('notifications.index') }}" class="text-decoration-none small fw-bold">Semua &rarr;</a>
             </div>
             <div class="card-body p-0">
                 <ul class="list-group list-group-flush">
-                    <li class="list-group-item px-4 py-3 border-light">
-                        <div class="d-flex align-items-start">
-                            <div class="bg-success-subtle text-success rounded-circle p-2 me-3"><i class="fa-solid fa-arrow-right-to-bracket"></i></div>
-                            <div>
-                                <p class="mb-0 fw-bold small text-dark">Barang Masuk (ATK)</p>
-                                <p class="mb-1 text-muted" style="font-size: 12px;">50 Rim Kertas HVS ditambahkan.</p>
-                                <small class="text-secondary" style="font-size: 11px;">10 Menit yang lalu</small>
+                    @forelse($recentLogs ?? [] as $log)
+                        @php
+                            $iconBg = match($log->modul) {
+                                'Aset' => 'bg-primary-subtle text-primary',
+                                'Persediaan' => 'bg-success-subtle text-success',
+                                'Opname' => 'bg-warning-subtle text-warning',
+                                default => 'bg-info-subtle text-info',
+                            };
+                            $icon = match($log->modul) {
+                                'Aset' => 'fa-boxes-stacked',
+                                'Persediaan' => 'fa-box-open',
+                                'Opname' => 'fa-clipboard-check',
+                                default => 'fa-bell',
+                            };
+                        @endphp
+                        <li class="list-group-item px-4 py-3 border-light">
+                            <div class="d-flex align-items-start">
+                                <div class="{{ $iconBg }} rounded-circle p-2 me-3" style="width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fa-solid {{ $icon }}" style="font-size: 13px;"></i>
+                                </div>
+                                <div>
+                                    <p class="mb-0 fw-bold small text-dark">{{ $log->modul }} &bull; {{ $log->aksi }}</p>
+                                    <p class="mb-1 text-muted" style="font-size: 11px;">{{ $log->detail }}</p>
+                                    <small class="text-secondary" style="font-size: 10px;">
+                                        {{ $log->user_name ?? 'Sistem' }} &bull; {{ $log->created_at ? $log->created_at->diffForHumans() : '-' }}
+                                    </small>
+                                </div>
                             </div>
-                        </div>
-                    </li>
-                    <li class="list-group-item px-4 py-3 border-light">
-                        <div class="d-flex align-items-start">
-                            <div class="bg-warning-subtle text-warning rounded-circle p-2 me-3"><i class="fa-solid fa-clipboard-check"></i></div>
-                            <div>
-                                <p class="mb-0 fw-bold small text-dark">Sesi Opname Disimpan</p>
-                                <p class="mb-1 text-muted" style="font-size: 12px;">Pengecekan Ruang IT selesai.</p>
-                                <small class="text-secondary" style="font-size: 11px;">1 Jam yang lalu</small>
-                            </div>
-                        </div>
-                    </li>
-                    <li class="list-group-item px-4 py-3">
-                        <div class="d-flex align-items-start">
-                            <div class="bg-danger-subtle text-danger rounded-circle p-2 me-3"><i class="fa-solid fa-arrow-right-from-bracket"></i></div>
-                            <div>
-                                <p class="mb-0 fw-bold small text-dark">Barang Keluar (Elektronik)</p>
-                                <p class="mb-1 text-muted" style="font-size: 12px;">2 Unit Printer didistribusikan.</p>
-                                <small class="text-secondary" style="font-size: 11px;">Kemarin, 14:30</small>
-                            </div>
-                        </div>
-                    </li>
+                        </li>
+                    @empty
+                        <li class="list-group-item text-center py-4 text-muted small">Belum ada aktivitas tercatat.</li>
+                    @endforelse
                 </ul>
-            </div>
-            <div class="card-footer bg-white text-center py-3 border-0">
-                <a href="#" class="text-decoration-none small fw-bold">Lihat Semua Aktivitas</a>
             </div>
         </div>
     </div>
@@ -173,23 +211,23 @@
         new Chart(ctx, {
             type: 'line',
             data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags'],
+                labels: {!! json_encode($chartLabels ?? ['Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags']) !!},
                 datasets: [
                     {
-                        label: 'Barang Masuk',
-                        data: [65, 59, 80, 81, 56, 55, 40, 75],
-                        borderColor: '#0d6efd', /* Warna Biru */
-                        backgroundColor: 'rgba(13, 110, 253, 0.15)',
+                        label: 'Barang Masuk (Unit)',
+                        data: {!! json_encode($chartMasuk ?? [10, 25, 50, 40, 30, 93]) !!},
+                        borderColor: '#0d6efd',
+                        backgroundColor: 'rgba(13, 110, 253, 0.12)',
                         borderWidth: 2,
                         fill: true,
                         tension: 0.4,
                         pointBackgroundColor: '#0d6efd'
                     }, 
                     {
-                        label: 'Barang Keluar',
-                        data: [28, 48, 40, 19, 86, 27, 90, 45],
-                        borderColor: '#fd7e14', /* Warna Oranye Terang */
-                        backgroundColor: 'rgba(253, 126, 20, 0.15)',
+                        label: 'Barang Keluar (Unit)',
+                        data: {!! json_encode($chartKeluar ?? [5, 12, 20, 15, 25, 0]) !!},
+                        borderColor: '#fd7e14',
+                        backgroundColor: 'rgba(253, 126, 20, 0.12)',
                         borderWidth: 2,
                         fill: true,
                         tension: 0.4,

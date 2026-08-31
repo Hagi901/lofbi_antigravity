@@ -6,9 +6,11 @@
 <div class="card border-0 shadow-sm rounded-4 h-100">
     <div class="card-header bg-white py-3 border-bottom-0 d-flex justify-content-between align-items-center">
         <h6 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-clipboard-check me-2 text-primary"></i>Riwayat Opname Fisik</h6>
+        @if(in_array(Auth::user()->role ?? '', ['admin', 'operator']))
         <a href="{{ route('opname.create') }}" class="btn btn-primary btn-sm fw-bold px-3 shadow-sm rounded-pill">
             <i class="fa-solid fa-plus me-1"></i> Mulai Opname Baru
         </a>
+        @endif
     </div>
     <div class="card-body p-4 pt-0">
         @if(session('success'))
@@ -29,6 +31,7 @@
                             <th class="text-secondary small fw-bold">PETUGAS / ADMIN</th>
                             <th class="text-secondary small fw-bold text-center">TOTAL ITEM</th>
                             <th class="text-secondary small fw-bold text-center">STATUS</th>
+                            <th class="text-secondary small fw-bold text-center">AKSI</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -45,6 +48,16 @@
                                     <span class="badge bg-success-subtle text-success border border-success px-3 py-1 rounded-pill">
                                         <i class="fa-solid fa-check me-1"></i> Selesai
                                     </span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="d-flex justify-content-center gap-1">
+                                        <a href="{{ route('opname.show', $s->id) }}" class="btn btn-light btn-sm text-primary shadow-sm" title="Lihat Hasil Opname">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </a>
+                                        <a href="{{ route('reports.opname.pdf', ['sesi_id' => $s->id]) }}" target="_blank" class="btn btn-light btn-sm text-dark shadow-sm" title="Cetak Berita Acara">
+                                            <i class="fa-solid fa-print"></i>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach

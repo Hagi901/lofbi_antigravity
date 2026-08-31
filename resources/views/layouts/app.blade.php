@@ -25,6 +25,7 @@
             <h4 class="text-warning fw-bold mb-0">LOFBI</h4>
             <small class="text-light">KSOP Kelas I Banten</small>
         </div>
+        @php $userRole = Auth::user()->role ?? 'viewer'; @endphp
         <div class="mt-3">
             <a href="{{ url('/dashboard') }}" class="{{ request()->is('dashboard') ? 'active' : '' }}">
                 <i class="fa-solid fa-chart-pie me-2"></i> Dashboard
@@ -35,7 +36,7 @@
             <a href="{{ url('/inventory') }}" class="{{ request()->is('inventory') || request()->is('inventory/in*') || request()->is('inventory/out*') ? 'active' : '' }}">
                 <i class="fa-solid fa-box-open me-2"></i> Persediaan (FIFO)
             </a>
-            @if(in_array(Auth::user()->role ?? '', ['validator', 'admin']))
+            @if(in_array($userRole, ['validator', 'admin']))
             @php
                 $pendingCount = \App\Models\TransaksiPersediaan::where('jenis','keluar')->where('status','menunggu')->count();
             @endphp
@@ -53,6 +54,11 @@
             <a href="{{ url('/reports') }}" class="{{ request()->is('reports*') ? 'active' : '' }}">
                 <i class="fa-solid fa-file-pdf me-2"></i> Laporan
             </a>
+            @if($userRole === 'admin')
+            <a href="{{ route('settings.index') }}" class="{{ request()->is('settings*') ? 'active' : '' }}">
+                <i class="fa-solid fa-sliders me-2"></i> Pengaturan Sistem
+            </a>
+            @endif
         </div>
     </div>
 
@@ -66,31 +72,43 @@
             <div class="ms-auto d-flex align-items-center">
                 
                 <!-- DROPDOWN NOTIFIKASI -->
+                @php
+                    $pendingNotifCount = \App\Models\TransaksiPersediaan::where('jenis','keluar')->where('status','menunggu')->count();
+                @endphp
                 <div class="dropdown me-3">
                     <button class="btn btn-light rounded-circle position-relative border-0 d-flex align-items-center justify-content-center" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="width: 40px; height: 40px;">
                         <i class="fa-regular fa-bell text-secondary fs-5"></i>
-                        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
-                            <span class="visually-hidden">New alerts</span>
+                        @if($pendingNotifCount > 0)
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 10px;">
+                            {{ $pendingNotifCount }}
                         </span>
+                        @endif
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2" style="width: 320px;">
-                        <li class="px-3 py-3 border-bottom bg-light">
-                            <h6 class="mb-0 fw-bold text-dark"><i class="fa-solid fa-bell text-warning me-2"></i>Notifikasi Terbaru</h6>
+                        <li class="px-3 py-3 border-bottom bg-light d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0 fw-bold text-dark"><i class="fa-solid fa-bell text-warning me-2"></i>Notifikasi</h6>
+                            <a href="{{ route('notifications.index') }}" class="small text-decoration-none fw-bold">Semua &rarr;</a>
                         </li>
+                        @if($pendingNotifCount > 0)
                         <li>
-                            <a class="dropdown-item py-3 border-bottom" href="#">
+                            <a class="dropdown-item py-3 border-bottom" href="{{ route('notifications.index') }}">
                                 <div class="d-flex align-items-center">
-                                    <div class="bg-primary text-white rounded-circle p-2 me-3 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
-                                        <i class="fa-solid fa-shield-halved"></i>
+                                    <div class="bg-warning bg-opacity-25 text-warning rounded-circle p-2 me-3 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+                                        <i class="fa-solid fa-clock text-warning"></i>
                                     </div>
                                     <div>
-                                        <p class="mb-0 small fw-bold text-dark">Keamanan Akun Aktif</p>
-                                        <p class="mb-0 small text-muted" style="font-size: 11px;">Sistem mencatat login terbaru Anda.</p>
+                                        <p class="mb-0 small fw-bold text-dark">{{ $pendingNotifCount }} Pengajuan Menunggu</p>
+                                        <p class="mb-0 small text-muted" style="font-size: 11px;">Barang keluar menunggu validasi.</p>
                                     </div>
                                 </div>
                             </a>
                         </li>
-                        <li><a class="dropdown-item text-center small text-primary fw-bold py-2 bg-light" href="#">Tandai Semua Dibaca</a></li>
+                        @else
+                        <li class="px-3 py-3 text-center text-muted small">
+                            <i class="fa-solid fa-circle-check text-success me-1"></i> Tidak ada notifikasi baru.
+                        </li>
+                        @endif
+                        <li><a class="dropdown-item text-center small text-primary fw-bold py-2 bg-light" href="{{ route('notifications.index') }}">Buka Pusat Notifikasi</a></li>
                     </ul>
                 </div>
 

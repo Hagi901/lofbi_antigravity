@@ -117,10 +117,10 @@
                 <h5 class="fw-bold text-dark mb-2">Berita Acara Opname</h5>
                 <p class="small text-muted mb-4 px-2">Cetak dokumen resmi hasil verifikasi fisik gudang untuk pelaporan pertanggungjawaban pimpinan.</p>
                 <div class="px-3">
-                    <button onclick="alert('Fitur Berita Acara Opname akan segera tersedia.')"
+                    <a href="{{ route('reports.opname.pdf') }}" target="_blank"
                         class="btn btn-dark w-100 btn-sm fw-bold shadow-sm">
                         <i class="fa-solid fa-print me-1"></i> Cetak Berita Acara
-                    </button>
+                    </a>
                 </div>
             </div>
         </div>

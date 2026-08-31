@@ -75,4 +75,13 @@ class OpnameController extends Controller
 
         return redirect()->route('opname.index')->with('success', 'Sesi Opname Fisik berhasil disimpan dan diverifikasi!');
     }
+
+    /**
+     * Menampilkan rincian hasil verifikasi fisik dalam satu sesi opname
+     */
+    public function show($id)
+    {
+        $sesi = OpnameSesi::with(['ruangan', 'admin', 'details.aset.jenisBarang.kategori'])->findOrFail($id);
+        return view('opname_show', compact('sesi'));
+    }
 }

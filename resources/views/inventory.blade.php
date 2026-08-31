@@ -41,13 +41,19 @@
             <i class="fa-solid fa-list-check text-primary me-2"></i>Kartu Persediaan (Metode FIFO)
         </h6>
         <div>
-            <!-- Tombol diarahkan ke Controller milikmu -->
-            <a href="{{ route('inventory.in.create') }}" class="btn btn-success btn-sm fw-bold px-3 shadow-sm me-2">
-                <i class="fa-solid fa-plus me-1"></i> Input Masuk
-            </a>
-            <a href="{{ route('inventory.out.create') }}" class="btn btn-danger btn-sm fw-bold px-3 shadow-sm">
-                <i class="fa-solid fa-minus me-1"></i> Input Keluar
-            </a>
+            @if(in_array(Auth::user()->role ?? '', ['validator', 'admin']) && ($pengajuanMenunggu ?? 0) > 0)
+                <a href="{{ route('inventory.pengajuan') }}" class="btn btn-warning btn-sm fw-bold px-3 shadow-sm me-2">
+                    <i class="fa-solid fa-stamp me-1"></i> Validasi Pengajuan ({{ $pengajuanMenunggu }})
+                </a>
+            @endif
+            @if(in_array(Auth::user()->role ?? '', ['admin', 'operator']))
+                <a href="{{ route('inventory.in.create') }}" class="btn btn-success btn-sm fw-bold px-3 shadow-sm me-2">
+                    <i class="fa-solid fa-plus me-1"></i> Input Masuk
+                </a>
+                <a href="{{ route('inventory.out.create') }}" class="btn btn-danger btn-sm fw-bold px-3 shadow-sm">
+                    <i class="fa-solid fa-minus me-1"></i> Input Keluar
+                </a>
+            @endif
         </div>
     </div>
     <div class="card-body p-4 pt-0">

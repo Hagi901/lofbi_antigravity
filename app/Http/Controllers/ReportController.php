@@ -137,6 +137,31 @@ class ReportController extends Controller
             ->download($filename);
     }
 
+    // ── BERITA ACARA OPNAME ───────────────────────────────────────────────────
+
+    /**
+     * Cetak Berita Acara Opname Fisik (PDF / Print)
+     */
+    public function exportOpnamePdf(Request $request)
+    {
+        $sesi = \App\Models\OpnameSesi::with(['ruangan', 'admin', 'details.aset.jenisBarang'])
+            ->when($request->sesi_id, fn($q) => $q->where('id', $request->sesi_id))
+            ->latest()
+            ->first();
+
+        if (!$sesi) {
+            return back()->with('error', 'Belum ada data sesi opname fisik yang tercatat.');
+        }
+
+        if (class_exists('\Barryvdh\DomPDF\Facade\Pdf')) {
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('reports.pdf_opname', compact('sesi'));
+            $pdf->setPaper('A4', 'portrait');
+            return $pdf->download('Berita_Acara_Opname_LOFBI_' . $sesi->id . '.pdf');
+        }
+
+        return view('reports.pdf_opname', compact('sesi'));
+    }
+
     // ── PRIVATE HELPERS ───────────────────────────────────────────────────────
 
     private function queryAset(?string $kategori)
