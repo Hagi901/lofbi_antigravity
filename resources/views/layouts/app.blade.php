@@ -54,6 +54,11 @@
             <a href="{{ url('/reports') }}" class="{{ request()->is('reports*') ? 'active' : '' }}">
                 <i class="fa-solid fa-file-pdf me-2"></i> Laporan
             </a>
+            @if(in_array($userRole, ['admin', 'operator']))
+            <a href="{{ route('import.index') }}" class="{{ request()->is('import*') ? 'active' : '' }}">
+                <i class="fa-solid fa-cloud-arrow-up me-2"></i> Import SIMAN & SAKTI
+            </a>
+            @endif
             @if($userRole === 'admin')
             <a href="{{ route('settings.index') }}" class="{{ request()->is('settings*') ? 'active' : '' }}">
                 <i class="fa-solid fa-sliders me-2"></i> Pengaturan Sistem

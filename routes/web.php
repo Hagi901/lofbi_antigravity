@@ -107,7 +107,15 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
 
-    // ── 7. Pengaturan Sistem → hanya admin ───────────────────────────────
+    // ── 7. Import & Sinkronisasi SIMAN & SAKTI → admin, operator ────────
+    Route::middleware('role:admin,operator')->group(function () {
+        Route::get('/import', [\App\Http\Controllers\ImportController::class, 'index'])->name('import.index');
+        Route::post('/import/sakti', [\App\Http\Controllers\ImportController::class, 'importSakti'])->name('import.sakti');
+        Route::post('/import/siman', [\App\Http\Controllers\ImportController::class, 'importSiman'])->name('import.siman');
+        Route::get('/import/template/{type}', [\App\Http\Controllers\ImportController::class, 'downloadTemplate'])->name('import.template');
+    });
+
+    // ── 8. Pengaturan Sistem → hanya admin ───────────────────────────────
     Route::middleware('role:admin')->group(function () {
         Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
         Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
