@@ -51,7 +51,8 @@ class OpnameController extends Controller
         DB::transaction(function () use ($request) {
             // Buat sesi baru dengan status 'draft'
             $sesi = OpnameSesi::create([
-                'admin_id'   => Auth::id(),
+                'ruangan_id' => $request->ruangan_id ?? null,
+                'admin_id'   => Auth::id() ?? 1,
                 'tanggal'    => $request->tanggal,
                 'periode'    => $request->periode,
                 'keterangan' => $request->keterangan,
