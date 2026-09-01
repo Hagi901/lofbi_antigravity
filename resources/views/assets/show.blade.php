@@ -103,7 +103,7 @@
                     </div>
 
                     <!-- Tabel Proyeksi Penyusutan -->
-                    <h6 class="fw-bold text-secondary mb-3 small"><i class="fa-solid fa-table-list text-secondary me-2"></i>Tabel Proyeksi Penyusutan ({{ $asset->masa_manfaat ?? 5 }} Tahun)</h6>
+                    <h6 class="fw-bold text-secondary mb-3 small"><i class="fa-solid fa-table-list text-secondary me-2"></i>Tabel Proyeksi Penyusutan — Garis Lurus SIMAN ({{ $asset->masa_manfaat ?? 5 }} Tahun)</h6>
                     <div class="table-responsive border rounded-3 shadow-sm">
                         <table class="table table-sm table-hover align-middle mb-0">
                             <thead class="table-light">
@@ -120,19 +120,27 @@
                                     $tahunPerolehan = $asset->tanggal_perolehan
                                         ? (int) \Carbon\Carbon::parse($asset->tanggal_perolehan)->format('Y')
                                         : (int) date('Y');
-                                    $umur        = (int) ($asset->masa_manfaat ?: 5);
-                                    $nilaiAwal   = (float) ($asset->nilai_perolehan ?: 0);
-                                    $susutPerThn = $umur > 0 ? $nilaiAwal / $umur : 0;
+                                    $umur         = (int) ($asset->masa_manfaat ?: 5);
+                                    $nilaiAwal    = (float) ($asset->nilai_perolehan ?: 0);
                                     $tahunSaatIni = (int) date('Y');
+
+                                    // ── Rumus SIMAN: nilai buku minimum Rp 1 ──
+                                    $nilaiYangDapatDisusutkan = max($nilaiAwal - 1, 0);
+                                    $susutPerThn = $umur > 0 ? $nilaiYangDapatDisusutkan / $umur : 0;
                                 @endphp
                                 @for($i = 0; $i <= $umur; $i++)
                                     @php
-                                        $beban    = $i == 0 ? 0 : $susutPerThn;
+                                        // Tahun 0 = perolehan, tidak ada beban
+                                        $beban     = ($i == 0) ? 0 : $susutPerThn;
                                         $akumulasi = $susutPerThn * $i;
-                                        $sisa      = max(0, $nilaiAwal - $akumulasi);
+
+                                        // Nilai buku = nilai awal - akumulasi, minimum Rp 1
+                                        $sisa      = ($i == 0) ? $nilaiAwal : max($nilaiAwal - $akumulasi, 1);
+
                                         $tahunIni  = $tahunPerolehan + $i;
                                         $isKini    = ($tahunIni === $tahunSaatIni && $i > 0);
                                         $isPast    = ($tahunIni < $tahunSaatIni && $i > 0);
+                                        $isHabis   = ($i == $umur);
                                     @endphp
                                     <tr class="{{ $isKini ? 'table-primary' : '' }}">
                                         <td class="text-center fw-bold {{ $i == 0 ? 'text-muted' : '' }}">
@@ -144,21 +152,24 @@
                                         <td class="{{ $i == 0 ? 'text-muted' : 'text-danger small' }}">
                                             {{ $i == 0 ? '-' : 'Rp ' . number_format($beban, 0, ',', '.') }}
                                         </td>
-                                        <td class="{{ $i == 0 ? 'text-muted' : 'text-muted small' }}">
+                                        <td class="text-muted small">
                                             {{ $i == 0 ? '-' : 'Rp ' . number_format($akumulasi, 0, ',', '.') }}
                                         </td>
-                                        <td class="text-end fw-bold {{ $i == 0 ? 'text-dark' : ($sisa == 0 ? 'text-danger' : 'text-dark') }}">
+                                        <td class="text-end fw-bold {{ $isHabis ? 'text-danger' : 'text-dark' }}">
                                             Rp {{ number_format($sisa, 0, ',', '.') }}
+                                            @if($isHabis)
+                                                <br><small class="text-danger fw-normal" style="font-size:10px;">Batas SIMAN</small>
+                                            @endif
                                         </td>
                                         <td class="text-center">
                                             @if($i == 0)
                                                 <span class="badge bg-secondary-subtle text-secondary border" style="font-size:9px;">Perolehan</span>
                                             @elseif($isKini)
                                                 <span class="badge bg-primary-subtle text-primary border" style="font-size:9px;"><i class="fa-solid fa-star me-1"></i>Periode Kini</span>
+                                            @elseif($isHabis)
+                                                <span class="badge bg-danger-subtle text-danger border" style="font-size:9px;">Habis Umur (Rp 1)</span>
                                             @elseif($isPast)
                                                 <span class="badge bg-light text-muted border" style="font-size:9px;">Sudah Lewat</span>
-                                            @elseif($sisa == 0)
-                                                <span class="badge bg-danger-subtle text-danger border" style="font-size:9px;">Habis Umur</span>
                                             @else
                                                 <span class="badge bg-light text-muted border" style="font-size:9px;">Proyeksi</span>
                                             @endif
@@ -168,6 +179,7 @@
                             </tbody>
                         </table>
                     </div>
+
                 </div>
 
                 <!-- Tab Riwayat Mutasi -->
