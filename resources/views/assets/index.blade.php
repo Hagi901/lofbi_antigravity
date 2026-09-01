@@ -29,108 +29,101 @@
         @endif
 
         <div class="table-responsive">
-            <!-- Tambahkan ID 'tabelAset' agar terbaca oleh DataTables -->
             <table id="tabelAset" class="table table-hover align-middle border-bottom w-100">
                 <thead class="table-light">
                     <tr>
-                        <th class="text-secondary small fw-bold border-0 text-center" width="5%">NO</th>
-                        <th class="text-secondary small fw-bold border-0">KODE ASET</th>
+                        <th class="text-secondary small fw-bold border-0">KODE</th>
                         <th class="text-secondary small fw-bold border-0">NAMA BARANG</th>
-                        <th class="text-secondary small fw-bold border-0">KATEGORI</th>
-                        <th class="text-secondary small fw-bold border-0">LOKASI RUANGAN</th>
-                        <th class="text-secondary small fw-bold border-0 text-center">PENYUSUTAN</th>
                         <th class="text-secondary small fw-bold border-0 text-center">KONDISI</th>
+                        <th class="text-secondary small fw-bold border-0 text-end">NILAI PEROLEHAN (Harga Beli)</th>
+                        <th class="text-secondary small fw-bold border-0 text-end">NILAI PENYUSUTAN (Terpakai)</th>
+                        <th class="text-secondary small fw-bold border-0 text-end">NILAI BUKU (Sisa)</th>
                         <th class="text-secondary small fw-bold border-0 text-center">AKSI</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- Looping data dari Database -->
                     @forelse ($assets ?? [] as $index => $asset)
+                        @php
+                            $nilaiPerolehan = (float) ($asset->nilai_perolehan ?? 0);
+                            $susut          = $asset->hitungPenyusutanGarisLurus();
+                            $akumulasi      = $susut['akumulasi'];
+                            $nilaiBuku      = $susut['nilai_buku'];
+
+                            $kondisiClass = 'bg-success-subtle text-success border-success';
+                            if(($asset->condition ?? $asset->kondisi ?? '') === 'Rusak Ringan') $kondisiClass = 'bg-warning-subtle text-warning border-warning';
+                            if(($asset->condition ?? $asset->kondisi ?? '') === 'Rusak Berat')  $kondisiClass = 'bg-danger-subtle text-danger border-danger';
+                            $kondisiLabel = $asset->condition ?? $asset->kondisi ?? 'Baik';
+                        @endphp
                         <tr>
-                            <td class="text-center text-muted fw-bold">{{ $index + 1 }}</td>
+                            {{-- KODE --}}
                             <td>
-                                <span class="badge bg-white text-dark border shadow-sm px-2 py-1">
-                                    {{ $asset->asset_code ?? 'AST-000' }}
+                                <span class="badge bg-white text-dark border shadow-sm px-2 py-1" style="font-size: 11px; letter-spacing: 0.3px;">
+                                    {{ $asset->asset_code ?? $asset->kode_aset ?? 'AST-000' }}
                                 </span>
                             </td>
-                            <td class="fw-bold text-dark">{{ $asset->name }}</td>
+
+                            {{-- NAMA BARANG + Ruangan --}}
                             <td>
-                                <!-- Penyesuaian: Menampilkan Kategori & Sub Kategori -->
-                                <span class="text-dark">{{ $asset->category->name ?? 'Tanpa Kategori' }}</span><br>
-                                <span class="badge bg-light text-secondary border mt-1">{{ $asset->subCategory->name ?? '-' }}</span>
+                                <a href="{{ route('assets.show', $asset->id) }}" class="fw-bold text-dark text-decoration-none">
+                                    {{ $asset->name ?? $asset->jenisBarang?->nama_generik ?? 'Aset #' . $asset->id }}
+                                </a>
+                                <br>
+                                <small class="text-muted">
+                                    <i class="fa-solid fa-location-dot text-danger me-1" style="font-size: 10px;"></i>
+                                    {{ $asset->room?->name ?? $asset->ruangan?->nama ?? 'Belum Dialokasikan' }}
+                                </small>
                             </td>
-                            <td class="text-muted small">
-                                <i class="fa-solid fa-location-dot text-danger me-1"></i> 
-                                {{ $asset->room->name ?? 'Belum Dialokasikan' }}
-                            </td>
-                            @php
-                                $nilaiPerolehan = (float) ($asset->nilai_perolehan ?? 0);
-                                $susut          = $asset->hitungPenyusutanGarisLurus();
-                                $akumulasi      = $susut['akumulasi'];
-                                $nilaiBuku      = $susut['nilai_buku'];
-                                $pctSusut       = $susut['persen_susut'];
-                                $tahunBerjalan  = $susut['tahun_berjalan'];
-                                $masaManfaat    = (int) ($asset->masa_manfaat ?? 0);
-                                $barColor       = $pctSusut < 50 ? 'bg-success' : ($pctSusut < 80 ? 'bg-warning' : 'bg-danger');
-                            @endphp
-                            <td style="min-width: 170px;">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <span class="small fw-bold text-dark">
-                                        Rp {{ number_format($nilaiBuku, 0, ',', '.') }}
-                                    </span>
-                                    <span class="badge {{ $pctSusut >= 80 ? 'bg-danger-subtle text-danger' : ($pctSusut >= 50 ? 'bg-warning-subtle text-warning' : 'bg-success-subtle text-success') }} border px-1" style="font-size: 10px;">
-                                        {{ $pctSusut }}%
-                                    </span>
-                                </div>
-                                <div class="progress rounded-pill" style="height: 6px;" title="Terdepresiasi {{ $pctSusut }}% — Tahun ke-{{ $tahunBerjalan }} dari {{ $masaManfaat }} tahun">
-                                    <div class="progress-bar {{ $barColor }}" style="width: {{ $pctSusut }}%"></div>
-                                </div>
-                                <div class="text-muted mt-1" style="font-size: 10px;">
-                                    Akum: Rp {{ number_format($akumulasi, 0, ',', '.') }}
-                                    &nbsp;·&nbsp; Thn ke-{{ $tahunBerjalan }}/{{ $masaManfaat }}
-                                </div>
-                            </td>
+
+                            {{-- KONDISI --}}
                             <td class="text-center">
-                                @php
-                                    $badgeClass = 'bg-success-subtle text-success border-success';
-                                    if($asset->condition == 'Rusak Ringan') $badgeClass = 'bg-warning-subtle text-warning border-warning';
-                                    if($asset->condition == 'Rusak Berat') $badgeClass = 'bg-danger-subtle text-danger border-danger';
-                                @endphp
-                                <span class="badge {{ $badgeClass }} border px-2 py-1">
-                                    {{ $asset->condition }}
-                                </span>
+                                <span class="badge {{ $kondisiClass }} border px-2 py-1">{{ $kondisiLabel }}</span>
                             </td>
+
+                            {{-- NILAI PEROLEHAN --}}
+                            <td class="text-end fw-bold text-dark">
+                                Rp {{ number_format($nilaiPerolehan, 0, ',', '.') }}
+                            </td>
+
+                            {{-- NILAI PENYUSUTAN (Terpakai) --}}
+                            <td class="text-end text-danger fw-bold">
+                                - Rp {{ number_format($akumulasi, 0, ',', '.') }}
+                            </td>
+
+                            {{-- NILAI BUKU (Sisa) --}}
+                            <td class="text-end fw-bold text-primary" style="font-size: 1rem;">
+                                Rp {{ number_format($nilaiBuku, 0, ',', '.') }}
+                            </td>
+
+                            {{-- AKSI --}}
                             <td class="text-center">
-                                <div class="d-flex justify-content-center gap-2">
-                                    {{-- Tombol Detail (semua role) --}}
+                                <div class="d-flex justify-content-center gap-1">
                                     <a href="{{ route('assets.show', $asset->id) }}" class="btn btn-light btn-sm text-secondary shadow-sm" title="Lihat Detail">
                                         <i class="fa-solid fa-eye"></i>
                                     </a>
                                     @if(in_array(Auth::user()->role ?? '', ['admin', 'operator']))
-                                    {{-- Tombol Edit --}}
-                                    <a href="{{ route('assets.edit', $asset->id) }}" class="btn btn-light btn-sm text-primary shadow-sm" title="Edit Aset">
-                                        <i class="fa-solid fa-pen-to-square"></i>
-                                    </a>
-                                    {{-- Tombol Hapus (admin saja) --}}
-                                    @if((Auth::user()->role ?? '') === 'admin')
-                                    <form action="{{ route('assets.destroy', $asset->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus aset ini secara permanen?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-light btn-sm text-danger shadow-sm" title="Hapus Aset">
-                                            <i class="fa-solid fa-trash"></i>
-                                        </button>
-                                    </form>
-                                    @endif
+                                        <a href="{{ route('assets.edit', $asset->id) }}" class="btn btn-light btn-sm text-primary shadow-sm" title="Edit Aset">
+                                            <i class="fa-solid fa-pen-to-square"></i>
+                                        </a>
+                                        @if((Auth::user()->role ?? '') === 'admin')
+                                            <form action="{{ route('assets.destroy', $asset->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus aset ini secara permanen?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-danger btn-sm shadow-sm" title="Hapus Aset">
+                                                    <i class="fa-solid fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        @endif
                                     @endif
                                 </div>
                             </td>
                         </tr>
                     @empty
-                        <!-- Kosong, karena DataTables akan otomatis menampilkan 'No data available' -->
+                        {{-- DataTables handles empty state --}}
                     @endforelse
                 </tbody>
             </table>
         </div>
+
     </div>
 </div>
 

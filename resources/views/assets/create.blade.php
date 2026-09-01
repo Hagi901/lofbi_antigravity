@@ -110,17 +110,45 @@
         </div>
     </div>
     
-    <!-- Panel Informasi -->
+    <!-- Panel Informasi Nilai Keuangan -->
     <div class="col-lg-4 mb-4">
-        <div class="card bg-primary bg-opacity-10 border-0 shadow-sm rounded-4 h-100">
+        <div class="card border-0 shadow-sm rounded-4 mb-3">
             <div class="card-body p-4">
                 <div class="d-flex align-items-center mb-3">
-                    <div class="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center me-3" style="width: 40px; height: 40px;">
-                        <i class="fa-solid fa-circle-info"></i>
+                    <div class="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center me-3" style="width: 38px; height: 38px;">
+                        <i class="fa-solid fa-rupiah-sign"></i>
                     </div>
-                    <h6 class="fw-bold text-primary mb-0">Informasi Form</h6>
+                    <h6 class="fw-bold text-dark mb-0">Penjelasan Nilai Keuangan</h6>
                 </div>
-                <p class="small text-muted mb-0" style="line-height: 1.6;">Pastikan <strong>Kode Aset</strong> unik dan belum pernah digunakan sebelumnya. <strong>Nilai Buku</strong> akan secara otomatis disamakan dengan Nilai Perolehan saat barang pertama kali disimpan ke dalam database.</p>
+
+                <div class="mb-3 pb-3 border-bottom">
+                    <p class="small fw-bold text-primary mb-1"><i class="fa-solid fa-circle-dot me-1"></i> Nilai Perolehan (Harga Beli)</p>
+                    <p class="small text-muted mb-0">Harga beli aset saat pertama kali diperoleh/dibeli. Nilai ini <strong>tidak berubah</strong> sepanjang umur aset.</p>
+                </div>
+
+                <div class="mb-3 pb-3 border-bottom">
+                    <p class="small fw-bold text-danger mb-1"><i class="fa-solid fa-circle-minus me-1"></i> Nilai Penyusutan (Terpakai)</p>
+                    <p class="small text-muted mb-0">Dihitung <strong>otomatis</strong> oleh sistem menggunakan metode <strong>Garis Lurus</strong> berdasarkan umur ekonomis yang diisi.</p>
+                </div>
+
+                <div class="mb-0">
+                    <p class="small fw-bold text-primary mb-1"><i class="fa-solid fa-circle-check me-1"></i> Nilai Buku (Sisa)</p>
+                    <p class="small text-muted mb-0">= <strong>Nilai Perolehan</strong> − <strong>Akumulasi Penyusutan</strong>. Ditampilkan otomatis di tabel dan laporan.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-primary bg-opacity-10 border-0 shadow-sm rounded-4">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-2">
+                    <i class="fa-solid fa-circle-info text-primary me-2"></i>
+                    <h6 class="fw-bold text-primary mb-0">Tips Pengisian</h6>
+                </div>
+                <p class="small text-muted mb-0" style="line-height: 1.6;">
+                    Pastikan <strong>Kode Aset</strong> unik dan belum pernah digunakan. 
+                    Kolom <strong>Nilai Buku</strong> dan <strong>Nilai Penyusutan</strong> akan dihitung dan ditampilkan 
+                    secara otomatis di halaman daftar aset setelah data disimpan.
+                </p>
             </div>
         </div>
     </div>
