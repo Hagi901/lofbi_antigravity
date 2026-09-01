@@ -8,7 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class Aset extends Model
 {
     protected $fillable = [
-        'jenis_barang_id', 'sub_kategori', 'kode_aset', 'merk', 'model', 'kondisi', 'ruangan_id',
+        'jenis_barang_id', 'sub_kategori', 'kode_aset', 'kode_bmn', 'nup', 'merk', 'model', 'no_seri',
+        'kondisi', 'ruangan_id', 'penanggung_jawab',
         'nilai_perolehan', 'tanggal_perolehan', 'masa_manfaat', 'metode_penyusutan',
         'akumulasi_penyusutan', 'nilai_buku', 'terakhir_dihitung_semester', 'last_opname_date',
     ];

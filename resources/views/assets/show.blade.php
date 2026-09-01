@@ -23,7 +23,19 @@
                 </div>
 
                 <h5 class="fw-bold text-dark mb-1">{{ $asset->name }}</h5>
-                <p class="text-muted small mb-3">{{ $asset->category->name ?? 'Aset' }} — <span class="fw-bold text-primary">{{ $asset->asset_code }}</span></p>
+                <p class="text-muted small mb-2">
+                    {{ $asset->category->name ?? 'Aset' }} &bull; <span class="fw-bold text-primary">{{ $asset->asset_code ?? $asset->kode_aset }}</span>
+                </p>
+                <div class="mb-3">
+                    <span class="badge bg-light text-primary border font-monospace px-2 py-1" style="font-size: 11px;">
+                        NUP: {{ $asset->nup ?? 1 }}
+                    </span>
+                    @if($asset->kode_bmn)
+                        <span class="badge bg-light text-secondary border font-monospace px-2 py-1 ms-1" style="font-size: 11px;">
+                            BMN: {{ $asset->kode_bmn }}
+                        </span>
+                    @endif
+                </div>
                 <span class="badge {{ $asset->kondisi === 'baik' ? 'bg-success-subtle text-success border border-success' : ($asset->kondisi === 'rusak_ringan' ? 'bg-warning-subtle text-warning border border-warning' : 'bg-danger-subtle text-danger border border-danger') }} px-3 py-2 rounded-pill mb-4">
                     <i class="fa-solid fa-circle-info me-1"></i> Kondisi: {{ $asset->condition }}
                 </span>
@@ -33,12 +45,12 @@
                     <h6 class="fw-bold text-secondary mb-3 small"><i class="fa-solid fa-chart-pie text-primary me-2"></i>Status Nilai & Umur Aset</h6>
                     <div class="mb-2 d-flex justify-content-between small">
                         <span class="fw-bold text-muted">Masa Manfaat</span>
-                        <span class="fw-bold text-primary">{{ $asset->useful_life_years ?? 5 }} Tahun</span>
+                        <span class="fw-bold text-primary">{{ $asset->useful_life_years ?? $asset->masa_manfaat ?? 5 }} Tahun ({{ ($asset->useful_life_years ?? $asset->masa_manfaat ?? 5) * 2 }} Semester)</span>
                     </div>
                     <div class="progress shadow-sm" style="height: 12px;">
                         <div class="progress-bar bg-primary" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
                     </div>
-                    <p class="small text-muted mt-3 mb-0" style="line-height: 1.5;">Metode perhitungan depresiasi: <strong>{{ $asset->metode_penyusutan ?? 'Garis Lurus' }}</strong> (Kemenhub BMN Standard).</p>
+                    <p class="small text-muted mt-3 mb-0" style="line-height: 1.5;">Metode perhitungan depresiasi: <strong>Garis Lurus Semesteran SIMAN (Floor Rp 1)</strong>.</p>
                 </div>
             </div>
         </div>
@@ -62,13 +74,17 @@
                 <!-- Tab Detail & Penyusutan -->
                 <div class="tab-pane fade show active" id="info" role="tabpanel">
                     <div class="row mb-4">
-                        <div class="col-md-6 mb-3">
-                            <p class="small text-muted mb-1 fw-bold">Lokasi Penempatan Saat Ini</p>
-                            <h6 class="fw-bold text-dark"><i class="fa-solid fa-location-dot text-danger me-2"></i>{{ $asset->room->name ?? 'Gudang Utama' }}</h6>
+                        <div class="col-md-4 mb-3">
+                            <p class="small text-muted mb-1 fw-bold">Lokasi Penempatan</p>
+                            <h6 class="fw-bold text-dark"><i class="fa-solid fa-location-dot text-danger me-2"></i>{{ $asset->room->name ?? $asset->ruangan?->nama ?? 'Belum Dialokasikan' }}</h6>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <p class="small text-muted mb-1 fw-bold">Tanggal Perolehan</p>
-                            <h6 class="fw-bold text-dark"><i class="fa-regular fa-calendar-check text-success me-2"></i>{{ $asset->tanggal_perolehan ? \Carbon\Carbon::parse($asset->tanggal_perolehan)->format('d F Y') : '-' }}</h6>
+                        <div class="col-md-4 mb-3">
+                            <p class="small text-muted mb-1 fw-bold">Penanggung Jawab (PJ)</p>
+                            <h6 class="fw-bold text-dark"><i class="fa-solid fa-user text-primary me-2"></i>{{ $asset->penanggung_jawab ?: 'Belum Ditentukan' }}</h6>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <p class="small text-muted mb-1 fw-bold">Nomor Seri Pabrik (S/N)</p>
+                            <h6 class="fw-bold text-dark font-monospace"><i class="fa-solid fa-barcode text-secondary me-2"></i>{{ $asset->no_seri ?: '-' }}</h6>
                         </div>
                     </div>
 

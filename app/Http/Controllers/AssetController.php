@@ -51,6 +51,10 @@ class AssetController extends Controller
             'condition' => 'required',
             'acquisition_value' => 'required|numeric|min:0',
             'useful_life_years' => 'required|integer|min:1',
+            'kode_bmn' => 'nullable|string|max:30',
+            'nup' => 'nullable|integer|min:1',
+            'no_seri' => 'nullable|string|max:100',
+            'penanggung_jawab' => 'nullable|string|max:150',
         ]);
 
         $kondisi = match (strtolower(str_replace(' ', '_', $request->condition))) {
@@ -68,12 +72,16 @@ class AssetController extends Controller
 
         $aset = Aset::create([
             'kode_aset' => $request->asset_code,
+            'kode_bmn' => $request->kode_bmn,
+            'nup' => $request->nup ?: 1,
             'jenis_barang_id' => $jenisBarang->id,
             'sub_kategori' => $subKategori,
             'merk' => $request->name,
             'model' => $request->model ?? '',
+            'no_seri' => $request->no_seri,
             'kondisi' => $kondisi,
             'ruangan_id' => $request->room_id,
+            'penanggung_jawab' => $request->penanggung_jawab,
             'nilai_perolehan' => $request->acquisition_value,
             'tanggal_perolehan' => $request->tanggal_perolehan ?? now()->toDateString(),
             'masa_manfaat' => $request->useful_life_years,
@@ -88,7 +96,7 @@ class AssetController extends Controller
             'user_name' => Auth::user()->name ?? 'Administrator',
             'modul' => 'Aset',
             'aksi' => 'Tambah',
-            'detail' => 'Mendaftarkan aset baru: ' . $aset->kode_aset . ' (' . $aset->merk . ')',
+            'detail' => 'Mendaftarkan aset baru: ' . $aset->kode_aset . ' (' . $aset->merk . ') - NUP: ' . ($aset->nup ?? 1),
         ]);
 
         return redirect()->route('assets.index')->with('success', 'Aset baru (' . $aset->kode_aset . ') berhasil didaftarkan!');
@@ -136,6 +144,10 @@ class AssetController extends Controller
             'condition' => 'required',
             'acquisition_value' => 'required|numeric|min:0',
             'useful_life_years' => 'required|integer|min:1',
+            'kode_bmn' => 'nullable|string|max:30',
+            'nup' => 'nullable|integer|min:1',
+            'no_seri' => 'nullable|string|max:100',
+            'penanggung_jawab' => 'nullable|string|max:150',
         ]);
 
         $kondisi = match (strtolower(str_replace(' ', '_', $request->condition))) {
@@ -154,10 +166,14 @@ class AssetController extends Controller
 
         $aset->update([
             'kode_aset' => $request->asset_code,
+            'kode_bmn' => $request->kode_bmn,
+            'nup' => $request->nup ?: 1,
             'sub_kategori' => $request->sub_category_id ?? $aset->sub_kategori,
             'merk' => $request->name,
+            'no_seri' => $request->no_seri,
             'kondisi' => $kondisi,
             'ruangan_id' => $request->room_id,
+            'penanggung_jawab' => $request->penanggung_jawab,
             'nilai_perolehan' => $request->acquisition_value,
             'masa_manfaat' => $request->useful_life_years,
         ]);

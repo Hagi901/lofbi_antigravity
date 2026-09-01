@@ -30,21 +30,36 @@
                     @csrf 
                     @method('PUT') {{-- Wajib ditambahkan untuk proses Update di Laravel --}}
                     
-                    <h6 class="fw-bold text-secondary mb-3 mt-2 border-bottom pb-2">Informasi Dasar Aset</h6>
+                    <h6 class="fw-bold text-secondary mb-3 mt-2 border-bottom pb-2">Informasi Dasar & Kodefikasi SIMAN / BMN</h6>
                     <div class="row mb-3">
-                        <div class="col-md-5 mb-3 mb-md-0">
-                            <label class="form-label small fw-bold text-secondary">Kode Aset <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control border-0 shadow-sm bg-light fw-bold text-primary" name="asset_code" value="{{ old('asset_code', $asset->asset_code) }}" required>
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <label class="form-label small fw-bold text-secondary">Kode Aset Internal <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control border-0 shadow-sm bg-light fw-bold text-primary" name="asset_code" value="{{ old('asset_code', $asset->asset_code ?? $asset->kode_aset) }}" required>
                         </div>
-                        <div class="col-md-7">
-                            <label class="form-label small fw-bold text-secondary">Nama Barang <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control border-0 shadow-sm bg-light" name="name" value="{{ old('name', $asset->name) }}" required>
+                        <div class="col-md-5 mb-3 mb-md-0">
+                            <label class="form-label small fw-bold text-secondary">Kodefikasi BMN (10 Digit SIMAN)</label>
+                            <input type="text" class="form-control border-0 shadow-sm bg-light font-monospace" name="kode_bmn" value="{{ old('kode_bmn', $asset->kode_bmn) }}" placeholder="Contoh: 3.05.01.05.001">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold text-secondary">NUP (No. Urut)</label>
+                            <input type="number" class="form-control border-0 shadow-sm bg-light font-monospace text-center fw-bold" name="nup" value="{{ old('nup', $asset->nup ?? 1) }}" min="1">
                         </div>
                     </div>
 
-                    <h6 class="fw-bold text-secondary mb-3 mt-4 border-bottom pb-2">Kategorisasi & Lokasi</h6>
                     <div class="row mb-3">
-                        <div class="col-md-4 mb-3 mb-md-0">
+                        <div class="col-md-7 mb-3 mb-md-0">
+                            <label class="form-label small fw-bold text-secondary">Nama Barang / Tipe <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control border-0 shadow-sm bg-light" name="name" value="{{ old('name', $asset->name) }}" required>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label small fw-bold text-secondary">Nomor Seri Pabrik (S/N)</label>
+                            <input type="text" class="form-control border-0 shadow-sm bg-light" name="no_seri" value="{{ old('no_seri', $asset->no_seri) }}" placeholder="Contoh: SN-88392019-ASUS">
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold text-secondary mb-3 mt-4 border-bottom pb-2">Kategorisasi, Lokasi & Penanggung Jawab</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-3 mb-3 mb-md-0">
                             <label class="form-label small fw-bold text-secondary">Kategori <span class="text-danger">*</span></label>
                             <select class="form-select border-0 shadow-sm bg-light" name="category_id" required>
                                 <option value="">-- Pilih Kategori --</option>
@@ -53,7 +68,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-4 mb-3 mb-md-0">
+                        <div class="col-md-3 mb-3 mb-md-0">
                             <label class="form-label small fw-bold text-secondary">Sub Kategori <span class="text-danger">*</span></label>
                             <select class="form-select border-0 shadow-sm bg-light" name="sub_category_id" required>
                                 <option value="">-- Pilih Sub --</option>
@@ -62,7 +77,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3 mb-3 mb-md-0">
                             <label class="form-label small fw-bold text-secondary">Lokasi Ruangan <span class="text-danger">*</span></label>
                             <select class="form-select border-0 shadow-sm bg-light" name="room_id" required>
                                 <option value="">-- Pilih Ruangan --</option>
@@ -70,6 +85,10 @@
                                     <option value="{{ $room->id }}" {{ ($asset->ruangan_id ?? $asset->room_id) == $room->id ? 'selected' : '' }}>{{ $room->name }}</option>
                                 @endforeach
                             </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold text-secondary">Penanggung Jawab (PJ)</label>
+                            <input type="text" class="form-control border-0 shadow-sm bg-light" name="penanggung_jawab" value="{{ old('penanggung_jawab', $asset->penanggung_jawab) }}" placeholder="Nama / NIP Pemegang">
                         </div>
                     </div>
 

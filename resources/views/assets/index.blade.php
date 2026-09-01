@@ -55,14 +55,24 @@
                             $kondisiLabel = $asset->condition ?? $asset->kondisi ?? 'Baik';
                         @endphp
                         <tr>
-                            {{-- KODE --}}
+                            {{-- KODE + BMN & NUP --}}
                             <td>
-                                <span class="badge bg-white text-dark border shadow-sm px-2 py-1" style="font-size: 11px; letter-spacing: 0.3px;">
-                                    {{ $asset->asset_code ?? $asset->kode_aset ?? 'AST-000' }}
-                                </span>
+                                <div class="d-flex align-items-center gap-1 mb-1">
+                                    <span class="badge bg-white text-dark border shadow-sm px-2 py-1" style="font-size: 11px; letter-spacing: 0.3px;">
+                                        {{ $asset->asset_code ?? $asset->kode_aset ?? 'AST-000' }}
+                                    </span>
+                                    <span class="badge bg-light text-primary border" style="font-size: 10px;" title="Nomor Urut Pendaftaran">
+                                        NUP {{ $asset->nup ?? 1 }}
+                                    </span>
+                                </div>
+                                @if($asset->kode_bmn)
+                                    <small class="text-muted font-monospace d-block" style="font-size: 10px;" title="Kodefikasi BMN SIMAN">
+                                        <i class="fa-solid fa-barcode text-secondary me-1"></i>{{ $asset->kode_bmn }}
+                                    </small>
+                                @endif
                             </td>
 
-                            {{-- NAMA BARANG + Ruangan --}}
+                            {{-- NAMA BARANG + Ruangan + PJ + S/N --}}
                             <td>
                                 <a href="{{ route('assets.show', $asset->id) }}" class="fw-bold text-dark text-decoration-none">
                                     {{ $asset->name ?? $asset->jenisBarang?->nama_generik ?? 'Aset #' . $asset->id }}
@@ -72,6 +82,16 @@
                                     <i class="fa-solid fa-location-dot text-danger me-1" style="font-size: 10px;"></i>
                                     {{ $asset->room?->name ?? $asset->ruangan?->nama ?? 'Belum Dialokasikan' }}
                                 </small>
+                                @if($asset->penanggung_jawab)
+                                    <small class="text-secondary ms-1">
+                                        &bull; <i class="fa-solid fa-user text-primary me-1" style="font-size: 10px;"></i>PJ: {{ $asset->penanggung_jawab }}
+                                    </small>
+                                @endif
+                                @if($asset->no_seri)
+                                    <br><small class="text-muted font-monospace" style="font-size: 10px;">
+                                        S/N: {{ $asset->no_seri }}
+                                    </small>
+                                @endif
                             </td>
 
                             {{-- KONDISI --}}
