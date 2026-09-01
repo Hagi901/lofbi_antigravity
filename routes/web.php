@@ -110,6 +110,7 @@ Route::middleware(['auth'])->group(function () {
     // ── 7. Import & Sinkronisasi SIMAN & SAKTI → admin, operator ────────
     Route::middleware('role:admin,operator')->group(function () {
         Route::get('/import', [\App\Http\Controllers\ImportController::class, 'index'])->name('import.index');
+        Route::post('/import', [\App\Http\Controllers\ImportController::class, 'importAuto'])->name('import.auto');
         Route::post('/import/sakti', [\App\Http\Controllers\ImportController::class, 'importSakti'])->name('import.sakti');
         Route::post('/import/siman', [\App\Http\Controllers\ImportController::class, 'importSiman'])->name('import.siman');
         Route::get('/import/template/{type}', [\App\Http\Controllers\ImportController::class, 'downloadTemplate'])->name('import.template');

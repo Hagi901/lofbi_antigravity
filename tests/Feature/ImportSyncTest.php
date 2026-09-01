@@ -119,4 +119,44 @@ class ImportSyncTest extends TestCase
         $this->assertEquals(10, $susut['total_semester']); // 5 tahun * 2 semester
         $this->assertEquals(1800000, $susut['susut_per_semester']); // 18jt / 10
     }
+
+    public function test_admin_can_use_auto_detect_single_upload_portal_for_both_siman_and_sakti(): void
+    {
+        $this->seed();
+        $admin = User::where('role', 'admin')->first() ?? User::first();
+        $ruangan = Ruangan::first();
+
+        // 1. Auto-Detect SAKTI
+        $saktiCsv = "No,Kode Barang,Nama Barang,Satuan,Saldo Stok,Harga Satuan\n";
+        $saktiCsv .= "1,1.01.03.01.014.000555,MINYAK PELUMAS MESIN KN,LITER,150,45000\n";
+        $saktiFile = UploadedFile::fake()->createWithContent('laporan_persediaan_auto.csv', $saktiCsv);
+
+        $response = $this->actingAs($admin)->post('/import', [
+            'file_dokumen'  => $saktiFile,
+            'jenis_dokumen' => 'auto',
+            'ruangan_id'    => $ruangan->id,
+        ]);
+        $response->assertRedirect('/import');
+        $response->assertSessionHas('success');
+        $this->assertStringContainsString('Persediaan SAKTI', (string)session('success'));
+
+        $this->assertTrue(Persediaan::whereHas('jenisBarang', fn($q) => $q->where('nama_generik', 'MINYAK PELUMAS MESIN KN'))->exists());
+
+        // 2. Auto-Detect SIMAN
+        $simanCsv = "No,Kode Aset,Kodefikasi BMN,NUP,Nama Barang,Nilai Perolehan,Masa Manfaat\n";
+        $simanCsv .= "1,AST-AUTO-888,3.05.01.04.001,1,Server Rack Dell PowerEdge,35000000,5\n";
+        $simanFile = UploadedFile::fake()->createWithContent('daftar_aset_bmn_auto.csv', $simanCsv);
+
+        $response = $this->actingAs($admin)->post('/import', [
+            'file_dokumen'  => $simanFile,
+            'jenis_dokumen' => 'auto',
+            'ruangan_id'    => $ruangan->id,
+        ]);
+        $response->assertRedirect('/import');
+        $response->assertSessionHas('success');
+        $this->assertStringContainsString('Aset Tetap SIMAN', (string)session('success'));
+
+        $this->assertTrue(Aset::where('kode_aset', 'AST-AUTO-888')->exists());
+    }
 }
+

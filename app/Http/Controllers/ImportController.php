@@ -7,13 +7,14 @@ use App\Models\Ruangan;
 use App\Services\ExcelBuilder;
 use App\Services\SaktiImportService;
 use App\Services\SimanImportService;
+use App\Services\XlsxParser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class ImportController extends Controller
 {
     /**
-     * Halaman Utama Pusat Sinkronisasi SIMAN & SAKTI
+     * Halaman Utama Pusat Sinkronisasi SIMAN & SAKTI (Single Smart Portal)
      */
     public function index()
     {
@@ -27,77 +28,128 @@ class ImportController extends Controller
     }
 
     /**
-     * Import Laporan Persediaan SAKTI
+     * Smart Auto-Detect Import (Satu Pintu Upload Cerdas)
      */
-    public function importSakti(Request $request, SaktiImportService $service)
+    public function importAuto(Request $request, SaktiImportService $saktiService, SimanImportService $simanService)
     {
+        $file = $request->file('file_dokumen') ?? $request->file('file_sakti') ?? $request->file('file_siman');
+        
+        if (!$file) {
+            return redirect()->route('import.index')->with('error', 'File laporan spreadsheet wajib diunggah.');
+        }
+
         $request->validate([
-            'file_sakti' => 'required|file|max:20480', // Maks 20 MB
-            'ruangan_id' => 'nullable|exists:ruangans,id',
+            'jenis_dokumen'=> 'nullable|string|in:auto,sakti,siman',
+            'ruangan_id'   => 'nullable|exists:ruangans,id',
         ]);
 
-        $file = $request->file('file_sakti');
         $path = $file->getRealPath();
+        $fileName = $file->getClientOriginalName();
+        $targetType = $request->jenis_dokumen ?: 'auto';
 
         try {
-            $result = $service->import($path, $request->ruangan_id);
+            // 1. Jika mode 'auto', jalankan deteksi tipe dokumen berdasarkan konten
+            if ($targetType === 'auto') {
+                $targetType = $this->detectDocumentType($path, $fileName);
+            }
+
+            // 2. Eksekusi import sesuai tipe yang terdeteksi
+            if ($targetType === 'sakti') {
+                $result = $saktiService->import($path, $request->ruangan_id);
+                $docLabel = 'Persediaan SAKTI';
+                $icon = 'fa-boxes-stacked';
+            } else {
+                $result = $simanService->import($path, $request->ruangan_id);
+                $docLabel = 'Aset Tetap SIMAN';
+                $icon = 'fa-landmark';
+            }
 
             if ($result['success']) {
                 AuditLog::create([
                     'user_id'   => Auth::id() ?? 1,
                     'user_name' => Auth::user()->name ?? 'Administrator',
                     'modul'     => 'Import Data',
-                    'aksi'      => 'Import SAKTI',
-                    'detail'    => 'Import persediaan SAKTI (' . $file->getClientOriginalName() . ') — ' . $result['imported_count'] . ' item berhasil disinkronkan',
+                    'aksi'      => 'Import ' . ($targetType === 'sakti' ? 'SAKTI' : 'SIMAN'),
+                    'detail'    => 'Sinkronisasi cerdas ' . $docLabel . ' (' . $fileName . ') — ' . $result['imported_count'] . ' data berhasil diperbarui',
                 ]);
 
-                return redirect()->route('import.index')
-                    ->with('success', $result['message']);
+                $msg = '✨ [Auto-Detector] Terdeteksi sebagai dokumen ' . $docLabel . '! ' . $result['message'];
+
+                return redirect()->route('import.index')->with('success', $msg);
             } else {
-                return redirect()->route('import.index')
-                    ->with('error', $result['message']);
+                return redirect()->route('import.index')->with('error', $result['message']);
             }
         } catch (\Exception $e) {
             return redirect()->route('import.index')
-                ->with('error', 'Terjadi kesalahan saat memproses file: ' . $e->getMessage());
+                ->with('error', 'Terjadi kendala saat membaca file: ' . $e->getMessage());
         }
     }
 
     /**
-     * Import Laporan Aset Tetap SIMAN
+     * Algoritma Deteksi Otomatis Jenis Dokumen (SIMAN vs SAKTI)
+     */
+    private function detectDocumentType(string $path, string $fileName): string
+    {
+        $lowerName = strtolower($fileName);
+        if (str_contains($lowerName, 'sakti') || str_contains($lowerName, 'persediaan')) {
+            return 'sakti';
+        }
+        if (str_contains($lowerName, 'siman') || str_contains($lowerName, 'aset')) {
+            return 'siman';
+        }
+
+        // Baca 20 baris pertama untuk identifikasi pola konten
+        $rows = XlsxParser::parse($path);
+        $sampleText = '';
+        foreach (array_slice($rows, 0, 20) as $row) {
+            $sampleText .= ' ' . implode(' ', array_map(fn($v) => strtolower(trim((string)$v)), $row));
+        }
+
+        // Bobot skor kecocokan
+        $saktiScore = 0;
+        $simanScore = 0;
+
+        // Indikator SAKTI (Persediaan)
+        if (str_contains($sampleText, 'persediaan')) $saktiScore += 3;
+        if (str_contains($sampleText, 'satuan')) $saktiScore += 2;
+        if (str_contains($sampleText, 'saldo')) $saktiScore += 2;
+        if (str_contains($sampleText, 'kuantitas')) $saktiScore += 2;
+        if (str_contains($sampleText, 'rincian buku persediaan')) $saktiScore += 5;
+        if (preg_match('/\b1\.\d{2}\.\d{2}\b/', $sampleText)) $saktiScore += 3; // Kode akun persediaan (1.01...)
+
+        // Indikator SIMAN (Aset Tetap)
+        if (str_contains($sampleText, 'nup')) $simanScore += 4;
+        if (str_contains($sampleText, 'masa manfaat') || str_contains($sampleText, 'umur ekonomis')) $simanScore += 3;
+        if (str_contains($sampleText, 'nilai perolehan') || str_contains($sampleText, 'akumulasi')) $simanScore += 3;
+        if (str_contains($sampleText, 'no seri') || str_contains($sampleText, 'serial number')) $simanScore += 2;
+        if (str_contains($sampleText, 'penanggung jawab') || str_contains($sampleText, 'pemakai')) $simanScore += 2;
+        if (preg_match('/\b3\.\d{2}\.\d{2}\b/', $sampleText)) $simanScore += 3; // Kodefikasi BMN aset (3.05...)
+
+        return $simanScore > $saktiScore ? 'siman' : 'sakti';
+    }
+
+    /**
+     * Endpoint legacy import langsung SAKTI (tetap didukung)
+     */
+    public function importSakti(Request $request, SaktiImportService $service)
+    {
+        if ($request->hasFile('file_sakti') && !$request->hasFile('file_dokumen')) {
+            $request->files->set('file_dokumen', $request->file('file_sakti'));
+        }
+        $request->merge(['jenis_dokumen' => 'sakti']);
+        return $this->importAuto($request, $service, app(SimanImportService::class));
+    }
+
+    /**
+     * Endpoint legacy import langsung SIMAN (tetap didukung)
      */
     public function importSiman(Request $request, SimanImportService $service)
     {
-        $request->validate([
-            'file_siman' => 'required|file|max:20480', // Maks 20 MB
-            'ruangan_id' => 'nullable|exists:ruangans,id',
-        ]);
-
-        $file = $request->file('file_siman');
-        $path = $file->getRealPath();
-
-        try {
-            $result = $service->import($path, $request->ruangan_id);
-
-            if ($result['success']) {
-                AuditLog::create([
-                    'user_id'   => Auth::id() ?? 1,
-                    'user_name' => Auth::user()->name ?? 'Administrator',
-                    'modul'     => 'Import Data',
-                    'aksi'      => 'Import SIMAN',
-                    'detail'    => 'Import aset SIMAN (' . $file->getClientOriginalName() . ') — ' . $result['imported_count'] . ' aset berhasil disinkronkan',
-                ]);
-
-                return redirect()->route('import.index')
-                    ->with('success', $result['message']);
-            } else {
-                return redirect()->route('import.index')
-                    ->with('error', $result['message']);
-            }
-        } catch (\Exception $e) {
-            return redirect()->route('import.index')
-                ->with('error', 'Terjadi kesalahan saat memproses file: ' . $e->getMessage());
+        if ($request->hasFile('file_siman') && !$request->hasFile('file_dokumen')) {
+            $request->files->set('file_dokumen', $request->file('file_siman'));
         }
+        $request->merge(['jenis_dokumen' => 'siman']);
+        return $this->importAuto($request, app(SaktiImportService::class), $service);
     }
 
     /**
