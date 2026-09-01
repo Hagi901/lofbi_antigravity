@@ -72,14 +72,16 @@
                         </div>
                     </div>
 
-                    <h6 class="fw-bold text-secondary mb-3 mt-2 border-bottom pb-2">Informasi Keuangan (Metode Garis Lurus — Dinamis)</h6>
+                    <h6 class="fw-bold text-secondary mb-3 mt-2 border-bottom pb-2">Informasi Keuangan (Metode Garis Lurus — SIMAN Semesteran)</h6>
                     @php
-                        $susutData     = $asset->hitungPenyusutanGarisLurus();
-                        $nilaiBukuKini = $susutData['nilai_buku'];
-                        $akumKini      = $susutData['akumulasi'];
-                        $susutPTahun   = $susutData['susut_per_tahun'];
-                        $tahunKe       = $susutData['tahun_berjalan'];
-                        $persenSusut   = $susutData['persen_susut'];
+                        $susutData          = $asset->hitungPenyusutanGarisLurus();
+                        $nilaiBukuKini      = $susutData['nilai_buku'];
+                        $akumKini           = $susutData['akumulasi'];
+                        $susutPSemester     = $susutData['susut_per_semester'];
+                        $susutPTahun        = $susutData['susut_per_tahun'];
+                        $semesterKe         = $susutData['semester_berjalan'];
+                        $totalSemester      = $susutData['total_semester'];
+                        $persenSusut        = $susutData['persen_susut'];
                     @endphp
                     <div class="row bg-light rounded-3 p-3 mb-4 mx-0 shadow-sm">
                         <div class="col-md-3 text-center border-end mb-3 mb-md-0">
@@ -87,13 +89,14 @@
                             <h6 class="fw-bold text-dark mb-0">Rp {{ number_format($asset->nilai_perolehan ?? 0, 0, ',', '.') }}</h6>
                         </div>
                         <div class="col-md-3 text-center border-end mb-3 mb-md-0">
-                            <p class="small text-muted mb-1 fw-bold">Beban Susut / Thn</p>
-                            <h6 class="fw-bold text-danger mb-0">Rp {{ number_format($susutPTahun, 0, ',', '.') }}</h6>
+                            <p class="small text-muted mb-1 fw-bold">Beban Susut / Semester</p>
+                            <h6 class="fw-bold text-danger mb-0">Rp {{ number_format($susutPSemester, 0, ',', '.') }}</h6>
+                            <small class="text-muted">≈ Rp {{ number_format($susutPTahun, 0, ',', '.') }} / thn</small>
                         </div>
                         <div class="col-md-3 text-center border-end mb-3 mb-md-0">
                             <p class="small text-muted mb-1 fw-bold">Akumulasi Saat Ini</p>
                             <h6 class="fw-bold text-warning mb-0">Rp {{ number_format($akumKini, 0, ',', '.') }}</h6>
-                            <small class="text-muted">Tahun ke-{{ $tahunKe }} / {{ $asset->masa_manfaat }}</small>
+                            <small class="text-muted">Semester ke-{{ $semesterKe }} / {{ $totalSemester }}</small>
                         </div>
                         <div class="col-md-3 text-center">
                             <p class="small text-muted mb-1 fw-bold">Nilai Buku Terkini</p>
@@ -102,72 +105,77 @@
                         </div>
                     </div>
 
-                    <!-- Tabel Proyeksi Penyusutan -->
-                    <h6 class="fw-bold text-secondary mb-3 small"><i class="fa-solid fa-table-list text-secondary me-2"></i>Tabel Proyeksi Penyusutan — Garis Lurus SIMAN ({{ $asset->masa_manfaat ?? 5 }} Tahun)</h6>
+                    <!-- Tabel Proyeksi Penyusutan Per Semester -->
+                    <h6 class="fw-bold text-secondary mb-3 small"><i class="fa-solid fa-table-list text-secondary me-2"></i>Tabel Proyeksi Penyusutan — Garis Lurus SIMAN ({{ $totalSemester }} Semester / {{ $asset->masa_manfaat }} Tahun)</h6>
                     <div class="table-responsive border rounded-3 shadow-sm">
                         <table class="table table-sm table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th class="text-secondary small fw-bold text-center py-2">TAHUN KE-</th>
-                                    <th class="text-secondary small fw-bold py-2">BEBAN PENYUSUTAN</th>
-                                    <th class="text-secondary small fw-bold py-2">AKUMULASI PENYUSUTAN</th>
-                                    <th class="text-secondary small fw-bold text-end py-2">NILAI BUKU TERSISA</th>
+                                    <th class="text-secondary small fw-bold text-center py-2" width="15%">SEMESTER KE-</th>
+                                    <th class="text-secondary small fw-bold py-2">PERIODE</th>
+                                    <th class="text-secondary small fw-bold text-end py-2">BEBAN PENYUSUTAN</th>
+                                    <th class="text-secondary small fw-bold text-end py-2">AKUMULASI</th>
+                                    <th class="text-secondary small fw-bold text-end py-2">NILAI BUKU</th>
                                     <th class="text-secondary small fw-bold text-center py-2">STATUS</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @php
-                                    $tahunPerolehan = $asset->tanggal_perolehan
-                                        ? (int) \Carbon\Carbon::parse($asset->tanggal_perolehan)->format('Y')
-                                        : (int) date('Y');
-                                    $umur         = (int) ($asset->masa_manfaat ?: 5);
-                                    $nilaiAwal    = (float) ($asset->nilai_perolehan ?: 0);
-                                    $tahunSaatIni = (int) date('Y');
-
-                                    // ── Rumus SIMAN: nilai buku minimum Rp 1 ──
-                                    $nilaiYangDapatDisusutkan = max($nilaiAwal - 1, 0);
-                                    $susutPerThn = $umur > 0 ? $nilaiYangDapatDisusutkan / $umur : 0;
+                                    $tglAwal       = $asset->tanggal_perolehan
+                                        ? \Carbon\Carbon::parse($asset->tanggal_perolehan)
+                                        : \Carbon\Carbon::now();
+                                    $umur          = (int) ($asset->masa_manfaat ?: 5);
+                                    $nilaiAwal     = (float) ($asset->nilai_perolehan ?: 0);
+                                    $totSem        = $umur * 2;
+                                    $bebanSem      = $totSem > 0 ? $nilaiAwal / $totSem : 0;
+                                    $semKiniAktif  = $semesterKe; // dari susutData di atas
+                                    $now           = \Carbon\Carbon::now();
                                 @endphp
-                                @for($i = 0; $i <= $umur; $i++)
+
+                                {{-- Baris 0: Perolehan --}}
+                                <tr>
+                                    <td class="text-center fw-bold text-muted">0</td>
+                                    <td class="text-muted small">{{ $tglAwal->format('d M Y') }} <span class="badge bg-secondary-subtle text-secondary border ms-1" style="font-size:9px;">Perolehan</span></td>
+                                    <td class="text-end text-muted">-</td>
+                                    <td class="text-end text-muted">-</td>
+                                    <td class="text-end fw-bold text-dark">Rp {{ number_format($nilaiAwal, 0, ',', '.') }}</td>
+                                    <td class="text-center"><span class="badge bg-secondary-subtle text-secondary border" style="font-size:9px;">Perolehan</span></td>
+                                </tr>
+
+                                @for($s = 1; $s <= $totSem; $s++)
                                     @php
-                                        // Tahun 0 = perolehan, tidak ada beban
-                                        $beban     = ($i == 0) ? 0 : $susutPerThn;
-                                        $akumulasi = $susutPerThn * $i;
+                                        $akumS   = min($bebanSem * $s, $nilaiAwal - 1);
+                                        $sisaS   = max($nilaiAwal - $akumS, 1);
+                                        $isHabis = ($s == $totSem);
 
-                                        // Nilai buku = nilai awal - akumulasi, minimum Rp 1
-                                        $sisa      = ($i == 0) ? $nilaiAwal : max($nilaiAwal - $akumulasi, 1);
+                                        // Tanggal akhir semester ke-s (tiap 6 bulan dari perolehan)
+                                        $tglSem  = $tglAwal->copy()->addMonths($s * 6);
+                                        $label   = 'S' . (($s % 2 == 1) ? '1' : '2') . '-' . $tglSem->format('Y');
 
-                                        $tahunIni  = $tahunPerolehan + $i;
-                                        $isKini    = ($tahunIni === $tahunSaatIni && $i > 0);
-                                        $isPast    = ($tahunIni < $tahunSaatIni && $i > 0);
-                                        $isHabis   = ($i == $umur);
+                                        $isKini  = ($s == $semKiniAktif);
+                                        $isPast  = ($s < $semKiniAktif);
                                     @endphp
-                                    <tr class="{{ $isKini ? 'table-primary' : '' }}">
-                                        <td class="text-center fw-bold {{ $i == 0 ? 'text-muted' : '' }}">
-                                            {{ $i }} <span class="text-muted fw-normal">({{ $tahunIni }})</span>
+                                    <tr class="{{ $isKini ? 'table-primary fw-semibold' : '' }}">
+                                        <td class="text-center fw-bold">
+                                            {{ $s }}
                                             @if($isKini)
-                                                <span class="badge bg-primary ms-1" style="font-size:9px;">Sekarang</span>
+                                                <span class="badge bg-primary ms-1" style="font-size:9px;">Kini</span>
                                             @endif
                                         </td>
-                                        <td class="{{ $i == 0 ? 'text-muted' : 'text-danger small' }}">
-                                            {{ $i == 0 ? '-' : 'Rp ' . number_format($beban, 0, ',', '.') }}
-                                        </td>
-                                        <td class="text-muted small">
-                                            {{ $i == 0 ? '-' : 'Rp ' . number_format($akumulasi, 0, ',', '.') }}
-                                        </td>
+                                        <td class="small text-muted">{{ $label }}</td>
+                                        <td class="text-end text-danger small">Rp {{ number_format($bebanSem, 0, ',', '.') }}</td>
+                                        <td class="text-end text-muted small">Rp {{ number_format($akumS, 0, ',', '.') }}</td>
                                         <td class="text-end fw-bold {{ $isHabis ? 'text-danger' : 'text-dark' }}">
-                                            Rp {{ number_format($sisa, 0, ',', '.') }}
+                                            Rp {{ number_format($sisaS, 0, ',', '.') }}
                                             @if($isHabis)
-                                                <br><small class="text-danger fw-normal" style="font-size:10px;">Batas SIMAN</small>
+                                                <br><small class="text-danger fw-normal" style="font-size:10px;">Lock Rp 1</small>
                                             @endif
                                         </td>
                                         <td class="text-center">
-                                            @if($i == 0)
-                                                <span class="badge bg-secondary-subtle text-secondary border" style="font-size:9px;">Perolehan</span>
-                                            @elseif($isKini)
+                                            @if($isKini)
                                                 <span class="badge bg-primary-subtle text-primary border" style="font-size:9px;"><i class="fa-solid fa-star me-1"></i>Periode Kini</span>
                                             @elseif($isHabis)
-                                                <span class="badge bg-danger-subtle text-danger border" style="font-size:9px;">Habis Umur (Rp 1)</span>
+                                                <span class="badge bg-danger-subtle text-danger border" style="font-size:9px;">Habis Umur</span>
                                             @elseif($isPast)
                                                 <span class="badge bg-light text-muted border" style="font-size:9px;">Sudah Lewat</span>
                                             @else
