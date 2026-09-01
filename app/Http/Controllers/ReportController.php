@@ -144,7 +144,7 @@ class ReportController extends Controller
      */
     public function exportOpnamePdf(Request $request)
     {
-        $sesi = \App\Models\OpnameSesi::with(['ruangan', 'admin', 'details.aset.jenisBarang'])
+        $sesi = \App\Models\OpnameSesi::with(['admin', 'approver', 'details.persediaan.jenisBarang.kategori'])
             ->when($request->sesi_id, fn($q) => $q->where('id', $request->sesi_id))
             ->latest()
             ->first();
@@ -161,6 +161,7 @@ class ReportController extends Controller
 
         return view('reports.pdf_opname', compact('sesi'));
     }
+
 
     // ── PRIVATE HELPERS ───────────────────────────────────────────────────────
 

@@ -81,6 +81,13 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware('role:admin,operator')->group(function () {
         Route::get('/opname/create', [OpnameController::class, 'create'])->name('opname.create');
         Route::post('/opname', [OpnameController::class, 'store'])->name('opname.store');
+        Route::get('/opname/{id}/input-fisik', [OpnameController::class, 'inputFisik'])->name('opname.input_fisik');
+        Route::post('/opname/{id}/save-fisik', [OpnameController::class, 'saveFisik'])->name('opname.save_fisik');
+    });
+    // Approve & reject → khusus validator
+    Route::middleware('role:admin,validator')->group(function () {
+        Route::post('/opname/{id}/approve', [OpnameController::class, 'approve'])->name('opname.approve');
+        Route::post('/opname/{id}/reject', [OpnameController::class, 'reject'])->name('opname.reject');
     });
     // Lihat daftar & detail → semua role boleh
     Route::get('/opname', [OpnameController::class, 'index'])->name('opname.index');

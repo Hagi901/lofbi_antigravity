@@ -278,25 +278,57 @@ class WebInterfaceTest extends TestCase
     public function test_authenticated_user_can_create_opname_session(): void
     {
         $this->seed();
-        $user = User::where('role', 'admin')->first() ?? User::first();
-        $ruangan = Ruangan::first();
+        $admin = User::where('role', 'admin')->first() ?? User::first();
+        $validator = User::where('role', 'validator')->first();
 
-        $response = $this->actingAs($user)->post('/opname', [
-            'ruangan_id' => $ruangan->id,
-            'tanggal' => date('Y-m-d'),
-            'keterangan' => 'Opname rutin mingguan',
+        // 1. Buka sesi opname baru (status: draft)
+        $response = $this->actingAs($admin)->post('/opname', [
+            'periode'    => 'Semester I 2026',
+            'tanggal'    => date('Y-m-d'),
+            'keterangan' => 'Opname Fisik Persediaan Semester I TA 2026',
         ]);
         $response->assertRedirect('/opname');
 
         $sesi = OpnameSesi::latest()->first();
         $this->assertNotNull($sesi);
+        $this->assertEquals('draft', $sesi->status);
+        $this->assertEquals('Semester I 2026', $sesi->periode);
+        $this->assertGreaterThan(0, $sesi->details->count());
 
-        // Show opname details
-        $response = $this->actingAs($user)->get('/opname/' . $sesi->id);
+        // 2. Akses halaman Input Fisik
+        $response = $this->actingAs($admin)->get('/opname/' . $sesi->id . '/input-fisik');
         $response->assertStatus(200);
 
-        // Export Berita Acara PDF
-        $response = $this->actingAs($user)->get('/reports/opname/pdf?sesi_id=' . $sesi->id);
+        // 3. Simpan Hasil Hitung Fisik (status: menunggu_persetujuan)
+        $stokFisikData = [];
+        foreach ($sesi->details as $detail) {
+            // Kita beri selisih -1 untuk item pertama untuk menguji selisih
+            $stokFisikData[$detail->id] = max(0, $detail->stok_buku - 1);
+        }
+
+        $response = $this->actingAs($admin)->post('/opname/' . $sesi->id . '/save-fisik', [
+            'stok_fisik' => $stokFisikData,
+        ]);
+        $response->assertRedirect('/opname/' . $sesi->id);
+
+        $sesi->refresh();
+        $this->assertEquals('menunggu_persetujuan', $sesi->status);
+
+        // 4. Validator Menyetujui Opname (status: disetujui)
+        $response = $this->actingAs($validator)->post('/opname/' . $sesi->id . '/approve');
+        $response->assertRedirect('/opname/' . $sesi->id);
+
+        $sesi->refresh();
+        $this->assertEquals('disetujui', $sesi->status);
+        $this->assertEquals($validator->id, $sesi->approver_id);
+
+        // 5. Show opname details
+        $response = $this->actingAs($admin)->get('/opname/' . $sesi->id);
+        $response->assertStatus(200);
+
+        // 6. Export Berita Acara PDF
+        $response = $this->actingAs($admin)->get('/reports/opname/pdf?sesi_id=' . $sesi->id);
         $response->assertStatus(200);
     }
+
 }
