@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Laporan Persediaan</title>
     <style>
-        body { font-family: Arial, sans-serif; font-size: 11px; color: #1a1a1a; }
+        body { font-family: 'Poppins', 'Segoe UI', Arial, sans-serif; font-size: 11px; color: #1a1a1a; }
         .header { text-align: center; margin-bottom: 18px; border-bottom: 2px solid #166534; padding-bottom: 12px; }
         .header h2 { margin: 0; font-size: 16px; color: #166534; letter-spacing: 1px; }
         .header p { margin: 4px 0 0 0; font-size: 11px; color: #555; }

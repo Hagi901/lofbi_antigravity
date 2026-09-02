@@ -8,10 +8,15 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Poppins) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        * { font-family: 'Poppins', sans-serif; }
+        body { background-color: #f8f9fa; font-family: 'Poppins', sans-serif; }
         .sidebar { width: 250px; height: 100vh; position: fixed; background: #0f172a; color: white; padding-top: 15px; z-index: 1040; }
-        .sidebar a { text-decoration: none; color: #cbd5e1; padding: 12px 20px; display: block; border-left: 4px solid transparent; transition: 0.3s; }
+        .sidebar a { text-decoration: none; color: #cbd5e1; padding: 12px 20px; display: block; border-left: 4px solid transparent; transition: 0.3s; font-size: 13.5px; }
         .sidebar a:hover, .sidebar a.active { background: #1e293b; color: #ffffff; border-left-color: #0d6efd; }
         .main-content { margin-left: 250px; min-height: 100vh; display: flex; flex-direction: column; }
         .navbar { background: #ffffff; border-bottom: 1px solid #e2e8f0; z-index: 1030; }

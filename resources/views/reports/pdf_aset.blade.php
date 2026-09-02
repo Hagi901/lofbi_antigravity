@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Laporan Aset Tetap</title>
     <style>
-        body { font-family: Arial, sans-serif; font-size: 11px; color: #1a1a1a; }
+        body { font-family: 'Poppins', 'Segoe UI', Arial, sans-serif; font-size: 11px; color: #1a1a1a; }
         .header { text-align: center; margin-bottom: 18px; border-bottom: 2px solid #1a3c6e; padding-bottom: 12px; }
         .header h2 { margin: 0; font-size: 16px; color: #1a3c6e; letter-spacing: 1px; }
         .header p { margin: 4px 0 0 0; font-size: 11px; color: #555; }
