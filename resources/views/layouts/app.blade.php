@@ -56,7 +56,7 @@
             </a>
             @if(in_array($userRole, ['admin', 'operator']))
             <a href="{{ route('import.index') }}" class="{{ request()->is('import*') ? 'active' : '' }}">
-                <i class="fa-solid fa-cloud-arrow-up me-2"></i> Import SIMAN & SAKTI
+                <i class="fa-solid fa-file-import me-2"></i> Input File Dokumen
             </a>
             @endif
             @if($userRole === 'admin')

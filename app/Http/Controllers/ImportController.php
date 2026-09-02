@@ -53,15 +53,15 @@ class ImportController extends Controller
                 $targetType = $this->detectDocumentType($path, $fileName);
             }
 
-            // 2. Eksekusi import sesuai tipe yang terdeteksi
+            // 2. Eksekusi import sesuai tipe yang terdeteksi secara otomatis
             if ($targetType === 'sakti') {
                 $result = $saktiService->import($path, $request->ruangan_id);
-                $docLabel = 'Persediaan SAKTI';
-                $icon = 'fa-boxes-stacked';
+                $docLabel = 'Barang Persediaan';
+                $aksiLabel = 'Import Persediaan';
             } else {
                 $result = $simanService->import($path, $request->ruangan_id);
-                $docLabel = 'Aset Tetap SIMAN';
-                $icon = 'fa-landmark';
+                $docLabel = 'Aset Inventarisasi';
+                $aksiLabel = 'Import Aset';
             }
 
             if ($result['success']) {
@@ -69,11 +69,11 @@ class ImportController extends Controller
                     'user_id'   => Auth::id() ?? 1,
                     'user_name' => Auth::user()->name ?? 'Administrator',
                     'modul'     => 'Import Data',
-                    'aksi'      => 'Import ' . ($targetType === 'sakti' ? 'SAKTI' : 'SIMAN'),
-                    'detail'    => 'Sinkronisasi cerdas ' . $docLabel . ' (' . $fileName . ') — ' . $result['imported_count'] . ' data berhasil diperbarui',
+                    'aksi'      => $aksiLabel,
+                    'detail'    => 'Input file ' . $docLabel . ' (' . $fileName . ') — ' . $result['imported_count'] . ' data berhasil diperbarui',
                 ]);
 
-                $msg = '✨ [Auto-Detector] Terdeteksi sebagai dokumen ' . $docLabel . '! ' . $result['message'];
+                $msg = 'File berhasil diproses sebagai ' . $docLabel . '! Sebanyak ' . $result['imported_count'] . ' data berhasil diperbarui di sistem.';
 
                 return redirect()->route('import.index')->with('success', $msg);
             } else {

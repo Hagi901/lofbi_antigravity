@@ -82,7 +82,7 @@ class ImportSyncTest extends TestCase
         $this->assertEquals(2500, $solar->batches->sum('sisa_stok'));
 
         // Verifikasi audit log
-        $this->assertTrue(AuditLog::where('aksi', 'Import SAKTI')->exists());
+        $this->assertTrue(AuditLog::where('aksi', 'Import Persediaan')->exists());
     }
 
     public function test_admin_can_import_siman_asset_data(): void
@@ -138,7 +138,7 @@ class ImportSyncTest extends TestCase
         ]);
         $response->assertRedirect('/import');
         $response->assertSessionHas('success');
-        $this->assertStringContainsString('Persediaan SAKTI', (string)session('success'));
+        $this->assertStringContainsString('Barang Persediaan', (string)session('success'));
 
         $this->assertTrue(Persediaan::whereHas('jenisBarang', fn($q) => $q->where('nama_generik', 'MINYAK PELUMAS MESIN KN'))->exists());
 
@@ -154,7 +154,7 @@ class ImportSyncTest extends TestCase
         ]);
         $response->assertRedirect('/import');
         $response->assertSessionHas('success');
-        $this->assertStringContainsString('Aset Tetap SIMAN', (string)session('success'));
+        $this->assertStringContainsString('Aset Inventarisasi', (string)session('success'));
 
         $this->assertTrue(Aset::where('kode_aset', 'AST-AUTO-888')->exists());
     }
