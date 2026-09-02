@@ -15,15 +15,45 @@
     <style>
         * { font-family: 'Poppins', sans-serif; }
         body { background-color: #f8f9fa; font-family: 'Poppins', sans-serif; }
-        .sidebar { width: 250px; height: 100vh; position: fixed; background: #0f172a; color: white; padding-top: 15px; z-index: 1040; }
+        .sidebar { width: 250px; height: 100vh; position: fixed; background: #0f172a; color: white; padding-top: 15px; z-index: 1040; transition: transform 0.3s ease-in-out; }
         .sidebar a { text-decoration: none; color: #cbd5e1; padding: 12px 20px; display: block; border-left: 4px solid transparent; transition: 0.3s; font-size: 13.5px; }
         .sidebar a:hover, .sidebar a.active { background: #1e293b; color: #ffffff; border-left-color: #0d6efd; }
-        .main-content { margin-left: 250px; min-height: 100vh; display: flex; flex-direction: column; }
+        .main-content { margin-left: 250px; min-height: 100vh; display: flex; flex-direction: column; transition: margin-left 0.3s ease; }
         .navbar { background: #ffffff; border-bottom: 1px solid #e2e8f0; z-index: 1030; }
         .content-area { padding: 25px; flex-grow: 1; }
+
+        /* Responsive Mobile Styles */
+        @media (max-width: 991.98px) {
+            .sidebar {
+                transform: translateX(-100%);
+                box-shadow: 0 0 25px rgba(0,0,0,0.5);
+            }
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0 !important;
+            }
+            .content-area {
+                padding: 15px !important;
+            }
+        }
+        .sidebar-backdrop {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(2px);
+            z-index: 1035;
+            display: none;
+        }
+        .sidebar-backdrop.show {
+            display: block;
+        }
     </style>
 </head>
 <body>
+    <!-- BACKDROP MOBILE -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
     <!-- SIDEBAR KIRI -->
     <div class="sidebar py-3">
         <div class="text-center mb-4 border-bottom border-secondary pb-3">
@@ -76,8 +106,13 @@
     <!-- KONTEN UTAMA KANAN -->
     <div class="main-content">
         <!-- NAVBAR ATAS -->
-        <nav class="navbar navbar-expand-lg px-4 py-3 shadow-sm">
-            <h5 class="mb-0 fw-bold text-dark">@yield('page_title', 'Dashboard')</h5>
+        <nav class="navbar navbar-expand-lg px-3 px-lg-4 py-3 shadow-sm">
+            <div class="d-flex align-items-center">
+                <button class="btn btn-light border-0 me-2 d-lg-none rounded-circle d-flex align-items-center justify-content-center shadow-sm" id="mobileSidebarToggle" type="button" style="width: 38px; height: 38px;">
+                    <i class="fa-solid fa-bars fs-5 text-dark"></i>
+                </button>
+                <h5 class="mb-0 fw-bold text-dark fs-6 fs-md-5">@yield('page_title', 'Dashboard')</h5>
+            </div>
             
             <div class="ms-auto d-flex align-items-center">
                 
@@ -170,19 +205,33 @@
         </div>
     </div>
 
-    <!-- Script Bootstrap Murni -->
+    <!-- Script Bootstrap & Interaktivitas -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- Script "Sentilan" agar Dropdown 100% Aktif -->
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // Mencari semua tombol yang memiliki fitur dropdown
+            // Dropdown initialization
             var dropdownElementList = [].slice.call(document.querySelectorAll('[data-bs-toggle="dropdown"]'));
-            
-            // Memaksa Bootstrap untuk mengaktifkan semuanya
-            var dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
+            dropdownElementList.map(function (dropdownToggleEl) {
                 return new bootstrap.Dropdown(dropdownToggleEl);
             });
+
+            // Mobile Sidebar Toggle & Backdrop
+            const toggleBtn = document.getElementById('mobileSidebarToggle');
+            const sidebar = document.querySelector('.sidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+
+            if (toggleBtn && sidebar && backdrop) {
+                toggleBtn.addEventListener('click', function() {
+                    sidebar.classList.toggle('show');
+                    backdrop.classList.toggle('show');
+                });
+
+                backdrop.addEventListener('click', function() {
+                    sidebar.classList.remove('show');
+                    backdrop.classList.remove('show');
+                });
+            }
         });
     </script>
 </body>
