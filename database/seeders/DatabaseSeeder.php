@@ -270,11 +270,13 @@ class DatabaseSeeder extends Seeder
             'detail' => 'Pengajuan barang keluar Seksi Kepegawaian',
         ]);
 
-        // ── Default System Settings ─────────────────────────────────────────
+                // ── Default System Settings ─────────────────────────────────────────
         Setting::updateOrCreate(['key' => 'nama_ksop'], ['value' => 'KSOP Kelas I Banten']);
-        Setting::updateOrCreate(['key' => 'alamat_instansi'], ['value' => 'Jl. Yos Sudarso No. 1, Bandar Lampung']);
+        Setting::updateOrCreate(['key' => 'alamat_instansi'], ['value' => 'Jl. Raya Pelabuhan No. 1, Banten']);
         Setting::updateOrCreate(['key' => 'logo_url'], ['value' => '/public/images/logo-ksop.png']);
         Setting::updateOrCreate(['key' => 'format_tanggal'], ['value' => 'DD MMM YYYY']);
         Setting::updateOrCreate(['key' => 'tahun_anggaran'], ['value' => '2026']);
+
+        $this->call(KsopBantenRealDataSeeder::class);
     }
 }
