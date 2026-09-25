@@ -35,10 +35,10 @@ class LofbiApiTest extends TestCase
             ->assertJsonPath('data.email', 'admin@lofbi.test');
     }
 
-    public function test_kasubbag_approval_cuts_inventory_fifo_across_batches(): void
+    public function test_validator_approval_cuts_inventory_fifo_across_batches(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
-        $kasubbag = User::factory()->create(['role' => 'kasubbag']);
+        $validator = User::factory()->create(['role' => 'validator']);
         $kategori = Kategori::create(['nama' => 'ATK', 'tipe' => 'persediaan']);
         $jenis = JenisBarang::create(['nama_generik' => 'Pulpen', 'kategori_id' => $kategori->id]);
         $persediaan = Persediaan::create([
@@ -75,7 +75,7 @@ class LofbiApiTest extends TestCase
         ]);
 
         $token = $this->postJson('/api/login', [
-            'email' => $kasubbag->email,
+            'email' => $validator->email,
             'password' => 'password',
         ])->json('access_token');
 
