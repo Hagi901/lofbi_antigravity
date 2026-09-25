@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-class InventoryController extends Controller
+class PersediaanController extends Controller
 {
     /**
      * Menampilkan daftar persediaan dan sisa stok FIFO

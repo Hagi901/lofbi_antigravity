@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AsetController;
-use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\PersediaanController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SettingController;
@@ -54,27 +54,27 @@ Route::middleware(['auth'])->group(function () {
     // ── 3. Persediaan & FIFO ──────────────────────────────────────────────
     // Tambah master, input masuk/keluar, edit, hapus → admin & operator
     Route::middleware('role:admin,operator')->group(function () {
-        Route::get('/inventory/create', [InventoryController::class, 'create'])->name('inventory.create');
-        Route::post('/inventory', [InventoryController::class, 'store'])->name('inventory.store');
-        Route::get('/inventory/in', [InventoryController::class, 'createIn'])->name('inventory.in.create');
-        Route::post('/inventory/in', [InventoryController::class, 'storeIn'])->name('inventory.in.store');
-        Route::get('/inventory/out', [InventoryController::class, 'createOut'])->name('inventory.out.create');
-        Route::post('/inventory/out', [InventoryController::class, 'storeOut'])->name('inventory.out.store');
-        Route::get('/inventory/{id}/edit', [InventoryController::class, 'edit'])->name('inventory.edit');
-        Route::put('/inventory/{id}', [InventoryController::class, 'update'])->name('inventory.update');
-        Route::delete('/inventory/{id}', [InventoryController::class, 'destroy'])->name('inventory.destroy');
+        Route::get('/inventory/create', [PersediaanController::class, 'create'])->name('inventory.create');
+        Route::post('/inventory', [PersediaanController::class, 'store'])->name('inventory.store');
+        Route::get('/inventory/in', [PersediaanController::class, 'createIn'])->name('inventory.in.create');
+        Route::post('/inventory/in', [PersediaanController::class, 'storeIn'])->name('inventory.in.store');
+        Route::get('/inventory/out', [PersediaanController::class, 'createOut'])->name('inventory.out.create');
+        Route::post('/inventory/out', [PersediaanController::class, 'storeOut'])->name('inventory.out.store');
+        Route::get('/inventory/{id}/edit', [PersediaanController::class, 'edit'])->name('inventory.edit');
+        Route::put('/inventory/{id}', [PersediaanController::class, 'update'])->name('inventory.update');
+        Route::delete('/inventory/{id}', [PersediaanController::class, 'destroy'])->name('inventory.destroy');
     });
 
     // Validasi pengajuan → hanya admin & validator
     Route::middleware('role:admin,validator')->group(function () {
-        Route::get('/inventory/pengajuan', [InventoryController::class, 'pengajuan'])->name('inventory.pengajuan');
-        Route::patch('/inventory/{id}/approve', [InventoryController::class, 'approve'])->name('inventory.approve');
-        Route::patch('/inventory/{id}/reject', [InventoryController::class, 'reject'])->name('inventory.reject');
+        Route::get('/inventory/pengajuan', [PersediaanController::class, 'pengajuan'])->name('inventory.pengajuan');
+        Route::patch('/inventory/{id}/approve', [PersediaanController::class, 'approve'])->name('inventory.approve');
+        Route::patch('/inventory/{id}/reject', [PersediaanController::class, 'reject'])->name('inventory.reject');
     });
 
     // Lihat kartu stok & detail buku persediaan → semua role boleh
-    Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
-    Route::get('/inventory/{id}', [InventoryController::class, 'show'])->name('inventory.show');
+    Route::get('/inventory', [PersediaanController::class, 'index'])->name('inventory.index');
+    Route::get('/inventory/{id}', [PersediaanController::class, 'show'])->name('inventory.show');
 
     // ── 4. Opname Fisik ───────────────────────────────────────────────────
     // Buat sesi opname → hanya admin & operator (create sebelum {id})
