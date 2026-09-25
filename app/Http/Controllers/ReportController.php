@@ -16,7 +16,7 @@ class ReportController extends Controller
     public function index()
     {
         $kategoris = Kategori::orderBy('nama')->get();
-        return view('reports', compact('kategoris'));
+        return view('reports.index', compact('kategoris'));
     }
 
     // ── ASET ─────────────────────────────────────────────────────────────────

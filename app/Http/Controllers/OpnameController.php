@@ -20,7 +20,7 @@ class OpnameController extends Controller
         $sesi = OpnameSesi::with(['admin', 'approver', 'details'])
             ->latest()
             ->get();
-        return view('opname', compact('sesi'));
+        return view('opname.index', compact('sesi'));
     }
 
     // ── 2. Form Buka Sesi Baru ───────────────────────────────────────────
@@ -35,7 +35,7 @@ class OpnameController extends Controller
             $periodes[] = "Semester II $t";
         }
 
-        return view('opname_create', compact('periodes'));
+        return view('opname.create', compact('periodes'));
     }
 
     // ── 3. Simpan Sesi + Snapshot Stok Buku ─────────────────────────────
@@ -96,7 +96,7 @@ class OpnameController extends Controller
             'details.persediaan.jenisBarang',
         ])->findOrFail($id);
 
-        return view('opname_show', compact('sesi'));
+        return view('opname.show', compact('sesi'));
     }
 
     // ── 5. Form Input Fisik ──────────────────────────────────────────────

@@ -30,7 +30,7 @@ class InventoryController extends Controller
         $totalStok = $items->sum(fn($i) => $i->batches->sum('sisa_stok'));
         $totalNilaiRupiah = $items->sum(fn($i) => $i->batches->sum(fn($b) => $b->sisa_stok * $b->harga_satuan));
 
-        return view('inventory', compact('items', 'pengajuanMenunggu', 'totalItems', 'totalStok', 'totalNilaiRupiah'));
+        return view('inventory.index', compact('items', 'pengajuanMenunggu', 'totalItems', 'totalStok', 'totalNilaiRupiah'));
     }
 
     /**
