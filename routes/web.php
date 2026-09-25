@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AssetController;
+use App\Http\Controllers\AsetController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\NotificationController;
@@ -41,15 +41,15 @@ Route::middleware(['auth'])->group(function () {
     // ── 2. Manajemen Aset ─────────────────────────────────────────────────
     // Tambah / Edit / Hapus → hanya admin & operator (create ditaruh sebelum {id})
     Route::middleware('role:admin,operator')->group(function () {
-        Route::get('/assets/create', [AssetController::class, 'create'])->name('assets.create');
-        Route::post('/assets', [AssetController::class, 'store'])->name('assets.store');
-        Route::get('/assets/{id}/edit', [AssetController::class, 'edit'])->name('assets.edit');
-        Route::put('/assets/{id}', [AssetController::class, 'update'])->name('assets.update');
-        Route::delete('/assets/{id}', [AssetController::class, 'destroy'])->name('assets.destroy');
+        Route::get('/assets/create', [AsetController::class, 'create'])->name('assets.create');
+        Route::post('/assets', [AsetController::class, 'store'])->name('assets.store');
+        Route::get('/assets/{id}/edit', [AsetController::class, 'edit'])->name('assets.edit');
+        Route::put('/assets/{id}', [AsetController::class, 'update'])->name('assets.update');
+        Route::delete('/assets/{id}', [AsetController::class, 'destroy'])->name('assets.destroy');
     });
     // Lihat daftar & detail → semua role boleh
-    Route::get('/assets', [AssetController::class, 'index'])->name('assets.index');
-    Route::get('/assets/{id}', [AssetController::class, 'show'])->name('assets.show');
+    Route::get('/assets', [AsetController::class, 'index'])->name('assets.index');
+    Route::get('/assets/{id}', [AsetController::class, 'show'])->name('assets.show');
 
     // ── 3. Persediaan & FIFO ──────────────────────────────────────────────
     // Tambah master, input masuk/keluar, edit, hapus → admin & operator

@@ -10,7 +10,7 @@ use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class AssetController extends Controller
+class AsetController extends Controller
 {
     /**
      * Menampilkan daftar seluruh aset
