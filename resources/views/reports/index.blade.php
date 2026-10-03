@@ -135,7 +135,7 @@
     <div class="card-body pt-0 px-4 pb-4">
         <div id="filter-summary" class="bg-light rounded-3 px-4 py-3 small text-muted">
             <i class="fa-solid fa-circle-info me-2 text-primary"></i>
-            Filter aktif: <strong id="summary-text">Semua Kategori</strong> —
+            Filter aktif: <strong id="summary-text">Semua Kategori</strong> &bull;
             Periode: <strong id="summary-period">{{ \Carbon\Carbon::now()->translatedFormat('F Y') }}</strong>
         </div>
     </div>

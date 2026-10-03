@@ -295,7 +295,7 @@ class PersediaanController extends Controller
     }
 
     /**
-     * Simpan PENGAJUAN barang keluar — status "menunggu" dulu
+     * Simpan PENGAJUAN barang keluar - status "menunggu" dulu
      */
     public function storeOut(Request $request)
     {
@@ -331,7 +331,7 @@ class PersediaanController extends Controller
             'user_name' => Auth::user()->name ?? 'Administrator',
             'modul'     => 'Persediaan',
             'aksi'      => 'Pengajuan Keluar',
-            'detail'    => 'Mengajukan pengeluaran ' . $qtyDiminta . ' ' . $persediaan->satuan . ' ' . $persediaan->name . ' untuk ' . $request->unit_kerja_penerima . ' — menunggu persetujuan Validator.',
+            'detail'    => 'Mengajukan pengeluaran ' . $qtyDiminta . ' ' . $persediaan->satuan . ' ' . $persediaan->name . ' untuk ' . $request->unit_kerja_penerima . ' - menunggu persetujuan Validator.',
         ]);
 
         return redirect()->route('inventory.index')->with('success', 'Pengajuan barang keluar sebanyak ' . $qtyDiminta . ' ' . $persediaan->satuan . ' berhasil diajukan! Menunggu persetujuan Validator.');

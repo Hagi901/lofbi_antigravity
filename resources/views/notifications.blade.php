@@ -26,7 +26,7 @@
                             <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
                                 <div>
                                     <strong class="text-dark">{{ $p->persediaan?->name }}</strong>
-                                    <span class="text-muted small ms-2">({{ $p->jumlah }} Unit) — untuk {{ $p->unit_kerja_penerima }}</span>
+                                    <span class="text-muted small ms-2">({{ $p->jumlah }} Unit) - untuk {{ $p->unit_kerja_penerima }}</span>
                                 </div>
                                 <small class="text-muted">{{ $p->tanggal ? \Carbon\Carbon::parse($p->tanggal)->format('d M Y') : '-' }}</small>
                             </div>
@@ -95,7 +95,7 @@
                         @foreach($asetHabisUmur as $a)
                             <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
                                 <div>
-                                    <strong class="text-dark">{{ $a->kode_aset }}</strong> — {{ $a->name }}
+                                    <strong class="text-dark">{{ $a->kode_aset }}</strong> - {{ $a->name }}
                                     <span class="text-muted small ms-2">({{ $a->ruangan?->nama ?? '-' }})</span>
                                 </div>
                                 <span class="badge bg-secondary-subtle text-secondary border">100% Terdepresiasi</span>

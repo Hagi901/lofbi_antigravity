@@ -13,7 +13,7 @@
                         <a href="{{ route('opname.index') }}" class="btn btn-light btn-sm rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 32px; height: 32px;">
                             <i class="fa-solid fa-arrow-left"></i>
                         </a>
-                        <h5 class="fw-bold text-dark mb-0">Opname Fisik Persediaan — {{ $sesi->periode ?? 'Sesi #' . $sesi->id }}</h5>
+                        <h5 class="fw-bold text-dark mb-0">Opname Fisik Persediaan: {{ $sesi->periode ?? 'Sesi #' . $sesi->id }}</h5>
                         <span class="badge {{ $sesi->statusBadgeClass() }} border px-3 py-1 rounded-pill">
                             <i class="fa-solid fa-circle-dot me-1" style="font-size: 8px;"></i> {{ $sesi->statusLabel() }}
                         </span>

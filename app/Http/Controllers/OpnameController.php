@@ -79,7 +79,7 @@ class OpnameController extends Controller
                 'user_name' => Auth::user()->name,
                 'modul'     => 'Opname',
                 'aksi'      => 'Buka Sesi Opname',
-                'detail'    => 'Buka sesi opname ' . $request->periode . ' — ' . $persediaans->count() . ' jenis barang di-snapshot',
+                'detail'    => 'Buka sesi opname ' . $request->periode . ' - ' . $persediaans->count() . ' jenis barang di-snapshot',
             ]);
         });
 
@@ -192,7 +192,7 @@ class OpnameController extends Controller
                     'jenis'              => $detail->selisih > 0 ? 'masuk' : 'keluar',
                     'jumlah'             => abs($detail->selisih),
                     'tanggal'            => $sesi->tanggal,
-                    'unit_kerja_penerima' => 'Penyesuaian Opname Fisik — ' . $sesi->periode,
+                    'unit_kerja_penerima' => 'Penyesuaian Opname Fisik - ' . $sesi->periode,
                     'diajukan_oleh'      => $sesi->admin_id,
                     'diputuskan_oleh'    => Auth::id(),
                     'status'             => 'disetujui',

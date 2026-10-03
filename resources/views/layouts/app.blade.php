@@ -168,7 +168,7 @@
                     <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2" style="width: 250px;">
                         <li class="px-3 py-3 bg-light border-bottom text-center">
                             <p class="mb-0 fw-bold text-dark">{{ Auth::user()->name ?? 'Pengguna LOFBI' }}</p>
-                            <small class="text-muted text-capitalize">{{ Auth::user()->role ?? 'Administrator' }} — KSOP Banten</small>
+                            <small class="text-muted text-capitalize">{{ Auth::user()->role ?? 'Administrator' }} - KSOP Banten</small>
                         </li>
                         
                         <!-- Menu Profil -->

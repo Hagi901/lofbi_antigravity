@@ -93,7 +93,7 @@
     </table>
 
     <div class="footer">
-        Dicetak oleh Sistem LOFBI — KSOP Kelas I Banten &copy; {{ date('Y') }}
+        Dicetak oleh Sistem LOFBI - KSOP Kelas I Banten &copy; {{ date('Y') }}
     </div>
 
     @if(!class_exists('\Barryvdh\DomPDF\Facade\Pdf'))

@@ -70,7 +70,7 @@ class ImportController extends Controller
                     'user_name' => Auth::user()->name ?? 'Administrator',
                     'modul'     => 'Import Data',
                     'aksi'      => $aksiLabel,
-                    'detail'    => 'Input file ' . $docLabel . ' (' . $fileName . ') — ' . $result['imported_count'] . ' data berhasil diperbarui',
+                    'detail'    => 'Input file ' . $docLabel . ' (' . $fileName . ') - ' . $result['imported_count'] . ' data berhasil diperbarui',
                 ]);
 
                 $msg = 'File berhasil diproses sebagai ' . $docLabel . '! Sebanyak ' . $result['imported_count'] . ' data berhasil diperbarui di sistem.';

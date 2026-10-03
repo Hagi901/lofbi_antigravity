@@ -6,7 +6,7 @@ use ZipArchive;
 use SimpleXMLElement;
 
 /**
- * XlsxParser — Parser file .xlsx & .csv murni berbasis PHP native (ZipArchive & SimpleXMLElement).
+ * XlsxParser - Parser file .xlsx & .csv murni berbasis PHP native (ZipArchive & SimpleXMLElement).
  * Tanpa perlu library eksternal berat (phpoffice/phpspreadsheet).
  */
 class XlsxParser

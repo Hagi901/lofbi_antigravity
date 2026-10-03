@@ -72,10 +72,10 @@
             <div class="card-body p-4">
                 <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-list-check text-primary me-2"></i>Alur Opname SAKTI</h6>
                 <ol class="list-unstyled mb-0" style="line-height: 2;">
-                    <li><span class="badge bg-secondary-subtle text-secondary border me-2">1</span> <strong>Buka Sesi</strong> — sistem snapshot stok buku</li>
-                    <li><span class="badge bg-warning-subtle text-warning border me-2">2</span> <strong>Input Fisik</strong> — isi jumlah hasil hitung</li>
-                    <li><span class="badge bg-warning-subtle text-warning border me-2">3</span> <strong>Ajukan</strong> — kirim ke Validator (KPA)</li>
-                    <li><span class="badge bg-success-subtle text-success border me-2">4</span> <strong>Disetujui</strong> — stok disesuaikan otomatis</li>
+                    <li><span class="badge bg-secondary-subtle text-secondary border me-2">1</span> <strong>Buka Sesi</strong>: sistem snapshot stok buku</li>
+                    <li><span class="badge bg-warning-subtle text-warning border me-2">2</span> <strong>Input Fisik</strong>: isi jumlah hasil hitung</li>
+                    <li><span class="badge bg-warning-subtle text-warning border me-2">3</span> <strong>Ajukan</strong>: kirim ke Validator (KPA)</li>
+                    <li><span class="badge bg-success-subtle text-success border me-2">4</span> <strong>Disetujui</strong>: stok disesuaikan otomatis</li>
                     <li><span class="badge bg-dark text-white me-2">5</span> <strong>Cetak</strong> Berita Acara Opname Fisik</li>
                 </ol>
             </div>

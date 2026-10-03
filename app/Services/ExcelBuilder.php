@@ -5,7 +5,7 @@ namespace App\Services;
 use ZipArchive;
 
 /**
- * ExcelBuilder — Generator file .xlsx murni tanpa library eksternal.
+ * ExcelBuilder - Generator file .xlsx murni tanpa library eksternal.
  * Menggunakan format Office Open XML (SpreadsheetML / OOXML).
  */
 class ExcelBuilder
@@ -71,7 +71,7 @@ class ExcelBuilder
         // xl/styles.xml
         $zip->addFromString('xl/styles.xml', $this->styles());
 
-        // xl/sharedStrings.xml  — tidak dipakai; semua inline string
+        // xl/sharedStrings.xml  - tidak dipakai; semua inline string
         foreach ($this->sheets as $idx => $sheet) {
             $sheetNum = $idx + 1;
             $zip->addFromString("xl/worksheets/sheet{$sheetNum}.xml",

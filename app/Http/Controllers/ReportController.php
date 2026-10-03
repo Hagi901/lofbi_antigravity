@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 class ReportController extends Controller
 {
     /**
-     * Halaman Pusat Unduh Laporan — kirim daftar kategori ke view
+     * Halaman Pusat Unduh Laporan - kirim daftar kategori ke view
      */
     public function index()
     {

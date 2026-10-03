@@ -92,10 +92,10 @@ class Aset extends Model
         return $this->nilai_buku;
     }
 
-    // ── Kalkulasi Penyusutan Garis Lurus — Metode SIMAN ───────────────────────
+    // ── Kalkulasi Penyusutan Garis Lurus - Metode SIMAN ───────────────────────
 
     /**
-     * Hitung penyusutan aktual per semester (Garis Lurus — SIMAN).
+     * Hitung penyusutan aktual per semester (Garis Lurus - SIMAN).
      *
      * Rumus SIMAN:
      *   Total Semester       = Masa Manfaat × 2
