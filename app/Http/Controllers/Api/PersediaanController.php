@@ -159,7 +159,7 @@ class PersediaanController extends Controller
     /**
      * Kasubbag menyetujui pengajuan barang keluar.
      * Stok dipotong secara FIFO dari batch paling awal.
-     * Proteksi role dilakukan oleh middleware 'role:kasubbag' di route.
+     * Proteksi role dilakukan oleh middleware 'role:admin,validator,pimpinan' di route.
      */
     public function setujui(TransaksiPersediaan $transaksi)
     {

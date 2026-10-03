@@ -33,7 +33,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/aset/{aset}/riwayat', [AsetController::class, 'riwayat']);
     Route::get('/aset/{aset}/qr', [AsetController::class, 'qr']);
 
-    // ── Persediaan (umum — admin & kasubbag/validator/operator bisa akses) ──
+    // ── Persediaan (umum — admin & operator/validator/pimpinan bisa akses) ──
     Route::get('/persediaan/ringkas', [PersediaanController::class, 'ringkas']);
     Route::get('/persediaan/jenis/{jenisBarang}/detail', [PersediaanController::class, 'detailByJenis']);
     Route::get('/persediaan/pengajuan', [PersediaanController::class, 'pengajuan']);
@@ -46,7 +46,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/persediaan/transfer-masuk', [PersediaanController::class, 'transferMasuk']);
 
     // ── Persediaan — approval persetujuan ──────────
-    Route::middleware('role:kasubbag,admin,validator,pimpinan')->group(function () {
+    Route::middleware('role:admin,validator,pimpinan')->group(function () {
         Route::post('/persediaan/pengajuan/{transaksi}/setujui', [PersediaanController::class, 'setujui']);
         Route::post('/persediaan/pengajuan/{transaksi}/tolak', [PersediaanController::class, 'tolak']);
     });

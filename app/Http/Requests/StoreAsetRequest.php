@@ -27,7 +27,7 @@ class StoreAsetRequest extends FormRequest
             'nilai_perolehan' => ['required', 'numeric', 'min:0'],
             'tanggal_perolehan' => ['nullable', 'date'],
             'masa_manfaat' => ['nullable', 'integer', 'min:1'],
-            'metode_penyusutan' => ['nullable', 'string', Rule::in(['Garis Lurus', 'Saldo Menurun'])],
+            'metode_penyusutan' => ['nullable', 'string', Rule::in(['Garis Lurus'])],
             'akumulasi_penyusutan' => ['sometimes', 'numeric', 'min:0'],
             'nilai_buku' => ['sometimes', 'numeric', 'min:0'],
             'terakhir_dihitung_semester' => ['nullable', 'string'],
