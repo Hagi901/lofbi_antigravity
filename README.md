@@ -5,9 +5,11 @@
 ![Database](https://img.shields.io/badge/Database-MySQL%20%7C%20SQLite-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
-Backend REST API untuk **Sistem Layanan Operasional & Form BMN / Inventarisasi (LOFBI)**. Aplikasi ini mengelola aset fisik inventaris (dengan kalkulasi penyusutan otomatis), persediaan barang habis pakai (dengan metode pemotongan stok FIFO), stok opname fisik per ruangan, serta menyajikan ringkasan statistik dan laporan resmi (BAOP, DBR, Nilai Buku).
+Aplikasi **Sistem Layanan Operasional & Form BMN / Inventarisasi (LOFBI)** untuk KSOP Kelas I Banten. Aplikasi ini mengelola aset fisik inventaris (dengan kalkulasi penyusutan otomatis), persediaan barang habis pakai (dengan metode pemotongan stok FIFO), stok opname fisik per ruangan, serta menyajikan ringkasan statistik dan laporan resmi (BAOP, DBR, Nilai Buku).
 
-> Frontend UI dan prototipe web telah dihapus. Folder ini berfungsi sebagai backend API murni.
+> Repo ini berisi **dua antarmuka yang berjalan bersamaan** di atas basis data & business logic yang sama:
+> 1. **Web app (Blade)** — antarmuka utama untuk dipakai sehari-hari (`routes/web.php`, login sesi biasa di `/login`).
+> 2. **REST API (Sanctum)** — untuk integrasi eksternal/mobile (`routes/api.php`, lihat [`API_DOCUMENTATION.md`](API_DOCUMENTATION.md)).
 
 ---
 
@@ -87,11 +89,15 @@ Server REST API aktif di: **`http://127.0.0.1:8000/api`**
 
 ## 🔐 Akun Demo (Seeder)
 
-| Role | Email | Password | Hak Akses Utama |
-|---|---|---|---|
-| **Admin** | `admin@lofbi.test` | `password` | Full Input (Aset, Persediaan, Opname, Pengajuan) |
-| **Kasubbag** | `kasubbag@lofbi.test` | `password` | Approval FIFO, Monitoring Dashboard, Laporan |
+Password semua akun demo: `password`
 
+| Role | Email | Hak Akses Utama |
+|---|---|---|
+| **Admin** | `admin@lofbi.test` | Full akses (Aset, Persediaan, Opname, Pengajuan, Settings) |
+| **Operator** | `operator@lofbi.test` | Input barang masuk/keluar, aset, opname fisik |
+| **Validator** | `validator@lofbi.test` | Approval/penolakan pengajuan barang keluar (potong stok FIFO), monitoring |
+| **Pimpinan** | `pimpinan@lofbi.test` | Read-only + laporan (setara Kasubbag di lapangan) |
+| **Viewer** | `viewer@lofbi.test` | Read-only semua halaman |
 ---
 
 ## 📑 Daftar Endpoint Utama (REST API)
@@ -149,6 +155,20 @@ Penyusutan / Semester = Penyusutan / Tahun / 2
 Nilai Buku = Nilai Perolehan - Akumulasi Penyusutan
 ```
 Command scheduler: `php artisan lofbi:hitung-penyusutan` (Otomatis berjalan tiap 1 Jan & 1 Juli).
+
+---
+
+## 🚀 Deploy ke Production
+
+File `.env` untuk development (local) **tidak boleh** dipakai langsung di server production. Sebelum go-live, pastikan checklist ini sudah dijalankan:
+
+- [ ] **`APP_ENV=production`** dan **`APP_DEBUG=false`** — kalau `APP_DEBUG` masih `true`, setiap error akan menampilkan stack trace, path file server, dan query SQL ke siapa pun yang mengakses halaman error. Ini risiko keamanan nyata, bukan sekadar kerapian.
+- [ ] **`LOG_LEVEL=error`** (bukan `debug`) — supaya file log tidak cepat membengkak dan tidak mencatat detail yang terlalu rinci.
+- [ ] **CORS** (`config/cors.php`) — `'allowed_origins' => ['*']` saat ini sengaja dibuat longgar untuk memudahkan development. Sebelum production, ganti jadi daftar domain spesifik yang benar-benar akan memakai API ini.
+- [ ] **Cron scheduler** — command `lofbi:hitung-penyusutan` (penyusutan aset tiap 1 Jan & 1 Jul) hanya berjalan otomatis kalau server punya cron job yang menjalankan `php artisan schedule:run` setiap menit. Ini **tidak otomatis ada** — perlu didaftarkan manual di cron server (lihat [dokumentasi Task Scheduling Laravel](https://laravel.com/docs/scheduling#running-the-scheduler)).
+- [ ] **Rate limiting login** — endpoint `/login` (web) dan `/api/login` belum punya pembatasan percobaan login (throttle), rentan brute-force. Tambahkan middleware `throttle` sebelum go-live.
+- [ ] **`MYSQLDUMP_PATH`** di `.env` — kalau pakai fitur Backup API dengan MySQL, pastikan path `mysqldump` sudah sesuai lokasi di server production (berbeda antara Windows/XAMPP dan Linux).
+- [ ] **Jalankan `php artisan config:cache` & `php artisan route:cache`** setelah `.env` production final — mempercepat response time.
 
 ---
 
