@@ -29,13 +29,33 @@ class LaporanController extends Controller
             ->paginate(50);
     }
 
-    public function nilaiBuku(Request $request)
+        public function nilaiBuku(Request $request)
     {
-        return Aset::with(['jenisBarang.kategori'])
+        $hasil = Aset::with(['jenisBarang.kategori'])
             ->when($request->kategori_id, fn ($q, $id) => $q->whereHas('jenisBarang', fn ($inner) => $inner->where('kategori_id', $id)))
-            ->select('id', 'jenis_barang_id', 'kode_aset', 'nilai_perolehan', 'akumulasi_penyusutan', 'nilai_buku', 'terakhir_dihitung_semester')
+            ->select('id', 'jenis_barang_id', 'kode_aset', 'nilai_perolehan', 'masa_manfaat', 'tanggal_perolehan', 'terakhir_dihitung_semester')
             ->orderBy('kode_aset')
             ->paginate(50);
+
+                $hasil->getCollection()->transform(function ($item) use ($applyFilters) {
+            $q = $applyFilters(
+                Aset::where('jenis_barang_id', $item->jenis_barang_id)
+            );
+
+            dump($item->nama_generik, $item->jenis_barang_id, $q->toSql(), $q->getBindings());
+
+            $rows = $q->get(['nilai_perolehan', 'masa_manfaat', 'tanggal_perolehan']);
+
+            dump($rows->toArray());
+
+            $item->total_nilai_buku = $rows->sum(fn ($a) => $a->nilai_buku_dinamis);
+
+            dump($item->total_nilai_buku);
+
+            return $item;
+        });
+
+        return $hasil;
     }
 
     /**
@@ -52,10 +72,16 @@ class LaporanController extends Controller
         // Ambil data tanpa pagination untuk keperluan export
         $data = match ($jenis) {
             'baop' => OpnameSesi::with(['ruangan', 'details'])->latest('tanggal')->get(),
+                        // akumulasi_penyusutan & nilai_buku dihitung live (bukan baca kolom
+            // tersimpan) agar sinkron dengan tampilan web.
             'nilai-buku' => Aset::with(['jenisBarang.kategori'])
-                ->select('id', 'jenis_barang_id', 'kode_aset', 'nilai_perolehan', 'akumulasi_penyusutan', 'nilai_buku', 'terakhir_dihitung_semester')
+                ->select('id', 'jenis_barang_id', 'kode_aset', 'nilai_perolehan', 'masa_manfaat', 'tanggal_perolehan', 'terakhir_dihitung_semester')
                 ->orderBy('kode_aset')
-                ->get(),
+                ->get()
+                ->each(function ($aset) {
+                    $aset->akumulasi_penyusutan = $aset->akumulasi_dinamis;
+                    $aset->nilai_buku = $aset->nilai_buku_dinamis;
+                }),
             default => Aset::with(['jenisBarang.kategori', 'ruangan'])->orderBy('kode_aset')->get(),
         };
 

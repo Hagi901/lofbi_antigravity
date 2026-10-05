@@ -11,13 +11,20 @@ use Illuminate\Http\Request;
 
 class AsetController extends Controller
 {
-    /**
-     * Ringkasan aset dikelompokkan per jenis barang.
-     * Mendukung filter: kategori_id, kondisi, ruangan_id, search.
-     * Response dipaginasi 20 item per halaman.
-     */
-    public function ringkas(Request $request)
+  
+          public function ringkas(Request $request)
     {
+        $applyFilters = function ($q) use ($request) {
+            return $q
+                ->when($request->kondisi, fn ($qq, $kondisi) => $qq->where('kondisi', $kondisi))
+                ->when($request->ruangan_id, fn ($qq, $id) => $qq->where('ruangan_id', $id))
+                ->when($request->search, fn ($qq, $search) => $qq->where(function ($inner) use ($search) {
+                    $inner->where('kode_aset', 'like', "%{$search}%")
+                        ->orWhere('merk', 'like', "%{$search}%")
+                        ->orWhere('model', 'like', "%{$search}%");
+                }));
+        };
+
         $query = Aset::query()
             ->join('jenis_barangs', 'jenis_barangs.id', '=', 'asets.jenis_barang_id')
             ->leftJoin('kategoris', 'kategoris.id', '=', 'jenis_barangs.kategori_id');
@@ -32,11 +39,25 @@ class AsetController extends Controller
                     ->orWhere('asets.model', 'like', "%{$search}%");
             }));
 
-        return $query
-            ->selectRaw('jenis_barangs.id as jenis_barang_id, jenis_barangs.nama_generik, kategoris.nama as kategori, count(asets.id) as jumlah_unit, coalesce(sum(asets.nilai_buku), 0) as total_nilai_buku')
+        $hasil = $query
+            ->selectRaw('jenis_barangs.id as jenis_barang_id, jenis_barangs.nama_generik, kategoris.nama as kategori, count(asets.id) as jumlah_unit')
             ->groupBy('jenis_barangs.id', 'jenis_barangs.nama_generik', 'kategoris.nama')
             ->orderBy('jenis_barangs.nama_generik')
             ->paginate(20);
+
+        // total_nilai_buku dihitung live per grup (bukan sum kolom tersimpan)
+        // agar sinkron dengan tampilan web. Hanya dihitung untuk 20 grup di
+        // halaman ini, jadi query tambahannya ringan.
+        $hasil->getCollection()->transform(function ($item) use ($applyFilters) {
+            $item->total_nilai_buku = $applyFilters(
+                Aset::where('jenis_barang_id', $item->jenis_barang_id)
+            )->get(['nilai_perolehan', 'masa_manfaat', 'tanggal_perolehan'])
+                ->sum(fn ($a) => $a->nilai_buku_dinamis);
+
+            return $item;
+        });
+
+        return $hasil;
     }
 
     /**

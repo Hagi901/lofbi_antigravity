@@ -19,9 +19,16 @@ class DashboardController extends Controller
             ->havingRaw('coalesce(sum(batch_persediaans.sisa_stok), 0) < persediaans.stok_minimum')
             ->count();
 
+        // Dihitung live per aset (bukan sum kolom tersimpan) agar sinkron dengan
+        // tampilan web — kolom nilai_buku cuma di-update 2x setahun oleh command
+        // lofbi:hitung-penyusutan, jadi sum() langsung di database bisa basi.
+        $totalNilaiBuku = Aset::select('nilai_perolehan', 'masa_manfaat', 'tanggal_perolehan')
+            ->get()
+            ->sum(fn ($a) => $a->nilai_buku_dinamis);
+
         return [
             'total_aset' => Aset::count(),
-            'total_nilai_buku' => Aset::sum('nilai_buku'),
+            'total_nilai_buku' => $totalNilaiBuku,
             'total_jenis_persediaan' => Persediaan::distinct('jenis_barang_id')->count('jenis_barang_id'),
             'alert_barang_rusak' => Aset::whereIn('kondisi', ['rusak_ringan', 'rusak_berat'])->count(),
             'alert_stok_menipis' => $stokMenipis,
