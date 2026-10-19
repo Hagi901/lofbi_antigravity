@@ -17,31 +17,36 @@ use App\Http\Controllers\UploadController;
 | Web Routes - LOFBI Fullstack Web Interface
 |--------------------------------------------------------------------------
 |
-| Role Matrix:
+| Matriks Hak Akses (3 Aktor):
 |
-|   admin
-|   - Kelola Aset
-|   - Kelola Persediaan
-|   - Kelola Master Barang
-|   - Membuat pengajuan barang keluar
-|   - Membuat dan input Opname
-|   - Upload & validasi data staging
-|   - Pengaturan & backup
-|   - Laporan
+| 1. Administrator (role: admin & operator)
+|    - Hak sama untuk:
+|      * Dashboard (lihat)
+|      * Aset & Persediaan (lihat, edit, hapus)
+|      * Pengajuan barang keluar (ajukan)
+|      * Opname fisik (buat sesi, input fisik, lihat)
+|      * Upload & revisi berkas staging, lihat paket & baris
+|      * Laporan & ekspor (lihat, unduh)
+|      * Profil & notifikasi
+|    - Khusus role admin:
+|      * Pengaturan sistem & unduh backup (/settings, /settings/backup)
+|      * Melihat daftar pengajuan barang keluar & validasi upload staging
 |
-|   validator
-|   - Melihat data Aset & Persediaan
-|   - Validasi data upload staging (setujui / tolak)
-|   - Approve / Reject pengajuan barang keluar
-|   - Approve / Reject hasil Opname
+| 2. Validator (role: validator)
+|    - Dashboard (lihat)
+|    - Aset & Persediaan (lihat daftar & detail)
+|    - Pengajuan barang keluar (lihat daftar, setujui, tolak)
+|    - Opname fisik (lihat sesi/detail, setujui, tolak)
+|    - Upload berkas staging (lihat paket & baris, setujui, tolak)
+|    - Laporan & ekspor (lihat, unduh)
+|    - Profil & notifikasi
 |
-|   pimpinan
-|   - Dashboard
-|   - Melihat Aset
-|   - Melihat Persediaan
-|   - Melihat Opname
-|   - Laporan
-|   - Monitoring
+| 3. Pimpinan (role: pimpinan)
+|    - Dashboard (lihat)
+|    - Aset & Persediaan (lihat daftar & detail)
+|    - Laporan & ekspor (lihat, unduh)
+|    - Profil & notifikasi
+|    - Dilarang (403): /upload, /opname, pengajuan barang keluar, dan semua aksi mutasi data
 |
 */
 
@@ -78,10 +83,10 @@ Route::middleware(['auth'])->group(function () {
 
     // ─────────────────────────────────────────────────────────────────────────
     // 1. DASHBOARD
-    // Admin & Pimpinan
+    // Admin, Operator, Validator, Pimpinan
     // ─────────────────────────────────────────────────────────────────────────
 
-    Route::middleware('role:admin,pimpinan')->group(function () {
+    Route::middleware('role:admin,operator,validator,pimpinan')->group(function () {
 
         Route::get('/dashboard', [DashboardController::class, 'index'])
             ->name('dashboard');
@@ -93,8 +98,8 @@ Route::middleware(['auth'])->group(function () {
     // 2. MANAJEMEN ASET
     // ─────────────────────────────────────────────────────────────────────────
 
-    // Edit & Hapus Aset → Admin
-    Route::middleware('role:admin')->group(function () {
+    // Edit & Hapus Aset -> Admin, Operator
+    Route::middleware('role:admin,operator')->group(function () {
         Route::get('/assets/{id}/edit', [AsetController::class, 'edit'])
             ->name('assets.edit');
 
@@ -105,8 +110,8 @@ Route::middleware(['auth'])->group(function () {
             ->name('assets.destroy');
     });
 
-    // Lihat Aset → Admin, Validator, Pimpinan
-    Route::middleware('role:admin,validator,pimpinan')->group(function () {
+    // Lihat Aset -> Admin, Operator, Validator, Pimpinan
+    Route::middleware('role:admin,operator,validator,pimpinan')->group(function () {
 
         Route::get('/assets', [AsetController::class, 'index'])
             ->name('assets.index');
@@ -120,8 +125,8 @@ Route::middleware(['auth'])->group(function () {
     // 3. PERSEDIAAN
     // ─────────────────────────────────────────────────────────────────────────
 
-    // Edit & Hapus Master Persediaan → Admin
-    Route::middleware('role:admin')->group(function () {
+    // Edit & Hapus Master Persediaan -> Admin, Operator
+    Route::middleware('role:admin,operator')->group(function () {
         Route::get('/inventory/{id}/edit', [PersediaanController::class, 'edit'])
             ->name('inventory.edit');
 
@@ -134,9 +139,8 @@ Route::middleware(['auth'])->group(function () {
 
 
     // Pengajuan Barang Keluar
-    // Admin → membuat pengajuan
-    // Validator → melihat dan memvalidasi
-    Route::middleware('role:admin')->group(function () {
+    // Admin & Operator -> membuat pengajuan
+    Route::middleware('role:admin,operator')->group(function () {
 
         Route::get('/inventory/out', [PersediaanController::class, 'createOut'])
             ->name('inventory.out.create');
@@ -145,13 +149,14 @@ Route::middleware(['auth'])->group(function () {
             ->name('inventory.out.store');
     });
 
+    // Daftar Pengajuan Barang Keluar -> Admin, Validator
     Route::middleware('role:admin,validator')->group(function () {
 
         Route::get('/inventory/pengajuan', [PersediaanController::class, 'pengajuan'])
             ->name('inventory.pengajuan');
     });
 
-    // Approve / Reject Pengajuan Barang Keluar → Validator
+    // Approve / Reject Pengajuan Barang Keluar -> Validator
     Route::middleware('role:validator')->group(function () {
 
         Route::patch('/inventory/{id}/approve', [PersediaanController::class, 'approve'])
@@ -162,8 +167,8 @@ Route::middleware(['auth'])->group(function () {
     });
 
 
-    // Lihat Persediaan → Admin, Validator, Pimpinan
-    Route::middleware('role:admin,validator,pimpinan')->group(function () {
+    // Lihat Persediaan -> Admin, Operator, Validator, Pimpinan
+    Route::middleware('role:admin,operator,validator,pimpinan')->group(function () {
 
         Route::get('/inventory', [PersediaanController::class, 'index'])
             ->name('inventory.index');
@@ -177,8 +182,8 @@ Route::middleware(['auth'])->group(function () {
     // 4. OPNAME FISIK
     // ─────────────────────────────────────────────────────────────────────────
 
-    // Membuat sesi & input hasil fisik → Admin
-    Route::middleware('role:admin')->group(function () {
+    // Membuat sesi & input hasil fisik -> Admin, Operator
+    Route::middleware('role:admin,operator')->group(function () {
 
         Route::get('/opname/create', [OpnameController::class, 'create'])
             ->name('opname.create');
@@ -194,7 +199,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
 
-    // Approve / Reject Opname → Validator
+    // Approve / Reject Opname -> Validator
     Route::middleware('role:validator')->group(function () {
 
         Route::post('/opname/{id}/approve', [OpnameController::class, 'approve'])
@@ -205,8 +210,8 @@ Route::middleware(['auth'])->group(function () {
     });
 
 
-    // Lihat Opname → Admin, Validator, Pimpinan
-    Route::middleware('role:admin,validator,pimpinan')->group(function () {
+    // Lihat Opname -> Admin, Operator, Validator (Pimpinan TIDAK punya akses)
+    Route::middleware('role:admin,operator,validator')->group(function () {
 
         Route::get('/opname', [OpnameController::class, 'index'])
             ->name('opname.index');
@@ -218,10 +223,10 @@ Route::middleware(['auth'])->group(function () {
 
     // ─────────────────────────────────────────────────────────────────────────
     // 5. LAPORAN & EXPORT
-    // Admin & Pimpinan
+    // Admin, Operator, Validator, Pimpinan
     // ─────────────────────────────────────────────────────────────────────────
 
-    Route::middleware('role:admin,pimpinan')->group(function () {
+    Route::middleware('role:admin,operator,validator,pimpinan')->group(function () {
 
         Route::get('/reports', [ReportController::class, 'index'])
             ->name('reports.index');
@@ -272,8 +277,8 @@ Route::middleware(['auth'])->group(function () {
     // 7.1 MODUL UPLOAD & VALIDASI DATA (STAGING & PROMOSI)
     // ─────────────────────────────────────────────────────────────────────────
 
-    // Melihat paket & baris (Admin, Operator, Validator, Pimpinan)
-    Route::middleware('role:admin,operator,validator,pimpinan')->group(function () {
+    // Melihat paket & baris (Admin, Operator, Validator - Pimpinan TIDAK punya akses)
+    Route::middleware('role:admin,operator,validator')->group(function () {
         Route::get('/upload', [UploadController::class, 'index'])->name('upload.index');
         Route::get('/upload/{id}', [UploadController::class, 'show'])->name('upload.show');
     });

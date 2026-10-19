@@ -10,15 +10,17 @@
 
 | Modul & Endpoint | Admin | Operator | Validator | Pimpinan |
 |---|:---:|:---:|:---:|:---:|
+| Dashboard (`GET /api/dashboard/*`) | Ya | Ya | Ya | Ya |
 | Lihat Data Aset (`GET /api/aset/*`) | Ya | Ya | Ya | Ya |
-| Edit & Hapus Aset (`PUT/DELETE /api/aset/*`) | Ya | Tidak | Tidak | Tidak |
+| Edit & Hapus Aset (`PUT/DELETE /api/aset/*`) | Ya | Ya | Tidak | Tidak |
 | Lihat Persediaan (`GET /api/persediaan/*`) | Ya | Ya | Ya | Ya |
-| Edit Master Persediaan (`PUT /api/persediaan/*`) | Ya | Tidak | Tidak | Tidak |
+| Edit Master Persediaan (`PUT /api/persediaan/*`) | Ya | Ya | Tidak | Tidak |
 | Buat Pengajuan Keluar (`POST /api/persediaan/*/pengajuan-keluar`) | Ya | Ya | Tidak | Tidak |
+| Lihat Daftar Pengajuan (`GET /api/persediaan/pengajuan`) | Ya | Tidak | Ya | Tidak |
 | Validasi Pengajuan Keluar (`POST /api/persediaan/pengajuan/*/setujui|tolak`) | Ya | Tidak | Ya | Tidak |
 | Buat Sesi Opname (`POST /api/opname`) | Ya | Ya | Tidak | Tidak |
-| Lihat Riwayat Opname (`GET /api/opname/*`) | Ya | Ya | Ya | Ya |
-| Monitoring & Laporan (`GET /api/monitoring/*`, `GET /api/laporan/*`) | Ya | Tidak | Ya | Ya |
+| Lihat Riwayat Opname (`GET /api/opname/*`) | Ya | Ya | Ya | Tidak |
+| Monitoring & Laporan (`GET /api/monitoring/*`, `GET /api/laporan/*`) | Ya | Ya | Ya | Ya |
 | Pengaturan & Backup Sistem (`/api/settings`, `/api/backup`, `/api/audit-trail`) | Ya | Tidak | Tidak | Tidak |
 
 ---
@@ -75,11 +77,11 @@
 - **Response**: Detail informasi aset beserta penyusutan & riwayat mutasi.
 
 ### `PUT /api/aset/{aset}`
-- **Protected** (`role:admin`)
+- **Protected** (`role:admin,operator`)
 - **Response**: Update data aset.
 
 ### `DELETE /api/aset/{aset}`
-- **Protected** (`role:admin`)
+- **Protected** (`role:admin,operator`)
 - **Response (204 No Content)**.
 
 ### `GET /api/aset/{aset}/riwayat`
@@ -113,7 +115,7 @@
 - **Response**: Detail satu master persediaan.
 
 ### `PUT /api/persediaan/{persediaan}`
-- **Protected** (`role:admin`)
+- **Protected** (`role:admin,operator`)
 - **Response**: Update informasi master persediaan.
 
 ### `POST /api/persediaan/{persediaan}/pengajuan-keluar`
@@ -122,7 +124,7 @@
 - **Response (201 Created)**: Membuat transaksi pengajuan berstatus `menunggu`.
 
 ### `GET /api/persediaan/pengajuan`
-- **Protected** (`role:admin,operator,validator,pimpinan`)
+- **Protected** (`role:admin,validator`)
 - **Query Params**: `status` (`menunggu`, `disetujui`, `ditolak`)
 - **Response**: List pengajuan barang keluar.
 
@@ -139,16 +141,16 @@
 ## 📡 4. Modul Monitoring Aset Real-Time
 
 ### `GET /api/monitoring/tracking`
-- **Protected** (`role:admin,validator,pimpinan`)
+- **Protected** (`role:admin,operator,validator,pimpinan`)
 - **Query Params**: `ruangan_id`, `kondisi`, `page`
 - **Response**: Real-time tracking lokasi aset & update timestamps terakhir.
 
 ### `GET /api/monitoring/peringatan-opname`
-- **Protected** (`role:admin,validator,pimpinan`)
+- **Protected** (`role:admin,operator,validator,pimpinan`)
 - **Response**: Jumlah & daftar aset yang belum di-opname > 6 bulan (`last_opname_date <= NOW - 6 Months`).
 
 ### `GET /api/monitoring/log-aktivitas`
-- **Protected** (`role:admin,validator,pimpinan`)
+- **Protected** (`role:admin,operator,validator,pimpinan`)
 - **Response**: 15 log aktivitas sistem terbaru.
 
 ---
@@ -181,7 +183,7 @@
 ## 📋 7. Modul Opname Fisik & Laporan
 
 ### `GET /api/opname/ruangan/{ruangan}`
-- **Protected** (`role:admin,operator,validator,pimpinan`)
+- **Protected** (`role:admin,operator,validator`)
 - **Response**: Ambil daftar barang di ruangan untuk checklist opname.
 
 ### `POST /api/opname`
@@ -189,26 +191,26 @@
 - **Body Request**: Buat sesi opname fisik & detail rekonsiliasi.
 
 ### `GET /api/opname/riwayat`
-- **Protected** (`role:admin,operator,validator,pimpinan`)
+- **Protected** (`role:admin,operator,validator`)
 - **Response**: Riwayat sesi opname.
 
 ### `GET /api/laporan/baop`
-- **Protected** (`role:admin,validator,pimpinan`)
+- **Protected** (`role:admin,operator,validator,pimpinan`)
 - **Response**: Laporan Berita Acara Opname Fisik (BAOP).
 
 ### `GET /api/laporan/dbr`
-- **Protected** (`role:admin,validator,pimpinan`)
+- **Protected** (`role:admin,operator,validator,pimpinan`)
 - **Response**: Laporan Daftar Barang Ruangan (DBR).
 
 ### `GET /api/laporan/nilai-buku`
-- **Protected** (`role:admin,validator,pimpinan`)
+- **Protected** (`role:admin,operator,validator,pimpinan`)
 - **Response**: Rekap Nilai Buku & Penyusutan.
 
 ### `GET /api/laporan/export`
-- **Protected** (`role:admin,validator,pimpinan`)
+- **Protected** (`role:admin,operator,validator,pimpinan`)
 - **Query Params**: `jenis` (`baop`, `dbr`, `nilai-buku`), `format` (`json`, `csv`, `excel`)
 - **Response**: Download file CSV/Excel RFC 4180 atau JSON payload.
 
 ### `GET /api/dashboard/summary`
-- **Protected** (`role:admin,validator,pimpinan`)
+- **Protected** (`role:admin,operator,validator,pimpinan`)
 - **Response**: Ringkasan data statistik untuk Dashboard.

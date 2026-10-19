@@ -39,6 +39,11 @@ class PersediaanController extends Controller
             ->get();
     }
 
+    public function show(Persediaan $persediaan)
+    {
+        return $persediaan->load(['jenisBarang.kategori', 'ruangan', 'batches' => fn ($q) => $q->orderBy('no_batch')]);
+    }
+
     public function update(StorePersediaanRequest $request, Persediaan $persediaan)
     {
         $persediaan->update($request->validated());

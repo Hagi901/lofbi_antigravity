@@ -169,6 +169,116 @@ class WebInterfaceTest extends TestCase
         $this->assertEquals('disetujui', $transaksi->status);
     }
 
+    public function test_operator_can_access_dashboard_assets_inventory_opname_reports_and_create_pengajuan(): void
+    {
+        $this->seed();
+        $operator = User::where('role', 'operator')->first() ?? User::factory()->create(['role' => 'operator']);
+
+        // (a) Dashboard
+        $this->actingAs($operator)->get('/dashboard')->assertStatus(200);
+
+        // (b) Aset - lihat daftar & detail
+        $this->actingAs($operator)->get('/assets')->assertStatus(200);
+        $aset = Aset::first();
+        $this->actingAs($operator)->get('/assets/' . $aset->id)->assertStatus(200);
+
+        // (c) Persediaan - lihat daftar & detail
+        $this->actingAs($operator)->get('/inventory')->assertStatus(200);
+        $item = Persediaan::first();
+        $this->actingAs($operator)->get('/inventory/' . $item->id)->assertStatus(200);
+
+        // (d) Form ajukan barang keluar
+        $this->actingAs($operator)->get('/inventory/out')->assertStatus(200);
+
+        // (e) Opname - lihat
+        $this->actingAs($operator)->get('/opname')->assertStatus(200);
+        $this->actingAs($operator)->get('/opname/create')->assertStatus(200);
+
+        // (f) Laporan
+        $this->actingAs($operator)->get('/reports')->assertStatus(200);
+
+        // (g) Upload & Validasi
+        $this->actingAs($operator)->get('/upload')->assertStatus(200);
+
+        // (h) Operator DILARANG akses settings
+        $this->actingAs($operator)->get('/settings')->assertStatus(403);
+
+        // (i) Operator DILARANG melihat daftar pengajuan (hanya admin & validator)
+        $this->actingAs($operator)->get('/inventory/pengajuan')->assertStatus(403);
+    }
+
+    public function test_validator_can_access_dashboard_and_reports(): void
+    {
+        $this->seed();
+        $validator = User::where('role', 'validator')->first() ?? User::factory()->create(['role' => 'validator']);
+
+        // (b) Dashboard
+        $this->actingAs($validator)->get('/dashboard')->assertStatus(200);
+
+        // Aset & persediaan - lihat
+        $this->actingAs($validator)->get('/assets')->assertStatus(200);
+        $this->actingAs($validator)->get('/inventory')->assertStatus(200);
+
+        // Opname - lihat
+        $this->actingAs($validator)->get('/opname')->assertStatus(200);
+
+        // Laporan
+        $this->actingAs($validator)->get('/reports')->assertStatus(200);
+
+        // Upload - lihat
+        $this->actingAs($validator)->get('/upload')->assertStatus(200);
+
+        // Pengajuan - lihat
+        $this->actingAs($validator)->get('/inventory/pengajuan')->assertStatus(200);
+
+        // Validator DILARANG: settings, ajukan barang keluar (POST), buat sesi opname (POST)
+        $this->actingAs($validator)->get('/settings')->assertStatus(403);
+        $this->actingAs($validator)->get('/inventory/out')->assertStatus(403);
+    }
+
+    public function test_pimpinan_can_access_dashboard_assets_inventory_reports_and_notifications(): void
+    {
+        $this->seed();
+        $pimpinan = User::where('role', 'pimpinan')->first() ?? User::factory()->create(['role' => 'pimpinan']);
+        $aset = Aset::first();
+        $item = Persediaan::first();
+
+        // (c) Pimpinan 200 pada: dashboard, daftar aset, daftar persediaan, laporan, notifikasi
+        $this->actingAs($pimpinan)->get('/dashboard')->assertStatus(200);
+        $this->actingAs($pimpinan)->get('/assets')->assertStatus(200);
+        $this->actingAs($pimpinan)->get('/assets/' . $aset->id)->assertStatus(200);
+        $this->actingAs($pimpinan)->get('/inventory')->assertStatus(200);
+        $this->actingAs($pimpinan)->get('/inventory/' . $item->id)->assertStatus(200);
+        $this->actingAs($pimpinan)->get('/reports')->assertStatus(200);
+        $this->actingAs($pimpinan)->get('/notifications')->assertStatus(200);
+        $this->actingAs($pimpinan)->get('/profile')->assertStatus(200);
+
+        // (c) Pimpinan 403 pada: /upload, /opname, pengajuan barang keluar, settings
+        $this->actingAs($pimpinan)->get('/upload')->assertStatus(403);
+        $this->actingAs($pimpinan)->get('/opname')->assertStatus(403);
+        $this->actingAs($pimpinan)->get('/inventory/out')->assertStatus(403);
+        $this->actingAs($pimpinan)->get('/inventory/pengajuan')->assertStatus(403);
+        $this->actingAs($pimpinan)->get('/settings')->assertStatus(403);
+    }
+
+    public function test_only_admin_can_access_settings_and_backup(): void
+    {
+        // (d) Hanya admin pada /settings dan backup
+        $this->seed();
+        $admin    = User::where('role', 'admin')->first();
+        $operator = User::where('role', 'operator')->first();
+        $validator = User::where('role', 'validator')->first();
+        $pimpinan = User::where('role', 'pimpinan')->first();
+
+        $this->actingAs($admin)->get('/settings')->assertStatus(200);
+        $this->actingAs($admin)->get('/settings/backup')->assertStatus(200);
+
+        foreach ([$operator, $validator, $pimpinan] as $user) {
+            $this->actingAs($user)->get('/settings')->assertStatus(403);
+            $this->actingAs($user)->get('/settings/backup')->assertStatus(403);
+        }
+    }
+
     public function test_role_access_control_blocks_pimpinan_from_admin_actions(): void
     {
         $this->seed();
@@ -179,7 +289,7 @@ class WebInterfaceTest extends TestCase
         $response = $this->actingAs($pimpinan)->get('/settings');
         $response->assertStatus(403);
 
-        // Pimpinan dilarang mengakses form edit aset (hanya admin)
+        // Pimpinan dilarang mengakses form edit aset (hanya admin & operator)
         $response = $this->actingAs($pimpinan)->get('/assets/' . $aset->id . '/edit');
         $response->assertStatus(403);
     }
@@ -284,6 +394,26 @@ class WebInterfaceTest extends TestCase
 
         // 6. Export Berita Acara PDF
         $response = $this->actingAs($admin)->get('/reports/opname/pdf?sesi_id=' . $sesi->id);
+        $response->assertStatus(200);
+    }
+
+    public function test_operator_can_also_create_opname_session_and_input_fisik(): void
+    {
+        $this->seed();
+        $operator = User::where('role', 'operator')->first() ?? User::factory()->create(['role' => 'operator']);
+
+        $response = $this->actingAs($operator)->post('/opname', [
+            'periode'    => 'Semester II 2026',
+            'tanggal'    => date('Y-m-d'),
+            'keterangan' => 'Opname oleh Operator',
+        ]);
+        $response->assertRedirect('/opname');
+
+        $sesi = OpnameSesi::latest()->first();
+        $this->assertNotNull($sesi);
+        $this->assertEquals('draft', $sesi->status);
+
+        $response = $this->actingAs($operator)->get('/opname/' . $sesi->id . '/input-fisik');
         $response->assertStatus(200);
     }
 

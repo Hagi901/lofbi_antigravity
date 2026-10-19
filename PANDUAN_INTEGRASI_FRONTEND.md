@@ -20,7 +20,7 @@ Semua akun menggunakan password: **`password`**
 | Role | Email Login | Hak Akses Utama |
 |---|---|---|
 | **Administrator** | `admin@lofbi.test` | Akses penuh CRUD seluruh modul & setting |
-| **Operator** | `operator@lofbi.test` | Pengajuan Barang Keluar, Upload Staging, & Opname |
+| **Operator** | `operator@lofbi.test` | Kelola Aset & Persediaan, Pengajuan Barang Keluar, Upload Staging, Opname, & Laporan |
 | **Validator** | `validator@lofbi.test` | Validasi Staging, Verifikasi Opname, & Approval |
 | **Pimpinan** | `pimpinan@lofbi.test` | Monitoring laporan, audit trail, & pengawasan |
 

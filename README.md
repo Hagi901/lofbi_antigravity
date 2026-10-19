@@ -16,11 +16,10 @@ Aplikasi **Sistem Layanan Operasional & Form BMN / Inventarisasi (LOFBI)** untuk
 ## ✨ Fitur Utama
 
 - 🔑 **Autentikasi Bearer Token (Sanctum)** - Keamanan endpoint dengan sistem perizinan berbasis peran (*Role-Based Access Control*).
-- 👥 **Aktor Pengguna (Multi-Role User)**:
-  - `admin`: Pengelolaan sistem, upload berkas staging, revisi berkas, pengajuan keluar, dan opname fisik.
-  - `operator`: Upload berkas staging, revisi berkas, pengajuan barang keluar, dan opname fisik.
-  - `validator`: Validasi baris berkas staging (setujui/tolak per baris atau sekaligus), approval pengajuan barang keluar (pemotongan stok FIFO), dan monitoring.
-  - `pimpinan`: Monitoring dashboard dan laporan resmi (setara Kasubbag/Pimpinan di lapangan).
+- 👥 **Aktor Pengguna (Tiga Aktor Utama)**:
+  - **Administrator** (`admin` & `operator`): Hak akses operasional setara meliputi pengelolaan aset & persediaan (lihat, edit, hapus), pembuatan pengajuan barang keluar, pelaksanaan opname fisik (buka sesi & input hasil fisik), upload berkas & revisi staging, akses laporan/ekspor, dan dashboard. Khusus role `admin` memiliki akses eksklusif ke pengaturan sistem dan unduh backup data.
+  - **Validator** (`validator`): Verifikasi & validasi baris upload staging (setujui/tolak per baris atau sekaligus), persetujuan (*approval*) pengajuan barang keluar (pemotongan stok FIFO), persetujuan opname, serta melihat data aset, persediaan, riwayat opname, laporan, dan dashboard.
+  - **Pimpinan** (`pimpinan`): Pemantauan eksekutif (*read-only*) untuk dashboard ringkasan, daftar aset, daftar persediaan, dan laporan resmi. Pimpinan dibatasi secara tegas (HTTP 403) dari modul opname, upload data, pengajuan barang keluar, dan seluruh aksi mutasi data.
 - 📂 **Satu Pintu Input Data via Upload Staging & Validasi**:
   - Seluruh data masuk hanya melalui modul **Upload Berkas** (file Excel SAKTI `bahan_opname_fisik.xlsx`).
   - Fitur input manual ("Tambah Master Barang", "Tambah Barang Masuk", dan "Tambah Aset") ditiadakan demi integritas data terpusat.
@@ -107,10 +106,10 @@ Password semua akun demo: `password`
 
 | Role | Email | Hak Akses Utama |
 |---|---|---|
-| **Admin** | `admin@lofbi.test` | Full akses (Upload Berkas, Aset, Persediaan, Opname, Pengajuan, Settings) |
-| **Operator** | `operator@lofbi.test` | Upload berkas staging, revisi berkas, pengajuan keluar, opname fisik |
-| **Validator** | `validator@lofbi.test` | Validasi berkas staging (setujui/tolak per baris), approval pengajuan barang keluar (potong stok FIFO) |
-| **Pimpinan** | `pimpinan@lofbi.test` | Read-only + laporan resmi (setara Kasubbag di lapangan) |
+| **Admin** | `admin@lofbi.test` | Full akses (Pengaturan & Backup, Upload, Aset, Persediaan, Opname, Pengajuan, Laporan) |
+| **Operator** | `operator@lofbi.test` | Upload berkas staging & revisi, kelola aset & persediaan, buat pengajuan keluar, sesi & input opname, laporan |
+| **Validator** | `validator@lofbi.test` | Validasi berkas staging (setujui/tolak), approval barang keluar (potong FIFO), approval opname, laporan |
+| **Pimpinan** | `pimpinan@lofbi.test` | Read-only eksekutif (Dashboard, Aset, Persediaan, Laporan) |
 
 ---
 

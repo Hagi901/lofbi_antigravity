@@ -75,9 +75,18 @@
             <a href="{{ url('/inventory') }}" class="{{ request()->is('inventory') || request()->is('inventory/in*') || request()->is('inventory/out*') ? 'active' : '' }}">
                 <i class="fa-solid fa-box-open me-2"></i> Persediaan (FIFO)
             </a>
-            @if(in_array($userRole, ['validator', 'admin']))
+            @if(in_array($userRole, ['admin', 'operator']))
             @php
                 $pendingCount = \App\Models\TransaksiPersediaan::where('jenis','keluar')->where('status','menunggu')->count();
+            @endphp
+            <a href="{{ route('inventory.out.create') }}" class="{{ request()->is('inventory/out') ? 'active' : '' }}" style="padding-left: 36px;">
+                <i class="fa-solid fa-arrow-up-from-bracket me-2 text-danger"></i>
+                <span class="small">Ajukan Barang Keluar</span>
+            </a>
+            @endif
+            @if(in_array($userRole, ['admin', 'validator']))
+            @php
+                $pendingCount = $pendingCount ?? \App\Models\TransaksiPersediaan::where('jenis','keluar')->where('status','menunggu')->count();
             @endphp
             <a href="{{ route('inventory.pengajuan') }}" class="{{ request()->is('inventory/pengajuan') ? 'active' : '' }}" style="padding-left: 36px;">
                 <i class="fa-solid fa-stamp me-2 text-warning"></i>
@@ -87,15 +96,19 @@
                 @endif
             </a>
             @endif
+            @if(in_array($userRole, ['admin', 'operator', 'validator']))
             <a href="{{ url('/opname') }}" class="{{ request()->is('opname*') ? 'active' : '' }}">
                 <i class="fa-solid fa-clipboard-check me-2"></i> Opname Fisik
             </a>
+            @endif
             <a href="{{ url('/reports') }}" class="{{ request()->is('reports*') ? 'active' : '' }}">
                 <i class="fa-solid fa-file-pdf me-2"></i> Laporan
             </a>
+            @if(in_array($userRole, ['admin', 'operator', 'validator']))
             <a href="{{ route('upload.index') }}" class="{{ request()->is('upload*') ? 'active' : '' }}">
                 <i class="fa-solid fa-cloud-arrow-up me-2"></i> Upload & Validasi
             </a>
+            @endif
 
             @if($userRole === 'admin')
             <a href="{{ route('settings.index') }}" class="{{ request()->is('settings*') ? 'active' : '' }}">
@@ -158,12 +171,14 @@
                             </a>
                         </li>
                         
-                        <!-- Menu Pengaturan -->
+                        <!-- Menu Pengaturan - hanya admin -->
+                        @if($userRole === 'admin')
                         <li>
                             <a class="dropdown-item py-2" href="{{ route('settings.index') }}">
                                 <i class="fa-solid fa-sliders me-2 text-secondary"></i> Pengaturan
                             </a>
                         </li>
+                        @endif
                         
                         <li><hr class="dropdown-divider my-2"></li>
                         

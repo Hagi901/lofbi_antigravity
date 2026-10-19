@@ -39,10 +39,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ======================================================================
     // ASET
-    // Admin      : Edit & Hapus
-    // Operator   : Lihat
-    // Validator  : Lihat
-    // Pimpinan   : Lihat
+    // Admin & Operator : Edit & Hapus
+    // Validator        : Lihat
+    // Pimpinan         : Lihat
     // ======================================================================
 
     // Semua role authenticated dapat melihat data Aset
@@ -68,8 +67,8 @@ Route::middleware('auth:sanctum')->group(function () {
         );
     });
 
-    // Edit & Hapus Aset -> Admin
-    Route::middleware('role:admin')->group(function () {
+    // Edit & Hapus Aset -> Admin & Operator
+    Route::middleware('role:admin,operator')->group(function () {
 
         Route::put('/aset/{aset}', [AsetController::class, 'update']);
 
@@ -80,11 +79,24 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
     // ======================================================================
+    // PENGAJUAN BARANG KELUAR - Lihat
+    // Admin & Validator dapat melihat
+    // ======================================================================
+
+    Route::middleware('role:admin,validator')->group(function () {
+
+        Route::get(
+            '/persediaan/pengajuan',
+            [PersediaanController::class, 'pengajuan']
+        );
+    });
+
+
+    // ======================================================================
     // PERSEDIAAN
-    // Admin      : Edit + pengajuan-keluar
-    // Operator   : Lihat + pengajuan-keluar
-    // Validator  : Lihat + validasi pengajuan keluar
-    // Pimpinan   : Lihat
+    // Admin & Operator : Edit + pengajuan-keluar
+    // Validator        : Lihat + validasi pengajuan keluar
+    // Pimpinan         : Lihat
     // ======================================================================
 
     // Semua role authenticated dapat melihat Persediaan
@@ -113,27 +125,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
     // ======================================================================
-    // PENGAJUAN BARANG KELUAR - Lihat
-    // Admin + Operator + Validator dapat melihat
-    // ======================================================================
-
-    Route::middleware('role:admin,operator,validator,pimpinan')->group(function () {
-
-        Route::get(
-            '/persediaan/pengajuan',
-            [PersediaanController::class, 'pengajuan']
-        );
-    });
-
-
-    // ======================================================================
     // OPERASIONAL PERSEDIAAN
-    // Admin + Operator - buat pengajuan keluar
-    // Admin - edit master persediaan
+    // Admin + Operator - buat pengajuan keluar & edit master
     // ======================================================================
 
-    // Edit master persediaan -> Admin
-    Route::middleware('role:admin')->group(function () {
+    // Edit master persediaan -> Admin & Operator
+    Route::middleware('role:admin,operator')->group(function () {
 
         Route::put(
             '/persediaan/{persediaan}',
@@ -177,10 +174,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ======================================================================
     // MONITORING
-    // Admin + Validator + Pimpinan
+    // Admin + Operator + Validator + Pimpinan
     // ======================================================================
 
-    Route::middleware('role:admin,validator,pimpinan')->group(function () {
+    Route::middleware('role:admin,operator,validator,pimpinan')->group(function () {
 
         Route::get(
             '/monitoring/tracking',
@@ -251,8 +248,8 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
 
-    // Melihat Opname -> Admin, Operator, Validator, Pimpinan
-    Route::middleware('role:admin,operator,validator,pimpinan')->group(function () {
+    // Melihat Opname -> Admin, Operator, Validator (Pimpinan TIDAK punya akses)
+    Route::middleware('role:admin,operator,validator')->group(function () {
 
         Route::get(
             '/opname/riwayat',
@@ -268,10 +265,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ======================================================================
     // LAPORAN
-    // Admin + Validator + Pimpinan
+    // Admin + Operator + Validator + Pimpinan
     // ======================================================================
 
-    Route::middleware('role:admin,validator,pimpinan')->group(function () {
+    Route::middleware('role:admin,operator,validator,pimpinan')->group(function () {
 
         Route::get(
             '/laporan/baop',
@@ -297,10 +294,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ======================================================================
     // DASHBOARD
-    // Admin + Validator + Pimpinan
+    // Admin + Operator + Validator + Pimpinan
     // ======================================================================
 
-    Route::middleware('role:admin,validator,pimpinan')->group(function () {
+    Route::middleware('role:admin,operator,validator,pimpinan')->group(function () {
 
         Route::get(
             '/dashboard/summary',
