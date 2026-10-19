@@ -264,26 +264,94 @@ class UploadStagingValidationTest extends TestCase
         $this->assertEquals(3, $paket->baris()->where('status', 'disetujui')->count());
     }
 
-    public function test_operator_cannot_validate_or_approve_staging_rows(): void
+    public function test_admin_and_operator_and_pimpinan_cannot_validate_or_approve_staging_rows(): void
     {
         $file = $this->createDummySaktiCsv();
         $this->actingAs($this->operator)->post('/upload', ['file' => $file]);
         $paket = UploadPaket::latest()->first();
         $baris = $paket->baris()->first();
 
-        // 1. Operator mencoba setujui baris -> 403 Forbidden
-        $response = $this->actingAs($this->operator)->post("/upload/baris/{$baris->id}/setujui");
-        $response->assertStatus(403);
+        // 1. Admin mencoba setujui baris, tolak baris, setujui semua -> 403 Forbidden
+        $this->actingAs($this->admin)->post("/upload/baris/{$baris->id}/setujui")->assertStatus(403);
+        $this->actingAs($this->admin)->post("/upload/baris/{$baris->id}/tolak", [
+            'deskripsi_revisi' => 'Admin mencoba menolak',
+        ])->assertStatus(403);
+        $this->actingAs($this->admin)->post("/upload/{$paket->id}/setujui-semua")->assertStatus(403);
 
-        // 2. Operator mencoba tolak baris -> 403 Forbidden
-        $response = $this->actingAs($this->operator)->post("/upload/baris/{$baris->id}/tolak", [
-            'deskripsi_revisi' => 'Harus ditolak',
-        ]);
-        $response->assertStatus(403);
+        // 2. Operator mencoba setujui baris, tolak baris, setujui semua -> 403 Forbidden
+        $this->actingAs($this->operator)->post("/upload/baris/{$baris->id}/setujui")->assertStatus(403);
+        $this->actingAs($this->operator)->post("/upload/baris/{$baris->id}/tolak", [
+            'deskripsi_revisi' => 'Operator mencoba menolak',
+        ])->assertStatus(403);
+        $this->actingAs($this->operator)->post("/upload/{$paket->id}/setujui-semua")->assertStatus(403);
 
-        // 3. Operator mencoba setujui semua baris -> 403 Forbidden
-        $response = $this->actingAs($this->operator)->post("/upload/{$paket->id}/setujui-semua");
-        $response->assertStatus(403);
+        // 3. Pimpinan mencoba setujui baris, tolak baris, setujui semua -> 403 Forbidden
+        $this->actingAs($this->pimpinan)->post("/upload/baris/{$baris->id}/setujui")->assertStatus(403);
+        $this->actingAs($this->pimpinan)->post("/upload/baris/{$baris->id}/tolak", [
+            'deskripsi_revisi' => 'Pimpinan mencoba menolak',
+        ])->assertStatus(403);
+        $this->actingAs($this->pimpinan)->post("/upload/{$paket->id}/setujui-semua")->assertStatus(403);
+
+        // 4. Verifikasi sisi server (UploadService) menolak pemanggilan langsung oleh selain validator
+        $uploadService = app(\App\Services\UploadService::class);
+
+        try {
+            $uploadService->setujuiBaris($baris, $this->admin);
+            $this->fail('Harusnya melempar HttpException 403 untuk Admin');
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            $this->assertEquals(403, $e->getStatusCode());
+        }
+
+        try {
+            $uploadService->tolakBaris($baris, $this->operator, 'Alasan');
+            $this->fail('Harusnya melempar HttpException 403 untuk Operator');
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            $this->assertEquals(403, $e->getStatusCode());
+        }
+
+        try {
+            $uploadService->setujuiSemua($paket, $this->pimpinan);
+            $this->fail('Harusnya melempar HttpException 403 untuk Pimpinan');
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            $this->assertEquals(403, $e->getStatusCode());
+        }
+
+        // 5. Validator berhasil memvalidasi
+        $response = $this->actingAs($this->validator)->post("/upload/baris/{$baris->id}/setujui");
+        $response->assertRedirect();
+        $this->assertEquals('disetujui', $baris->fresh()->status);
+    }
+
+    public function test_upload_view_renders_validation_buttons_only_for_validator(): void
+    {
+        $file = $this->createDummySaktiCsv();
+        $this->actingAs($this->admin)->post('/upload', ['file' => $file]);
+        $paket = UploadPaket::latest()->first();
+
+        // Validator: melihat tombol Setujui Semua dan tombol aksi validasi baris
+        $viewValidator = $this->actingAs($this->validator)->get("/upload/{$paket->id}");
+        $viewValidator->assertStatus(200);
+        $viewValidator->assertSee('Setujui Semua');
+        $viewValidator->assertSee('title="Setujui baris ini"', false);
+        $viewValidator->assertSee('title="Tolak baris ini"', false);
+
+        // Admin: dapat melihat paket & status baris, tetapi TIDAK melihat tombol Setujui Semua / aksi baris
+        $viewAdmin = $this->actingAs($this->admin)->get("/upload/{$paket->id}");
+        $viewAdmin->assertStatus(200);
+        $viewAdmin->assertDontSee('Setujui Semua');
+        $viewAdmin->assertDontSee('title="Setujui baris ini"', false);
+        $viewAdmin->assertDontSee('title="Tolak baris ini"', false);
+        $viewAdmin->assertSee('Status');
+        $viewAdmin->assertSee('Catatan / Revisi');
+
+        // Operator: dapat melihat paket & status baris, tetapi TIDAK melihat tombol Setujui Semua / aksi baris
+        $viewOperator = $this->actingAs($this->operator)->get("/upload/{$paket->id}");
+        $viewOperator->assertStatus(200);
+        $viewOperator->assertDontSee('Setujui Semua');
+        $viewOperator->assertDontSee('title="Setujui baris ini"', false);
+        $viewOperator->assertDontSee('title="Tolak baris ini"', false);
+        $viewOperator->assertSee('Status');
+        $viewOperator->assertSee('Catatan / Revisi');
     }
 
     public function test_notifications_sent_to_correct_recipients_for_all_three_types(): void

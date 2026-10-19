@@ -30,7 +30,7 @@ use App\Http\Controllers\UploadController;
 |      * Profil & notifikasi
 |    - Khusus role admin:
 |      * Pengaturan sistem & unduh backup (/settings, /settings/backup)
-|      * Melihat daftar pengajuan barang keluar & validasi upload staging
+|      * Melihat daftar pengajuan barang keluar
 |
 | 2. Validator (role: validator)
 |    - Dashboard (lihat)
@@ -289,8 +289,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/upload/{id}/revisi', [UploadController::class, 'revisi'])->name('upload.revisi');
     });
 
-    // Validasi per baris & setujui semua (Validator & Admin)
-    Route::middleware('role:validator,admin')->group(function () {
+    // Validasi per baris & setujui semua (HANYA Validator)
+    Route::middleware('role:validator')->group(function () {
         Route::post('/upload/baris/{barisId}/setujui', [UploadController::class, 'setujuiBaris'])->name('upload.baris.setujui');
         Route::post('/upload/baris/{barisId}/tolak', [UploadController::class, 'tolakBaris'])->name('upload.baris.tolak');
         Route::post('/upload/{id}/setujui-semua', [UploadController::class, 'setujuiSemua'])->name('upload.setujui_semua');

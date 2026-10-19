@@ -241,6 +241,10 @@ class UploadService
      */
     public function setujuiBaris(UploadBaris $baris, User $validator, ?int $ruanganId = null): BatchPersediaan
     {
+        if ($validator->role !== 'validator') {
+            abort(403, 'Hanya role validator yang diizinkan memvalidasi baris.');
+        }
+
         return DB::transaction(function () use ($baris, $validator, $ruanganId) {
             if ($baris->status === 'disetujui' && $baris->batch_persediaan_id) {
                 return $baris->batchPersediaan;
@@ -337,6 +341,10 @@ class UploadService
      */
     public function tolakBaris(UploadBaris $baris, User $validator, string $deskripsiRevisi): void
     {
+        if ($validator->role !== 'validator') {
+            abort(403, 'Hanya role validator yang diizinkan menolak baris.');
+        }
+
         $deskripsiClean = trim($deskripsiRevisi);
         if ($deskripsiClean === '') {
             throw ValidationException::withMessages([
@@ -392,6 +400,10 @@ class UploadService
      */
     public function setujuiSemua(UploadPaket $paket, User $validator, ?int $ruanganId = null): int
     {
+        if ($validator->role !== 'validator') {
+            abort(403, 'Hanya role validator yang diizinkan memvalidasi baris.');
+        }
+
         return DB::transaction(function () use ($paket, $validator, $ruanganId) {
             $pendingRows = $paket->baris()->where('status', 'menunggu')->get();
             $approvedCount = 0;

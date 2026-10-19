@@ -18,12 +18,12 @@ Aplikasi **Sistem Layanan Operasional & Form BMN / Inventarisasi (LOFBI)** untuk
 - 🔑 **Autentikasi Bearer Token (Sanctum)** - Keamanan endpoint dengan sistem perizinan berbasis peran (*Role-Based Access Control*).
 - 👥 **Aktor Pengguna (Tiga Aktor Utama)**:
   - **Administrator** (`admin` & `operator`): Hak akses operasional setara meliputi pengelolaan aset & persediaan (lihat, edit, hapus), pembuatan pengajuan barang keluar, pelaksanaan opname fisik (buka sesi & input hasil fisik), upload berkas & revisi staging, akses laporan/ekspor, dan dashboard. Khusus role `admin` memiliki akses eksklusif ke pengaturan sistem dan unduh backup data.
-  - **Validator** (`validator`): Verifikasi & validasi baris upload staging (setujui/tolak per baris atau sekaligus), persetujuan (*approval*) pengajuan barang keluar (pemotongan stok FIFO), persetujuan opname, serta melihat data aset, persediaan, riwayat opname, laporan, dan dashboard.
+  - **Validator** (`validator`): Verifikasi & validasi baris upload staging (satu-satunya peran yang berhak menyetujui/menolak per baris atau sekaligus), persetujuan (*approval*) pengajuan barang keluar (pemotongan stok FIFO), persetujuan opname, serta melihat data aset, persediaan, riwayat opname, laporan, dan dashboard.
   - **Pimpinan** (`pimpinan`): Pemantauan eksekutif (*read-only*) untuk dashboard ringkasan, daftar aset, daftar persediaan, dan laporan resmi. Pimpinan dibatasi secara tegas (HTTP 403) dari modul opname, upload data, pengajuan barang keluar, dan seluruh aksi mutasi data.
 - 📂 **Satu Pintu Input Data via Upload Staging & Validasi**:
   - Seluruh data masuk hanya melalui modul **Upload Berkas** (file Excel SAKTI `bahan_opname_fisik.xlsx`).
   - Fitur input manual ("Tambah Master Barang", "Tambah Barang Masuk", dan "Tambah Aset") ditiadakan demi integritas data terpusat.
-  - Staging berjenjang: Berkas diunggah sebagai satu paket berstatus `menunggu`. Validator memeriksa per baris dengan opsi tolak (wajib mengisi deskripsi revisi) atau setujui.
+  - Staging berjenjang: Berkas diunggah sebagai satu paket berstatus `menunggu`. HANYA role Validator yang memeriksa per baris dengan opsi tolak (wajib mengisi deskripsi revisi) atau setujui. Administrator (admin & operator) hanya mengunggah dan merevisi, dilarang memvalidasi.
   - Baris disetujui langsung dipromosikan ke batch persediaan resmi dalam transaksi basis data aman.
   - Mekanisme revisi: Pengunggah dapat mengunggah ulang berkas perbaikan; baris dengan kunci unik yang sama menggantikan baris ditolak tanpa menyentuh atau menduplikasi baris yang sudah disetujui.
   - Format Word (`.docx`) ditolak secara tegas dengan pesan peringatan jelas.
@@ -106,9 +106,9 @@ Password semua akun demo: `password`
 
 | Role | Email | Hak Akses Utama |
 |---|---|---|
-| **Admin** | `admin@lofbi.test` | Full akses (Pengaturan & Backup, Upload, Aset, Persediaan, Opname, Pengajuan, Laporan) |
+| **Admin** | `admin@lofbi.test` | Pengaturan & Backup sistem, upload berkas & revisi staging, kelola aset & persediaan, buat pengajuan, sesi & input opname, laporan |
 | **Operator** | `operator@lofbi.test` | Upload berkas staging & revisi, kelola aset & persediaan, buat pengajuan keluar, sesi & input opname, laporan |
-| **Validator** | `validator@lofbi.test` | Validasi berkas staging (setujui/tolak), approval barang keluar (potong FIFO), approval opname, laporan |
+| **Validator** | `validator@lofbi.test` | Validasi berkas staging (satu-satunya yang berhak setujui/tolak), approval barang keluar (potong FIFO), approval opname, laporan |
 | **Pimpinan** | `pimpinan@lofbi.test` | Read-only eksekutif (Dashboard, Aset, Persediaan, Laporan) |
 
 ---

@@ -22,6 +22,9 @@
 | Lihat Riwayat Opname (`GET /api/opname/*`) | Ya | Ya | Ya | Tidak |
 | Monitoring & Laporan (`GET /api/monitoring/*`, `GET /api/laporan/*`) | Ya | Ya | Ya | Ya |
 | Pengaturan & Backup Sistem (`/api/settings`, `/api/backup`, `/api/audit-trail`) | Ya | Tidak | Tidak | Tidak |
+| Unggah & Revisi Berkas Staging (`POST /upload`, `POST /upload/*/revisi`) | Ya | Ya | Tidak | Tidak |
+| Lihat Paket & Baris Staging (`GET /upload`, `GET /upload/*`) | Ya | Ya | Ya | Tidak |
+| Validasi Baris Staging (`POST /upload/baris/*/setujui|tolak`, `POST /upload/*/setujui-semua`) | Tidak | Tidak | Ya | Tidak |
 
 ---
 

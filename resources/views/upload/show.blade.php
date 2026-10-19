@@ -41,8 +41,8 @@
                 </span>
             @endif
 
-            <!-- Tombol Aksi Validator: Setujui Semua -->
-            @if(in_array(auth()->user()->role, ['validator', 'admin']) && $countMenunggu > 0)
+            @if(auth()->user()->role === 'validator' && $countMenunggu > 0)
+                {{-- Tombol Aksi Validator: Setujui Semua --}}
                 <form action="{{ route('upload.setujui_semua', $paket->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menyetujui seluruh {{ $countMenunggu }} baris yang belum ditolak? Data akan langsung masuk ke tabel resmi.');">
                     @csrf
                     <button type="submit" class="btn btn-success btn-sm rounded-pill px-3 fw-bold shadow-sm">
@@ -124,7 +124,7 @@
                         <th class="text-end" style="width: 100px;">Saldo</th>
                         <th class="text-center" style="width: 120px;">Status</th>
                         <th style="min-width: 200px;">Catatan / Revisi</th>
-                        @if(in_array(auth()->user()->role, ['validator', 'admin']))
+                        @if(auth()->user()->role === 'validator')
                             <th class="text-end pe-3" style="width: 150px;">Aksi</th>
                         @endif
                     </tr>
@@ -185,7 +185,7 @@
                                 @endif
                             </td>
 
-                            @if(in_array(auth()->user()->role, ['validator', 'admin']))
+                            @if(auth()->user()->role === 'validator')
                                 <td class="text-end pe-3">
                                     @if($b->status === 'menunggu')
                                         <div class="btn-group btn-group-sm">
@@ -215,7 +215,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ in_array(auth()->user()->role, ['validator', 'admin']) ? 8 : 7 }}" class="text-center py-4 text-muted">
+                            <td colspan="{{ auth()->user()->role === 'validator' ? 8 : 7 }}" class="text-center py-4 text-muted">
                                 Tidak ada baris yang sesuai dengan kriteria filter.
                             </td>
                         </tr>
@@ -231,6 +231,7 @@
     </div>
 </div>
 
+@if(auth()->user()->role === 'validator')
 <!-- Modal Tolak Baris (Validator) -->
 <div class="modal fade" id="modalTolak" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -263,6 +264,7 @@
         </div>
     </div>
 </div>
+@endif
 
 <!-- Modal Upload Revisi (Pengunggah) -->
 <div class="modal fade" id="modalRevisi" tabindex="-1" aria-hidden="true">

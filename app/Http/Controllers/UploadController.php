@@ -150,6 +150,10 @@ class UploadController extends Controller
      */
     public function setujuiBaris($barisId, Request $request)
     {
+        if (Auth::user()?->role !== 'validator') {
+            abort(403, 'Hanya role validator yang diizinkan menyetujui baris unggahan.');
+        }
+
         $baris = UploadBaris::findOrFail($barisId);
         $this->uploadService->setujuiBaris($baris, Auth::user());
 
@@ -169,6 +173,10 @@ class UploadController extends Controller
      */
     public function tolakBaris($barisId, Request $request)
     {
+        if (Auth::user()?->role !== 'validator') {
+            abort(403, 'Hanya role validator yang diizinkan menolak baris unggahan.');
+        }
+
         $request->validate([
             'deskripsi_revisi' => 'required|string|min:3|max:1000',
         ], [
@@ -195,6 +203,10 @@ class UploadController extends Controller
      */
     public function setujuiSemua($id, Request $request)
     {
+        if (Auth::user()?->role !== 'validator') {
+            abort(403, 'Hanya role validator yang diizinkan menyetujui semua baris unggahan.');
+        }
+
         $paket = UploadPaket::findOrFail($id);
         $count = $this->uploadService->setujuiSemua($paket, Auth::user());
 
