@@ -1,5 +1,5 @@
 # 📘 Panduan Integrasi Frontend & Backend LOFBI
-### Khusus Pengembang Frontend (Blade / JavaScript) — KSOP Kelas I Banten
+### Khusus Pengembang Frontend (Blade / JavaScript) - KSOP Kelas I Banten
 
 Dokumen ini disusun untuk memudahkan tim Frontend dalam menghubungkan antarmuka UI (Blade Templates / JavaScript) dengan **REST API Backend LOFBI** (`lofbi_antigravity`).
 

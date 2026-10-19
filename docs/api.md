@@ -1,219 +1,112 @@
-# LOFBI REST API Specification
-### Dokumentasi API Backend (Laravel 12 Sanctum) - KSOP Kelas I Banten
+# Dokumentasi REST API LOFBI
 
-**Base URL**: `http://127.0.0.1:8000/api`  
-**Authentication Header**: `Authorization: Bearer {sanctum_token}`
+Dokumentasi antarmuka REST API LOFBI (*Layanan Operasional & Form BMN / Inventarisasi*) KSOP Kelas I Banten berbasis Laravel 12 Sanctum.
 
----
-
-## 👥 Matriks Hak Akses Peran (Role-Based Access Control)
-
-| Modul & Endpoint | Admin | Operator | Validator | Pimpinan |
-|---|:---:|:---:|:---:|:---:|
-| Dashboard (`GET /api/dashboard/*`) | Ya | Ya | Ya | Ya |
-| Lihat Data Aset (`GET /api/aset/*`) | Ya | Ya | Ya | Ya |
-| Edit & Hapus Aset (`PUT/DELETE /api/aset/*`) | Ya | Ya | Tidak | Tidak |
-| Lihat Persediaan (`GET /api/persediaan/*`) | Ya | Ya | Ya | Ya |
-| Edit Master Persediaan (`PUT /api/persediaan/*`) | Ya | Ya | Tidak | Tidak |
-| Buat Pengajuan Keluar (`POST /api/persediaan/*/pengajuan-keluar`) | Ya | Ya | Tidak | Tidak |
-| Lihat Daftar Pengajuan (`GET /api/persediaan/pengajuan`) | Ya | Tidak | Ya | Tidak |
-| Validasi Pengajuan Keluar (`POST /api/persediaan/pengajuan/*/setujui|tolak`) | Ya | Tidak | Ya | Tidak |
-| Buat Sesi Opname (`POST /api/opname`) | Ya | Ya | Tidak | Tidak |
-| Lihat Riwayat Opname (`GET /api/opname/*`) | Ya | Ya | Ya | Tidak |
-| Monitoring & Laporan (`GET /api/monitoring/*`, `GET /api/laporan/*`) | Ya | Ya | Ya | Ya |
-| Pengaturan & Backup Sistem (`/api/settings`, `/api/backup`, `/api/audit-trail`) | Ya | Tidak | Tidak | Tidak |
-| Unggah & Revisi Berkas Staging (`POST /upload`, `POST /upload/*/revisi`) | Ya | Ya | Tidak | Tidak |
-| Lihat Paket & Baris Staging (`GET /upload`, `GET /upload/*`) | Ya | Ya | Ya | Tidak |
-| Validasi Baris Staging (`POST /upload/baris/*/setujui|tolak`, `POST /upload/*/setujui-semua`) | Tidak | Tidak | Ya | Tidak |
+- **Base URL**: `http://127.0.0.1:8000/api`
+- **Header Autentikasi**: `Authorization: Bearer {token}`
+- **Header Permintaan**: `Accept: application/json`, `Content-Type: application/json`
+- **Matriks Akses Lengkap**: Lihat [Matriks Peran (docs/role.md)](role.md)
 
 ---
 
-## 🔐 1. Autentikasi & User Profile
+## 1. Autentikasi & Akun
 
-### `POST /api/login`
-- **Public** (Tidak perlu token)
-- **Body Request**:
-  ```json
-  {
-    "email": "admin@lofbi.test",
-    "password": "password"
-  }
-  ```
-- **Response Success (200 OK)**:
-  ```json
-  {
-    "token": "1|sanctum_token_string_here",
-    "user": {
-      "id": 1,
-      "name": "Admin LOFBI",
-      "email": "admin@lofbi.test",
-      "role": "admin"
-    }
-  }
-  ```
+| Method | Endpoint | Akses Peran | Keterangan |
+|---|---|---|---|
+| `POST` | `/api/login` | Publik | Autentikasi email dan password, mengembalikan token Sanctum. |
+| `POST` | `/api/logout` | Semua peran | Revoke personal access token yang sedang aktif. |
+| `GET` | `/api/me` | Semua peran | Mengambil data akun pengguna yang sedang login. |
 
-### `POST /api/logout`
-- **Protected** (`auth:sanctum`)
-- **Response Success (200 OK)**: `{"message": "Logged out successfully"}`
-
-### `GET /api/me`
-- **Protected** (`auth:sanctum`)
-- **Response Success (200 OK)**: Menampilkan objek user yang sedang login.
+**Contoh Payload Login**:
+```json
+{
+  "email": "admin@lofbi.test",
+  "password": "password"
+}
+```
 
 ---
 
-## 📦 2. Modul Manajemen Aset (KBM & BMN)
+## 2. Dashboard & Monitoring
 
-> **Catatan Alur Masuk Data**: Input manual aset (`POST /api/aset`) telah ditiadakan sesuai tata kelola satu pintu. Seluruh data aset masuk melalui modul Upload Berkas Staging (SIMAN) dan divalidasi oleh Validator sebelum disetujui masuk ke master data resmi.
-
-### `GET /api/aset/ringkas`
-- **Protected** (`role:admin,operator,validator,pimpinan`)
-- **Query Params**: `kategori_id`, `kondisi`, `ruangan_id`, `search`, `page`
-- **Response**: Ringkasan daftar aset dikelompokkan per jenis barang (paginasi 20).
-
-### `GET /api/aset/jenis/{jenisBarang}/unit`
-- **Protected** (`role:admin,operator,validator,pimpinan`)
-- **Response**: List unit aset per jenis barang.
-
-### `GET /api/aset/{aset}`
-- **Protected** (`role:admin,operator,validator,pimpinan`)
-- **Response**: Detail informasi aset beserta penyusutan & riwayat mutasi.
-
-### `PUT /api/aset/{aset}`
-- **Protected** (`role:admin,operator`)
-- **Response**: Update data aset.
-
-### `DELETE /api/aset/{aset}`
-- **Protected** (`role:admin,operator`)
-- **Response (204 No Content)**.
-
-### `GET /api/aset/{aset}/riwayat`
-- **Protected** (`role:admin,operator,validator,pimpinan`)
-- **Response**: Riwayat mutasi/perpindahan lokasi & kondisi aset.
-
-### `GET /api/aset/{aset}/qr`
-- **Protected** (`role:admin,operator,validator,pimpinan`)
-- **Response**: Payload QR Code aset (Kode Aset, Lokasi, Kondisi, Metadata).
+| Method | Endpoint | Akses Peran | Keterangan |
+|---|---|---|---|
+| `GET` | `/api/dashboard/summary` | Semua peran | Ringkasan metrik total aset, persediaan, nilai buku, dan alert. |
+| `GET` | `/api/monitoring/tracking` | Semua peran | Tracking lokasi aset terkini dan tanggal pembaruan. |
+| `GET` | `/api/monitoring/peringatan-opname` | Semua peran | Daftar aset yang belum dilakukan opname fisik lebih dari 6 bulan. |
+| `GET` | `/api/monitoring/log-aktivitas` | Semua peran | Daftar 15 aktivitas transaksi terbaru pada sistem. |
 
 ---
 
-## 🗃️ 3. Modul Persediaan & Batch FIFO
+## 3. Manajemen Aset BMN
 
-> **Catatan Alur Masuk Data**: Input manual persediaan dan barang masuk manual (`POST /api/persediaan`, `POST /api/persediaan/{id}/barang-masuk`, `POST /api/persediaan/transfer-masuk`) telah ditiadakan. Seluruh data saldo/batch persediaan bersumber dari berkas resmi SAKTI (`bahan_opname_fisik.xlsx`) melalui modul Upload Berkas Staging, diperiksa per baris oleh Validator, dan dipromosikan otomatis ke batch persediaan berstatus disetujui.
+Input awal data aset terpusat melalui modul unggah staging berkas eksternal. Endpoint API aset melayani pencarian, pembaruan, dan pelaporan unit.
 
-### `GET /api/persediaan/ringkas`
-- **Protected** (`role:admin,operator,validator,pimpinan`)
-- **Response**: Ringkasan stok persediaan per jenis barang.
-
-### `GET /api/persediaan/jenis/{jenisBarang}/detail`
-- **Protected** (`role:admin,operator,validator,pimpinan`)
-- **Response**: Detail persediaan beserta daftar batch stoknya.
-
-### `GET /api/persediaan/{persediaan}/batch`
-- **Protected** (`role:admin,operator,validator,pimpinan`)
-- **Response**: Daftar riwayat batch masuk persediaan (diurutkan FIFO).
-
-### `GET /api/persediaan/{persediaan}`
-- **Protected** (`role:admin,operator,validator,pimpinan`)
-- **Response**: Detail satu master persediaan.
-
-### `PUT /api/persediaan/{persediaan}`
-- **Protected** (`role:admin,operator`)
-- **Response**: Update informasi master persediaan.
-
-### `POST /api/persediaan/{persediaan}/pengajuan-keluar`
-- **Protected** (`role:admin,operator`)
-- **Body Request**: `{"jumlah": 10, "tanggal": "2026-08-10", "unit_kerja_penerima": "Seksi Kepegawaian"}`
-- **Response (201 Created)**: Membuat transaksi pengajuan berstatus `menunggu`.
-
-### `GET /api/persediaan/pengajuan`
-- **Protected** (`role:admin,validator`)
-- **Query Params**: `status` (`menunggu`, `disetujui`, `ditolak`)
-- **Response**: List pengajuan barang keluar.
-
-### `POST /api/persediaan/pengajuan/{transaksi}/setujui`
-- **Protected** (`role:validator,admin`)
-- **Action**: Pemotongan stok otomatis secara **FIFO (First-In, First-Out)** dari batch tertua.
-
-### `POST /api/persediaan/pengajuan/{transaksi}/tolak`
-- **Protected** (`role:validator,admin`)
-- **Body Request**: `{"catatan_penolakan": "Alasan penolakan"}`
+| Method | Endpoint | Akses Peran | Keterangan |
+|---|---|---|---|
+| `GET` | `/api/aset/ringkas` | Semua peran | Rekap aset per jenis barang (paginasi 20 item). Query: `kategori_id`, `kondisi`, `ruangan_id`, `search`. |
+| `GET` | `/api/aset/jenis/{jenisBarang}/unit` | Semua peran | Daftar seluruh unit aset pada satu kelompok jenis barang. |
+| `GET` | `/api/aset/{aset}` | Semua peran | Rincian lengkap aset beserta nilai buku dinamis dan riwayat mutasi. |
+| `PUT` | `/api/aset/{aset}` | Admin, Operator | Pembaruan data aset (kondisi, ruangan, penanggung jawab, nilai). |
+| `DELETE`| `/api/aset/{aset}` | Admin, Operator | Menghapus data unit aset (HTTP 204 No Content). |
+| `GET` | `/api/aset/{aset}/riwayat` | Semua peran | Riwayat mutasi lokasi atau kondisi aset. |
+| `GET` | `/api/aset/{aset}/qr` | Semua peran | Payload metadata untuk pencetakan label QR Code aset. |
 
 ---
 
-## 📡 4. Modul Monitoring Aset Real-Time
+## 4. Persediaan & Pemotongan FIFO
 
-### `GET /api/monitoring/tracking`
-- **Protected** (`role:admin,operator,validator,pimpinan`)
-- **Query Params**: `ruangan_id`, `kondisi`, `page`
-- **Response**: Real-time tracking lokasi aset & update timestamps terakhir.
+Seluruh saldo persediaan bersumber dari berkas resmi SAKTI yang disetujui. Pengeluaran barang diproses melalui antrean persetujuan dengan kalkulasi FIFO otomatis.
 
-### `GET /api/monitoring/peringatan-opname`
-- **Protected** (`role:admin,operator,validator,pimpinan`)
-- **Response**: Jumlah & daftar aset yang belum di-opname > 6 bulan (`last_opname_date <= NOW - 6 Months`).
-
-### `GET /api/monitoring/log-aktivitas`
-- **Protected** (`role:admin,operator,validator,pimpinan`)
-- **Response**: 15 log aktivitas sistem terbaru.
-
----
-
-## 📜 5. Modul Audit Trail
-
-### `GET /api/audit-trail`
-- **Protected** (`role:admin`)
-- **Query Params**: `modul`, `aksi`, `search`, `page`
-- **Response**: Rekam jejak log transaksi sistem lengkap.
+| Method | Endpoint | Akses Peran | Keterangan |
+|---|---|---|---|
+| `GET` | `/api/persediaan/ringkas` | Semua peran | Ringkasan stok persediaan dikelompokkan per jenis barang. |
+| `GET` | `/api/persediaan/jenis/{jenisBarang}/detail` | Semua peran | Daftar varian persediaan beserta batch aktifnya. |
+| `GET` | `/api/persediaan/{persediaan}/batch` | Semua peran | Riwayat batch masuk pada satu master persediaan. |
+| `GET` | `/api/persediaan/{persediaan}` | Semua peran | Rincian data master persediaan. |
+| `PUT` | `/api/persediaan/{persediaan}` | Admin, Operator | Pembaruan data master persediaan (merk, satuan, stok minimum). |
+| `POST`| `/api/persediaan/{persediaan}/pengajuan-keluar` | Admin, Operator | Pengajuan pengeluaran barang (validasi stok fisik di awal). |
+| `GET` | `/api/persediaan/pengajuan` | Admin, Validator | Daftar antrean pengajuan pengeluaran barang keluar. |
+| `POST`| `/api/persediaan/pengajuan/{transaksi}/setujui` | Validator, Admin | Persetujuan pengeluaran dan pemotongan stok otomatis FIFO. |
+| `POST`| `/api/persediaan/pengajuan/{transaksi}/tolak` | Validator, Admin | Penolakan pengeluaran barang (wajib `catatan_penolakan`). |
 
 ---
 
-## ⚙️ 6. Modul Settings & System Preferences
+## 5. Stok Opname Fisik
 
-### `GET /api/settings`
-- **Protected** (`role:admin`)
-- **Response**: Ambil profil instansi (Nama KSOP, Alamat, Logo) & preferensi sistem.
-
-### `POST /api/settings`
-- **Protected** (`role:admin`)
-- **Body Request**: `{"nama_ksop": "KSOP Kelas I Banten", "format_tanggal": "DD MMM YYYY", "tahun_anggaran": "2026"}`
-
-### `POST /api/backup`
-- **Protected** (`role:admin`)
-- **Response**: Response status backup data database.
+| Method | Endpoint | Akses Peran | Keterangan |
+|---|---|---|---|
+| `GET` | `/api/opname/ruangan/{ruangan}` | Admin, Operator, Validator | Referensi daftar aset dan persediaan per ruangan untuk pengisian fisik. |
+| `POST`| `/api/opname` | Admin, Operator | Simpan hasil sesi opname fisik beserta rincian item. |
+| `GET` | `/api/opname/riwayat` | Admin, Operator, Validator | Riwayat sesi opname fisik (paginasi 15 item). |
 
 ---
 
-## 📋 7. Modul Opname Fisik & Laporan
+## 6. Laporan & Ekspor Data
 
-### `GET /api/opname/ruangan/{ruangan}`
-- **Protected** (`role:admin,operator,validator`)
-- **Response**: Ambil daftar barang di ruangan untuk checklist opname.
+| Method | Endpoint | Akses Peran | Keterangan |
+|---|---|---|---|
+| `GET` | `/api/laporan/baop` | Semua peran | Data Laporan Berita Acara Opname Fisik. |
+| `GET` | `/api/laporan/dbr` | Semua peran | Data Laporan Daftar Barang Ruangan (filter: `ruangan_id`). |
+| `GET` | `/api/laporan/nilai-buku` | Semua peran | Data Rekapitulasi Nilai Perolehan dan Nilai Buku Aset. |
+| `GET` | `/api/laporan/export` | Semua peran | Ekspor data berkas (Query: `jenis=baop|dbr|nilai-buku`, `format=csv|json|excel`). |
 
-### `POST /api/opname`
-- **Protected** (`role:admin,operator`)
-- **Body Request**: Buat sesi opname fisik & detail rekonsiliasi.
+---
 
-### `GET /api/opname/riwayat`
-- **Protected** (`role:admin,operator,validator`)
-- **Response**: Riwayat sesi opname.
+## 7. Pengaturan & Master Data
 
-### `GET /api/laporan/baop`
-- **Protected** (`role:admin,operator,validator,pimpinan`)
-- **Response**: Laporan Berita Acara Opname Fisik (BAOP).
+| Method | Endpoint | Akses Peran | Keterangan |
+|---|---|---|---|
+| `GET` | `/api/audit-trail` | Admin | Log aktivitas audit trail seluruh transaksi aplikasi. |
+| `GET` | `/api/settings` | Admin | Informasi profil instansi KSOP dan preferensi sistem. |
+| `POST`| `/api/settings` | Admin | Simpan perubahan konfigurasi instansi. |
+| `POST`| `/api/backup` | Admin | Eksekusi pencadangan database sistem. |
+| `GET` | `/api/ruangan` | Semua peran | Referensi daftar ruangan aktif. |
+| `GET` | `/api/kategori` | Semua peran | Referensi kategori aset dan persediaan. |
 
-### `GET /api/laporan/dbr`
-- **Protected** (`role:admin,operator,validator,pimpinan`)
-- **Response**: Laporan Daftar Barang Ruangan (DBR).
+---
 
-### `GET /api/laporan/nilai-buku`
-- **Protected** (`role:admin,operator,validator,pimpinan`)
-- **Response**: Rekap Nilai Buku & Penyusutan.
+## 8. Koleksi Postman
 
-### `GET /api/laporan/export`
-- **Protected** (`role:admin,operator,validator,pimpinan`)
-- **Query Params**: `jenis` (`baop`, `dbr`, `nilai-buku`), `format` (`json`, `csv`, `excel`)
-- **Response**: Download file CSV/Excel RFC 4180 atau JSON payload.
-
-### `GET /api/dashboard/summary`
-- **Protected** (`role:admin,operator,validator,pimpinan`)
-- **Response**: Ringkasan data statistik untuk Dashboard.
+Koleksi pengujian Postman siap pakai tersedia pada direktori:
+[`docs/postman/LOFBI_API.postman_collection.json`](postman/LOFBI_API.postman_collection.json)

@@ -1,83 +1,81 @@
-# 📦 LOFBI API - REST API Inventaris & Persediaan (BMN)
+# 📦 LOFBI - Layanan Operasional & Form BMN / Inventarisasi
 
-![Laravel Version](https://img.shields.io/badge/Laravel-11-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)
+![Laravel Version](https://img.shields.io/badge/Laravel-12-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)
 ![PHP Version](https://img.shields.io/badge/PHP-%5E8.2-777BB4?style=for-the-badge&logo=php&logoColor=white)
 ![Database](https://img.shields.io/badge/Database-MySQL%20%7C%20SQLite-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
-Aplikasi **Sistem Layanan Operasional & Form BMN / Inventarisasi (LOFBI)** untuk KSOP Kelas I Banten. Aplikasi ini mengelola aset fisik inventaris (dengan kalkulasi penyusutan otomatis), persediaan barang habis pakai (dengan metode pemotongan stok FIFO), stok opname fisik per ruangan, serta menyajikan ringkasan statistik dan laporan resmi (BAOP, DBR, Nilai Buku).
+Aplikasi **LOFBI** (*Layanan Operasional & Form BMN / Inventarisasi*) adalah sistem pengelolaan Barang Milik Negara (BMN) dan persediaan barang habis pakai pada Kantor Kesyahbandaran dan Otoritas Pelabuhan (KSOP) Kelas I Banten. Aplikasi ini menyediakan tata kelola inventaris aset fisik dengan penyusutan dinamis, pengelolaan persediaan dengan pemotongan stok otomatis First In First Out (FIFO), stok opname fisik berbasis ruangan, alur satu pintu impor berkas resmi berjenjang, dan pelaporan operasional terpadu.
 
-> Repo ini berisi **dua antarmuka yang berjalan bersamaan** di atas basis data & business logic yang sama:
-> 1. **Web app (Blade)** - antarmuka utama untuk dipakai sehari-hari (`routes/web.php`, login sesi biasa di `/login`).
-> 2. **REST API (Sanctum)** - untuk integrasi eksternal/mobile (`routes/api.php`, lihat [`API_DOCUMENTATION.md`](API_DOCUMENTATION.md)).
+Aplikasi menyediakan dua antarmuka terintegrasi yang berjalan berdampingan di atas logika bisnis yang sama:
+1. **Web App (Blade)**: Antarmuka operasional harian untuk pengguna kantor melalui browser (`/login`).
+2. **REST API (Sanctum)**: Antarmuka terprogram untuk integrasi sistem dan aplikasi seluler (`/api`).
 
 ---
 
 ## ✨ Fitur Utama
 
-- 🔑 **Autentikasi Bearer Token (Sanctum)** - Keamanan endpoint dengan sistem perizinan berbasis peran (*Role-Based Access Control*).
-- 👥 **Aktor Pengguna (Tiga Aktor Utama)**:
-  - **Administrator** (`admin` & `operator`): Hak akses operasional setara meliputi pengelolaan aset & persediaan (lihat, edit, hapus), pembuatan pengajuan barang keluar, pelaksanaan opname fisik (buka sesi & input hasil fisik), upload berkas & revisi staging, akses laporan/ekspor, dan dashboard. Khusus role `admin` memiliki akses eksklusif ke pengaturan sistem dan unduh backup data.
-  - **Validator** (`validator`): Verifikasi & validasi baris upload staging (satu-satunya peran yang berhak menyetujui/menolak per baris atau sekaligus), persetujuan (*approval*) pengajuan barang keluar (pemotongan stok FIFO), persetujuan opname, serta melihat data aset, persediaan, riwayat opname, laporan, dan dashboard.
-  - **Pimpinan** (`pimpinan`): Pemantauan eksekutif (*read-only*) untuk dashboard ringkasan, daftar aset, daftar persediaan, dan laporan resmi. Pimpinan dibatasi secara tegas (HTTP 403) dari modul opname, upload data, pengajuan barang keluar, dan seluruh aksi mutasi data.
-- 📂 **Satu Pintu Input Data via Upload Staging & Validasi**:
-  - Seluruh data masuk hanya melalui modul **Upload Berkas** (file Excel SAKTI `bahan_opname_fisik.xlsx`).
-  - Fitur input manual ("Tambah Master Barang", "Tambah Barang Masuk", dan "Tambah Aset") ditiadakan demi integritas data terpusat.
-  - Staging berjenjang: Berkas diunggah sebagai satu paket berstatus `menunggu`. HANYA role Validator yang memeriksa per baris dengan opsi tolak (wajib mengisi deskripsi revisi) atau setujui. Administrator (admin & operator) hanya mengunggah dan merevisi, dilarang memvalidasi.
-  - Baris disetujui langsung dipromosikan ke batch persediaan resmi dalam transaksi basis data aman.
-  - Mekanisme revisi: Pengunggah dapat mengunggah ulang berkas perbaikan; baris dengan kunci unik yang sama menggantikan baris ditolak tanpa menyentuh atau menduplikasi baris yang sudah disetujui.
-  - Format Word (`.docx`) ditolak secara tegas dengan pesan peringatan jelas.
-  - **Status Tahap 5 (SIMAN Aset) & Tahap 6 (PDF Berbasis Teks)**: Dicatat sebagai **PENDING** karena sampel berkas resmi belum tersedia di `storage/samples/`.
-- 🏢 **Manajemen Aset Inventaris**:
-  - Pengelompokan aset per jenis barang dan unit detail.
-  - Penghitungan penyusutan metode garis lurus (*straight-line*) otomatis per semester.
-- 📦 **Manajemen Persediaan & Batch FIFO**:
-  - Pencatatan barang masuk per batch bersumber dari berkas SAKTI yang disetujui.
-  - Pemotongan stok otomatis metode **FIFO (First In, First Out)** dari batch paling awal saat disetujui Validator.
-  - Indikator badge label *(Nilai belum lengkap)* jika harga satuan batch belum diisi pada format opname fisik.
-- 🔔 **Sistem Notifikasi Drawer Terintegrasi**:
-  - Ikon lonceng interaktif dengan badge notifikasi belum dibaca.
-  - Panel samping (offcanvas drawer) selebar ~50% layar yang otomatis menandai notifikasi telah dibaca saat dibuka.
-  - Tombol aksi langsung (CTA) menuju paket staging terfilter atau tabel modul terkait.
-- 📋 **Stok Opname Fisik**:
-  - Verifikasi kondisi fisik barang aktual per ruangan dan pencatatan riwayat sesi opname.
-- 📊 **Dashboard & Laporan**:
-  - Statistik total aset, nilai buku, barang rusak, alert stok menipis, dan pengajuan pending.
-  - Laporan Berita Acara Opname (BAOP), Daftar Barang Ruangan (DBR), Nilai Buku Aset, serta Export CSV berstandar RFC 4180.
+- 🚪 **Gerbang Input Satu Pintu via Upload Staging**: Seluruh data persediaan masuk melalui modul Upload Berkas (file Excel SAKTI `bahan_opname_fisik.xlsx`). Input manual ditiadakan demi integritas data.
+- 🛡️ **Validasi Berjenjang oleh Validator**: Berkas diunggah ke tabel staging sebagai satu paket (`menunggu`). HANYA role Validator yang berhak memeriksa, menyetujui, atau menolak per baris (wajib alasan penolakan). Baris disetujui langsung dipromosikan ke batch persediaan resmi.
+- 🔄 **Mekanisme Revisi Tanpa Duplikasi**: Pengunggah dapat mengunggah ulang berkas perbaikan untuk baris yang ditolak tanpa menduplikasi baris yang sudah pernah disetujui.
+- 📦 **Persediaan & Pemotongan Stok FIFO**: Pencatatan saldo persediaan per nomor batch kedatangan. Pemotongan stok barang keluar dilakukan secara otomatis dari batch paling awal saat disetujui.
+- 🏢 **Manajemen Aset BMN & Penyusutan**: Pencatatan kode BMN, NUP, nomor seri, ruangan penempatan, kondisi fisik, dan perhitungan akumulasi penyusutan metode garis lurus per semester.
+- 📋 **Stok Opname Fisik**: Pembukaan sesi opname, pembuatan snapshot stok buku, pengisian hasil hitung fisik lapangan, kalkulasi selisih otomatis, dan persetujuan penyesuaian stok.
+- 🔔 **Notifikasi Drawer Terintegrasi**: Sistem notifikasi offcanvas drawer dengan penandaan baca otomatis dan tautan aksi langsung ke baris atau pengajuan terkait.
+- 📊 **Laporan Resmi & Ekspor Data**: Cetak dan unduh Berita Acara Opname Fisik (BAOP), Daftar Barang Ruangan (DBR), Nilai Buku Aset, serta ekspor file CSV/Excel RFC 4180 dan PDF.
 
 ---
 
-## 🛠️ Persyaratan Sistem
+## 👥 Tiga Aktor Pengguna & Hak Akses
+
+Aplikasi menerapkan pemisahan tugas (*segregation of duties*) yang ketat dengan tiga peran aktor utama:
+
+1. **Administrator (`admin` & `operator`)**:
+   - Memiliki hak operasional penuh: mengelola data aset dan master persediaan (lihat, ubah, hapus), membuat pengajuan barang keluar, membuka sesi opname dan menginput hasil hitung fisik, serta mengunggah berkas staging dan mengirimkan revisi.
+   - Pembeda hak: Khusus akun `admin` memiliki akses eksklusif ke Pengaturan Sistem (`/settings`), Backup Database, dan Audit Trail. Role `operator` dibatasi (HTTP 403) dari kedua fitur tersebut.
+   - Administrator dilarang memvalidasi, menyetujui, atau menolak baris unggahan staging.
+2. **Validator (`validator`)**:
+   - Satu-satunya peran yang berwenang menyetujui atau menolak baris unggahan staging (per baris atau sekaligus).
+   - Berwenang menyetujui atau menolak pengajuan pengeluaran barang persediaan (eksekusi pemotongan FIFO).
+   - Berwenang memeriksa dan menyetujui atau menolak hasil sesi stok opname fisik.
+   - Memiliki hak lihat pada dashboard, data aset, data persediaan, daftar pengajuan, dan seluruh laporan.
+3. **Pimpinan (`pimpinan`)**:
+   - Peran pemantauan eksekutif dengan hak baca penuh (*read-only*): dashboard statistik, katalog aset, katalog persediaan, dan seluruh laporan resmi.
+   - Dilarang keras (HTTP 403) mengakses modul upload berkas, stok opname, pengajuan keluar, dan seluruh aksi mutasi data.
+
+Matriks izin akses lengkap dapat dibaca pada [Matriks Peran (docs/role.md)](docs/role.md).
+
+---
+
+## 🛠️ Persyaratan Lingkungan
 
 - PHP `>= 8.2`
-- Composer `>= 2.0`
-- MySQL / MariaDB (via XAMPP) atau SQLite
-- Extension PHP: `OpenSSL`, `PDO`, `Mbstring`, `Tokenizer`, `XML`, `Ctype`, `JSON`, `BCMath`
+- Composer `>= 2.2`
+- MySQL / MariaDB (XAMPP) atau SQLite
+- Ekstensi PHP aktif: `pdo`, `mbstring`, `openssl`, `tokenizer`, `xml`, `ctype`, `json`, `bcmath`, `gd`, `zip`
 
 ---
 
-## 🚀 Panduan Instalasi (Local Development)
+## 🚀 Panduan Instalasi Lokal
 
-### 1. Clone Repository
+### 1. Klon Repositori
 ```bash
 git clone https://github.com/Hagi901/lofbi-api.git
 cd lofbi-api
 ```
 
-### 2. Install Dependency PHP
+### 2. Pasang Dependensi
 ```bash
 composer install
 ```
 
-### 3. Buat File Konfigurasi `.env`
+### 3. Konfigurasi Lingkungan (`.env`)
 ```bash
 copy .env.example .env
 php artisan key:generate
 ```
 
-### 4. Konfigurasi Database di `.env` (XAMPP / MySQL)
-Buat database bernama **`lofbi_db`** di phpMyAdmin (`http://localhost/phpmyadmin`), lalu buka file `.env` dan atur:
-
+Sesuaikan parameter koneksi basis data pada `.env`:
 ```env
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
@@ -87,102 +85,104 @@ DB_USERNAME=root
 DB_PASSWORD=
 ```
 
-### 5. Jalankan Migrasi Database & Seeder Data Demo
+### 4. Migrasi & Seeder Data
+Jalankan migrasi tabel beserta akun demo dan data referensi awal:
 ```bash
 php artisan migrate:fresh --seed
 ```
 
-### 6. Jalankan Server API
+### 5. Jalankan Server Aplikasi
 ```bash
 php artisan serve
 ```
-Server REST API aktif di: **`http://127.0.0.1:8000/api`**
+- Antarmuka Web: **`http://127.0.0.1:8000`**
+- Antarmuka REST API: **`http://127.0.0.1:8000/api`**
 
 ---
 
-## 🔐 Akun Demo (Seeder)
+## 🔑 Akun Demo Pengujian
 
-Password semua akun demo: `password`
+Seluruh akun demo menggunakan kata sandi bawaan: **`password`**
 
-| Role | Email | Hak Akses Utama |
+| Peran | Alamat Email | Hak Akses Utama |
 |---|---|---|
-| **Admin** | `admin@lofbi.test` | Pengaturan & Backup sistem, upload berkas & revisi staging, kelola aset & persediaan, buat pengajuan, sesi & input opname, laporan |
-| **Operator** | `operator@lofbi.test` | Upload berkas staging & revisi, kelola aset & persediaan, buat pengajuan keluar, sesi & input opname, laporan |
-| **Validator** | `validator@lofbi.test` | Validasi berkas staging (satu-satunya yang berhak setujui/tolak), approval barang keluar (potong FIFO), approval opname, laporan |
-| **Pimpinan** | `pimpinan@lofbi.test` | Read-only eksekutif (Dashboard, Aset, Persediaan, Laporan) |
+| **Administrator** | `admin@lofbi.test` | Seluruh operasional, upload berkas, pengaturan sistem, dan backup. |
+| **Operator** | `operator@lofbi.test` | Seluruh operasional, upload berkas, input fisik opname, ajukan barang. |
+| **Validator** | `validator@lofbi.test` | Validasi baris upload, persetujuan FIFO keluar, persetujuan opname. |
+| **Pimpinan** | `pimpinan@lofbi.test` | Pemantauan dashboard, aset, persediaan, dan unduh laporan resmi. |
 
 ---
 
-## 📑 Daftar Endpoint Utama (REST API)
+## 🧪 Menjalankan Pengujian Otomatis
 
-| Method | Endpoint | Role | Deskripsi |
-|---|---|---|---|
-| `POST` | `/api/login` | Public | Login user & dapatkan token Bearer |
-| `POST` | `/api/logout` | Auth | Revoke token session |
-| `GET` | `/api/me` | Auth | Profil user terautentikasi |
-| `GET` | `/api/dashboard/summary` | Auth | Ringkasan statistik & alert dashboard |
-| `GET` | `/api/aset/ringkas` | Auth | Ringkasan aset per jenis barang (Paginated) |
-| `GET` | `/api/aset/jenis/{id}/unit` | Auth | Detail unit aset per jenis barang |
-| `GET` | `/api/persediaan/ringkas` | Auth | Ringkasan persediaan & sisa stok total |
-| `POST` | `/api/persediaan/{id}/pengajuan-keluar` | Admin, Operator | Buat pengajuan barang keluar |
-| `GET` | `/api/persediaan/pengajuan` | Auth | Daftar pengajuan barang keluar |
-| `POST` | `/api/persediaan/pengajuan/{id}/setujui` | Validator, Kasubbag | Approval pengajuan & potong stok FIFO |
-| `POST` | `/api/persediaan/pengajuan/{id}/tolak` | Validator, Kasubbag | Tolak pengajuan barang keluar (wajib isi alasan) |
-| `GET` | `/api/opname/ruangan/{id}` | Admin, Operator | Referensi aset & persediaan di ruangan |
-| `POST` | `/api/opname` | Admin, Operator | Simpan hasil pemeriksaan opname fisik |
-| `GET` | `/api/laporan/baop` | Auth | Laporan Berita Acara Opname |
-| `GET` | `/api/laporan/dbr` | Auth | Laporan Daftar Barang Ruangan |
-| `GET` | `/api/laporan/nilai-buku` | Auth | Laporan Rekap Nilai Buku Aset |
-| `GET` | `/api/laporan/export?jenis=dbr&format=csv` | Auth | Export data laporan ke format CSV |
+Aplikasi dilengkapi test suite komprehensif yang mencakup pengujian otentikasi, hak akses per role, pemotongan stok FIFO, upload staging, dan integritas route:
 
----
+```bash
+# Jalankan seluruh test suite
+php artisan test
 
-## 🧪 Pengujian API (Postman Collection)
-
-File **[`LOFBI_API.postman_collection.json`](LOFBI_API.postman_collection.json)** telah tersedia di root repository ini.
-
-1. Buka aplikasi **Postman** / Bruno / Insomnia.
-2. Import file `LOFBI_API.postman_collection.json`.
-3. Jalankan request **`Login Admin`** atau **`Login Kasubbag`**. Token Bearer akan otomatis tersimpan untuk request berikutnya.
-
----
-
-## 📐 Algoritma & Logika Bisnis
-
-### 1. Metode FIFO Persediaan
-```text
-Batch #1 (Masuk 10 Jan) -> Sisa: 20 pcs @ Rp 3.000
-Batch #2 (Masuk 15 Apr) -> Sisa: 100 pcs @ Rp 3.200
-
-Pengajuan Keluar disetujui: 30 pcs
-- 20 pcs diambil dari Batch #1 (Sisa Batch #1 -> 0)
-- 10 pcs diambil dari Batch #2 (Sisa Batch #2 -> 90)
+# Format kode otomatis sesuai standar PSR-12 / Laravel
+vendor/bin/pint
 ```
 
-### 2. Penyusutan Aset (Garis Lurus per Semester)
-```text
-Penyusutan / Tahun = Nilai Perolehan / Masa Manfaat (Tahun)
-Penyusutan / Semester = Penyusutan / Tahun / 2
-Nilai Buku = Nilai Perolehan - Akumulasi Penyusutan
+---
+
+## 📁 Struktur Folder Proyek
+
 ```
-Command scheduler: `php artisan lofbi:hitung-penyusutan` (Otomatis berjalan tiap 1 Jan & 1 Juli).
+lofbi_antigravity/
+├── app/
+│   ├── Http/
+│   │   ├── Controllers/
+│   │   │   ├── Api/                 # REST API Controllers (Sanctum)
+│   │   │   └── Web/                 # Web Blade Controllers (Auth, Aset, Opname, dll)
+│   │   ├── Middleware/              # CheckRole middleware
+│   │   ├── Requests/                # Form Request Validations
+│   │   └── Resources/               # API Json Resources
+│   ├── Models/                      # Model Eloquent (Aset, Persediaan, Batch, dll)
+│   └── Services/                    # Logika Bisnis Terpusat
+│       ├── Opname/                  # OpnameService (buka sesi, hitung nilai, approval)
+│       ├── Persediaan/              # PengajuanService (pengajuan keluar, FIFO cutting)
+│       ├── Report/                  # ExcelBuilder & Report generators
+│       └── Upload/                  # UploadService, SaktiStagingParser, XlsxParser
+├── config/                          # Konfigurasi aplikasi
+├── database/
+│   ├── migrations/                  # Skema migrasi tabel
+│   └── seeders/                     # Seeder akun demo dan data master
+├── docs/                            # Dokumentasi Teknis
+│   ├── api.md                       # Spesifikasi ringkas REST API
+│   ├── arsitektur.md                # Diagram arsitektur dan peta modul
+│   ├── integrasi-frontend.md        # Panduan integrasi UI eksternal
+│   ├── role.md                      # Matriks lengkap perizinan peran
+│   └── postman/                     # Koleksi Postman LOFBI API
+├── resources/
+│   └── views/                       # Tampilan antarmuka Blade
+│       ├── assets/                  # Tampilan modul Aset
+│       ├── inventory/               # Tampilan modul Persediaan
+│       ├── layouts/                 # Master layout (sidebar, navbar, drawer)
+│       ├── opname/                  # Tampilan modul Stok Opname
+│       ├── reports/                 # Tampilan dan template PDF Laporan
+│       └── upload/                  # Tampilan antarmuka Upload Staging
+├── routes/
+│   ├── api/                         # Route modular API per modul
+│   ├── web/                         # Route modular Web per modul
+│   ├── api.php                      # Endpoint utama API (memuat routes/api/*)
+│   └── web.php                      # Endpoint utama Web (memuat routes/web/*)
+├── storage/
+│   └── samples/                     # Berkas contoh format impor SAKTI / SIMAN
+└── tests/
+    └── Feature/
+        ├── Api/                     # Pengujian fungsional API
+        ├── Upload/                  # Pengujian modul Upload Staging & Validasi
+        └── Web/                     # Pengujian fungsional antarmuka Web
+```
 
 ---
 
-## 🚀 Deploy ke Production
+## 📚 Tautan Dokumentasi Terkait
 
-File `.env` untuk development (local) **tidak boleh** dipakai langsung di server production. Sebelum go-live, pastikan checklist ini sudah dijalankan:
-
-- [ ] **`APP_ENV=production`** dan **`APP_DEBUG=false`** - kalau `APP_DEBUG` masih `true`, setiap error akan menampilkan stack trace, path file server, dan query SQL ke siapa pun yang mengakses halaman error. Ini risiko keamanan nyata, bukan sekadar kerapian.
-- [ ] **`LOG_LEVEL=error`** (bukan `debug`) - supaya file log tidak cepat membengkak dan tidak mencatat detail yang terlalu rinci.
-- [ ] **CORS** (`config/cors.php`) - `'allowed_origins' => ['*']` saat ini sengaja dibuat longgar untuk memudahkan development. Sebelum production, ganti jadi daftar domain spesifik yang benar-benar akan memakai API ini.
-- [ ] **Cron scheduler** - command `lofbi:hitung-penyusutan` (penyusutan aset tiap 1 Jan & 1 Jul) hanya berjalan otomatis kalau server punya cron job yang menjalankan `php artisan schedule:run` setiap menit. Ini **tidak otomatis ada** - perlu didaftarkan manual di cron server (lihat [dokumentasi Task Scheduling Laravel](https://laravel.com/docs/scheduling#running-the-scheduler)).
-- [ ] **Rate limiting login** - endpoint `/login` (web) dan `/api/login` belum punya pembatasan percobaan login (throttle), rentan brute-force. Tambahkan middleware `throttle` sebelum go-live.
-- [ ] **`MYSQLDUMP_PATH`** di `.env` - kalau pakai fitur Backup API dengan MySQL, pastikan path `mysqldump` sudah sesuai lokasi di server production (berbeda antara Windows/XAMPP dan Linux).
-- [ ] **Jalankan `php artisan config:cache` & `php artisan route:cache`** setelah `.env` production final - mempercepat response time.
-
----
-
-## 📄 Lisensi
-
-Project ini dirilis di bawah lisensi [MIT License](LICENSE).
+- [Arsitektur Sistem & Alur Bisnis (docs/arsitektur.md)](docs/arsitektur.md)
+- [Matriks Hak Akses Peran (docs/role.md)](docs/role.md)
+- [Dokumentasi REST API (docs/api.md)](docs/api.md)
+- [Panduan Integrasi Frontend (docs/integrasi-frontend.md)](docs/integrasi-frontend.md)
+- [Koleksi Postman API (docs/postman/)](docs/postman/LOFBI_API.postman_collection.json)
