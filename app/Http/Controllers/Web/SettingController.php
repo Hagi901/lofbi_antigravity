@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\AuditLog;
 use App\Models\Setting;
 use Illuminate\Http\Request;
@@ -14,18 +13,19 @@ class SettingController extends Controller
     public function index()
     {
         $settings = Setting::all()->pluck('value', 'key');
+
         return view('settings', compact('settings'));
     }
 
     public function update(Request $request)
     {
         $data = $request->validate([
-            'nama_aplikasi'    => 'nullable|string|max:255',
-            'nama_ksop'        => 'nullable|string|max:255',
-            'alamat_instansi'  => 'nullable|string|max:500',
-            'peringatan_stok'  => 'nullable|string|in:0,1',
-            'notif_opname'     => 'nullable|string|in:0,1',
-            'laporan_harian'   => 'nullable|string|in:0,1',
+            'nama_aplikasi' => 'nullable|string|max:255',
+            'nama_ksop' => 'nullable|string|max:255',
+            'alamat_instansi' => 'nullable|string|max:500',
+            'peringatan_stok' => 'nullable|string|in:0,1',
+            'notif_opname' => 'nullable|string|in:0,1',
+            'laporan_harian' => 'nullable|string|in:0,1',
         ]);
 
         foreach ($data as $key => $value) {
@@ -47,8 +47,9 @@ class SettingController extends Controller
     {
         $dbPath = database_path('database.sqlite');
         if (file_exists($dbPath)) {
-            return response()->download($dbPath, 'LOFBI_Backup_' . date('Ymd_His') . '.sqlite');
+            return response()->download($dbPath, 'LOFBI_Backup_'.date('Ymd_His').'.sqlite');
         }
+
         return back()->with('error', 'File database tidak ditemukan.');
     }
 }

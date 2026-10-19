@@ -75,8 +75,8 @@ class SettingsController extends Controller
         }
 
         $direktoriBackup = $this->siapkanDirektoriBackup();
-        $namaFile = 'backup_lofbi_' . now()->format('Ymd_His') . '.sqlite';
-        $tujuan = $direktoriBackup . DIRECTORY_SEPARATOR . $namaFile;
+        $namaFile = 'backup_lofbi_'.now()->format('Ymd_His').'.sqlite';
+        $tujuan = $direktoriBackup.DIRECTORY_SEPARATOR.$namaFile;
 
         copy($dbPath, $tujuan);
 
@@ -92,8 +92,8 @@ class SettingsController extends Controller
     {
         $config = config('database.connections.mysql');
         $direktoriBackup = $this->siapkanDirektoriBackup();
-        $namaFile = 'backup_lofbi_' . now()->format('Ymd_His') . '.sql';
-        $tujuan = $direktoriBackup . DIRECTORY_SEPARATOR . $namaFile;
+        $namaFile = 'backup_lofbi_'.now()->format('Ymd_His').'.sql';
+        $tujuan = $direktoriBackup.DIRECTORY_SEPARATOR.$namaFile;
 
         $mysqldump = env('MYSQLDUMP_PATH', 'mysqldump');
 
@@ -103,7 +103,7 @@ class SettingsController extends Controller
             escapeshellarg($config['host']),
             escapeshellarg($config['port']),
             escapeshellarg($config['username']),
-            $config['password'] !== '' ? '--password=' . escapeshellarg($config['password']) : '',
+            $config['password'] !== '' ? '--password='.escapeshellarg($config['password']) : '',
             escapeshellarg($config['database']),
             escapeshellarg($tujuan)
         );

@@ -36,7 +36,7 @@ class KsopBantenRealDataSeeder extends Seeder
         $katLogistik = Kategori::updateOrCreate(['nama' => 'Logistik & Konsumsi'], ['tipe' => 'persediaan']);
 
         // ── 3. Data Barang & Transaksi Riil ───────────────────────────────────
-        
+
         // A. BUKU PELAUT (1.01.03.01.014.000037)
         $jbBukuPelaut = JenisBarang::updateOrCreate(['nama_generik' => 'BUKU PELAUT (1.01.03.01.014.000037)'], ['kategori_id' => $katATK->id]);
         $pBukuPelaut = Persediaan::updateOrCreate(['jenis_barang_id' => $jbBukuPelaut->id], [

@@ -20,8 +20,8 @@ class SaktiStagingParser
     /**
      * Parse file SAKTI menjadi array data baris untuk upload_baris.
      *
-     * @param string $filePath Path file fisik
-     * @param string|null $sheetName Nama sheet opsional
+     * @param  string  $filePath  Path file fisik
+     * @param  string|null  $sheetName  Nama sheet opsional
      * @return array Array of associative arrays (siap di-insert ke upload_baris)
      */
     public function parse(string $filePath, ?string $sheetName = null): array
@@ -45,12 +45,12 @@ class SaktiStagingParser
         $headerIndex = -1;
         $colMap = [
             'tgl_perolehan' => -1,
-            'kode_barang'   => -1,
-            'nama_barang'   => -1,
-            'satuan'        => -1,
-            'saldo_sistem'  => -1,
-            'hasil_opsik'   => -1,
-            'kategori'      => -1,
+            'kode_barang' => -1,
+            'nama_barang' => -1,
+            'satuan' => -1,
+            'saldo_sistem' => -1,
+            'hasil_opsik' => -1,
+            'kategori' => -1,
         ];
 
         foreach ($rows as $idx => $row) {
@@ -64,12 +64,12 @@ class SaktiStagingParser
         if ($headerIndex === -1) {
             $headerIndex = 0;
             $colMap['tgl_perolehan'] = 0;
-            $colMap['kode_barang']   = 1;
-            $colMap['nama_barang']   = 2;
-            $colMap['satuan']        = 3;
-            $colMap['saldo_sistem']  = 4;
-            $colMap['hasil_opsik']   = 5;
-            $colMap['kategori']      = 6;
+            $colMap['kode_barang'] = 1;
+            $colMap['nama_barang'] = 2;
+            $colMap['satuan'] = 3;
+            $colMap['saldo_sistem'] = 4;
+            $colMap['hasil_opsik'] = 5;
+            $colMap['kategori'] = 6;
         }
 
         $parsedRows = [];
@@ -91,12 +91,12 @@ class SaktiStagingParser
             }
 
             // C. Ekstrak data mentah sesuai mapping kolom
-            $rawKode   = $this->getCellString($row, $colMap['kode_barang']);
-            $rawNama   = $this->getCellString($row, $colMap['nama_barang']);
+            $rawKode = $this->getCellString($row, $colMap['kode_barang']);
+            $rawNama = $this->getCellString($row, $colMap['nama_barang']);
             $rawSatuan = $this->getCellString($row, $colMap['satuan']);
-            $rawSaldo  = $this->getCellString($row, $colMap['saldo_sistem']);
-            $rawOpsik  = $this->getCellString($row, $colMap['hasil_opsik']);
-            $rawKat    = $this->getCellString($row, $colMap['kategori']);
+            $rawSaldo = $this->getCellString($row, $colMap['saldo_sistem']);
+            $rawOpsik = $this->getCellString($row, $colMap['hasil_opsik']);
+            $rawKat = $this->getCellString($row, $colMap['kategori']);
 
             // D. Lewati baris yang sepenuhnya kosong
             if ($rawKode === '' && $rawNama === '' && $rawSatuan === '' && $rawSaldo === '') {
@@ -114,7 +114,7 @@ class SaktiStagingParser
 
             // G. Parsing saldo sistem (dukung format angka Indonesia, titik ribuan / koma desimal)
             $saldoSistem = $this->parseInteger($rawSaldo);
-            $hasilOpsik  = $rawOpsik !== '' ? $this->parseInteger($rawOpsik) : null;
+            $hasilOpsik = $rawOpsik !== '' ? $this->parseInteger($rawOpsik) : null;
 
             // H. Deteksi placeholder & kualitas data
             $isPlaceholder = false;
@@ -129,7 +129,7 @@ class SaktiStagingParser
             }
 
             // Kode barang tidak sesuai 16 digit
-            if (!$kodeData['valid']) {
+            if (! $kodeData['valid']) {
                 $perluPerhatian = true;
                 $catatanParser[] = 'Format kode barang tidak baku (bukan 16 digit)';
             }
@@ -137,37 +137,37 @@ class SaktiStagingParser
             // Saldo negatif
             if ($saldoSistem !== null && $saldoSistem < 0) {
                 $perluPerhatian = true;
-                $catatanParser[] = 'Saldo di sistem bernilai negatif (' . $saldoSistem . ')';
+                $catatanParser[] = 'Saldo di sistem bernilai negatif ('.$saldoSistem.')';
             }
 
             // Satuan default jika kosong
             $satuan = $rawSatuan !== '' ? strtoupper($rawSatuan) : '-';
 
             $parsedRows[] = [
-                'nomor_baris'          => $nomorUrutBaris++,
-                'status'               => 'menunggu',
-                'deskripsi_revisi'     => null,
-                'kode_barang_lengkap'  => $kodeData['lengkap'],
-                'kb_lvl1'              => $kodeData['lvl1'],
-                'kb_lvl2'              => $kodeData['lvl2'],
-                'kb_lvl3'              => $kodeData['lvl3'],
-                'kb_lvl4'              => $kodeData['lvl4'],
-                'kb_lvl5'              => $kodeData['lvl5'],
-                'kb_seq'               => $kodeData['seq'],
-                'nama_barang'          => $rawNama !== '' ? $rawNama : '-',
-                'satuan'               => $satuan,
-                'saldo_sistem'         => $saldoSistem ?? 0,
-                'hasil_opsik'          => $hasilOpsik,
-                'kategori_sakti'       => $rawKat !== '' ? $rawKat : null,
-                'harga_satuan'         => null,
-                'harga_belum_diisi'    => true,
-                'no_dokumen'           => null,
-                'no_bukti'             => null,
-                'tgl_dok'              => null,
-                'tgl_buku'             => null,
-                'is_placeholder'       => $isPlaceholder,
-                'perlu_perhatian'      => $perluPerhatian,
-                'catatan_parser'       => !empty($catatanParser) ? implode('; ', $catatanParser) : null,
+                'nomor_baris' => $nomorUrutBaris++,
+                'status' => 'menunggu',
+                'deskripsi_revisi' => null,
+                'kode_barang_lengkap' => $kodeData['lengkap'],
+                'kb_lvl1' => $kodeData['lvl1'],
+                'kb_lvl2' => $kodeData['lvl2'],
+                'kb_lvl3' => $kodeData['lvl3'],
+                'kb_lvl4' => $kodeData['lvl4'],
+                'kb_lvl5' => $kodeData['lvl5'],
+                'kb_seq' => $kodeData['seq'],
+                'nama_barang' => $rawNama !== '' ? $rawNama : '-',
+                'satuan' => $satuan,
+                'saldo_sistem' => $saldoSistem ?? 0,
+                'hasil_opsik' => $hasilOpsik,
+                'kategori_sakti' => $rawKat !== '' ? $rawKat : null,
+                'harga_satuan' => null,
+                'harga_belum_diisi' => true,
+                'no_dokumen' => null,
+                'no_bukti' => null,
+                'tgl_dok' => null,
+                'tgl_buku' => null,
+                'is_placeholder' => $isPlaceholder,
+                'perlu_perhatian' => $perluPerhatian,
+                'catatan_parser' => ! empty($catatanParser) ? implode('; ', $catatanParser) : null,
             ];
         }
 
@@ -183,16 +183,16 @@ class SaktiStagingParser
         $hasKode = false;
         $tempMap = [
             'tgl_perolehan' => -1,
-            'kode_barang'   => -1,
-            'nama_barang'   => -1,
-            'satuan'        => -1,
-            'saldo_sistem'  => -1,
-            'hasil_opsik'   => -1,
-            'kategori'      => -1,
+            'kode_barang' => -1,
+            'nama_barang' => -1,
+            'satuan' => -1,
+            'saldo_sistem' => -1,
+            'hasil_opsik' => -1,
+            'kategori' => -1,
         ];
 
         foreach ($row as $idx => $cell) {
-            $lower = strtolower(trim((string)$cell));
+            $lower = strtolower(trim((string) $cell));
             if ($lower === '') {
                 continue;
             }
@@ -220,6 +220,7 @@ class SaktiStagingParser
 
         if ($hasNama && $hasKode) {
             $colMap = $tempMap;
+
             return true;
         }
 
@@ -231,7 +232,7 @@ class SaktiStagingParser
      */
     private function isColumnNumberRow(array $row): bool
     {
-        $filled = array_filter(array_map('trim', $row), fn($v) => $v !== '');
+        $filled = array_filter(array_map('trim', $row), fn ($v) => $v !== '');
         if (empty($filled)) {
             return false;
         }
@@ -239,7 +240,7 @@ class SaktiStagingParser
         $allNumbers = true;
         foreach ($filled as $val) {
             $valClean = trim($val, '()[] ');
-            if (!is_numeric($valClean) || (int)$valClean > 30) {
+            if (! is_numeric($valClean) || (int) $valClean > 30) {
                 $allNumbers = false;
                 break;
             }
@@ -259,14 +260,14 @@ class SaktiStagingParser
         $clean = trim($raw);
         if ($clean === '') {
             return [
-                'valid'   => false,
+                'valid' => false,
                 'lengkap' => null,
-                'lvl1'    => null,
-                'lvl2'    => null,
-                'lvl3'    => null,
-                'lvl4'    => null,
-                'lvl5'    => null,
-                'seq'     => null,
+                'lvl1' => null,
+                'lvl2' => null,
+                'lvl3' => null,
+                'lvl4' => null,
+                'lvl5' => null,
+                'seq' => null,
             ];
         }
 
@@ -275,15 +276,16 @@ class SaktiStagingParser
             $parts = explode('.', $clean);
             if (count($parts) === 6) {
                 $digits = implode('', $parts);
+
                 return [
-                    'valid'   => strlen($digits) === 16,
+                    'valid' => strlen($digits) === 16,
                     'lengkap' => $digits,
-                    'lvl1'    => $parts[0],
-                    'lvl2'    => $parts[1],
-                    'lvl3'    => $parts[2],
-                    'lvl4'    => $parts[3],
-                    'lvl5'    => $parts[4],
-                    'seq'     => $parts[5],
+                    'lvl1' => $parts[0],
+                    'lvl2' => $parts[1],
+                    'lvl3' => $parts[2],
+                    'lvl4' => $parts[3],
+                    'lvl5' => $parts[4],
+                    'seq' => $parts[5],
                 ];
             }
         }
@@ -294,27 +296,27 @@ class SaktiStagingParser
 
         if (strlen($digits) === 16) {
             return [
-                'valid'   => true,
+                'valid' => true,
                 'lengkap' => $digits,
-                'lvl1'    => substr($digits, 0, 1),   // 1
-                'lvl2'    => substr($digits, 1, 2),   // 01
-                'lvl3'    => substr($digits, 3, 2),   // 01
-                'lvl4'    => substr($digits, 5, 2),   // 08
-                'lvl5'    => substr($digits, 7, 3),   // 047
-                'seq'     => substr($digits, 10, 6),  // 000001
+                'lvl1' => substr($digits, 0, 1),   // 1
+                'lvl2' => substr($digits, 1, 2),   // 01
+                'lvl3' => substr($digits, 3, 2),   // 01
+                'lvl4' => substr($digits, 5, 2),   // 08
+                'lvl5' => substr($digits, 7, 3),   // 047
+                'seq' => substr($digits, 10, 6),  // 000001
             ];
         }
 
         // Jika bukan 16 digit, tetap simpan string aslinya untuk validator periksa
         return [
-            'valid'   => false,
+            'valid' => false,
             'lengkap' => $clean,
-            'lvl1'    => null,
-            'lvl2'    => null,
-            'lvl3'    => null,
-            'lvl4'    => null,
-            'lvl5'    => null,
-            'seq'     => null,
+            'lvl1' => null,
+            'lvl2' => null,
+            'lvl3' => null,
+            'lvl4' => null,
+            'lvl5' => null,
+            'seq' => null,
         ];
     }
 
@@ -323,11 +325,11 @@ class SaktiStagingParser
      */
     private function getCellString(array $row, int $colIndex): string
     {
-        if ($colIndex < 0 || !isset($row[$colIndex])) {
+        if ($colIndex < 0 || ! isset($row[$colIndex])) {
             return '';
         }
 
-        return trim((string)$row[$colIndex]);
+        return trim((string) $row[$colIndex]);
     }
 
     /**
@@ -348,7 +350,8 @@ class SaktiStagingParser
             return null;
         }
 
-        $val = (int)$digitsOnly;
+        $val = (int) $digitsOnly;
+
         return $isNegative ? -$val : $val;
     }
 }

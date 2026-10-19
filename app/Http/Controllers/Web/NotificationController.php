@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\Aset;
 use App\Models\AuditLog;
 use App\Models\Notifikasi;
@@ -35,6 +34,7 @@ class NotificationController extends Controller
             ->get()
             ->filter(function ($item) {
                 $sisa = $item->batches->sum('sisa_stok');
+
                 return $sisa <= ($item->stok_minimum ?? 0);
             });
 

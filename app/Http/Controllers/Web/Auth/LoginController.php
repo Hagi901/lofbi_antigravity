@@ -31,8 +31,8 @@ class LoginController extends Controller
         // Cek kecocokan di database
         if (Auth::attempt($credentials)) {
             // Jika cocok, buatkan sesi baru agar aman dari serangan
-            $request->session()->regenerate(); 
-            
+            $request->session()->regenerate();
+
             // Arahkan ke dashboard
             return redirect()->intended('dashboard')->with('success', 'Selamat datang kembali di Sistem LOFBI!');
         }
@@ -50,10 +50,10 @@ class LoginController extends Controller
     {
         // Hapus status login
         Auth::logout();
-        
+
         // Hancurkan tiket sesi saat ini
         $request->session()->invalidate();
-        
+
         // Buat token keamanan baru untuk form selanjutnya
         $request->session()->regenerateToken();
 

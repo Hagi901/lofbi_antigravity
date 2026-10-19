@@ -16,11 +16,11 @@ class BatchPersediaan extends Model
     protected function casts(): array
     {
         return [
-            'tanggal_masuk'     => 'date',
-            'harga_satuan'      => 'decimal:2',
+            'tanggal_masuk' => 'date',
+            'harga_satuan' => 'decimal:2',
             'harga_belum_diisi' => 'boolean',
-            'tgl_dok'           => 'date',
-            'tgl_buku'          => 'date',
+            'tgl_dok' => 'date',
+            'tgl_buku' => 'date',
         ];
     }
 

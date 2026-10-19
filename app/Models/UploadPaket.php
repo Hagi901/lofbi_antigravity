@@ -12,13 +12,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * Satu record per file yang diunggah.
  * Status paket diturunkan dari status baris-barisnya.
  *
- * @property int    $id
- * @property int    $diunggah_oleh
- * @property string $jenis          'sakti' | 'siman'
+ * @property int $id
+ * @property int $diunggah_oleh
+ * @property string $jenis 'sakti' | 'siman'
  * @property string $nama_file
  * @property string $path_file
- * @property int    $jumlah_baris
- * @property string $status         'menunggu' | 'disetujui_sebagian' | 'disetujui' | 'ditolak'
+ * @property int $jumlah_baris
+ * @property string $status 'menunggu' | 'disetujui_sebagian' | 'disetujui' | 'ditolak'
  * @property string|null $catatan
  */
 class UploadPaket extends Model
@@ -70,10 +70,10 @@ class UploadPaket extends Model
      */
     public function refreshStatus(): void
     {
-        $total      = $this->baris()->count();
-        $disetujui  = $this->baris()->where('status', 'disetujui')->count();
-        $ditolak    = $this->baris()->where('status', 'ditolak')->count();
-        $menunggu   = $this->baris()->where('status', 'menunggu')->count();
+        $total = $this->baris()->count();
+        $disetujui = $this->baris()->where('status', 'disetujui')->count();
+        $ditolak = $this->baris()->where('status', 'ditolak')->count();
+        $menunggu = $this->baris()->where('status', 'menunggu')->count();
 
         if ($total === 0) {
             $status = 'menunggu';
@@ -104,11 +104,11 @@ class UploadPaket extends Model
     public function getLabelStatusAttribute(): string
     {
         return match ($this->status) {
-            'menunggu'           => 'Menunggu Validasi',
+            'menunggu' => 'Menunggu Validasi',
             'disetujui_sebagian' => 'Disetujui Sebagian',
-            'disetujui'          => 'Disetujui',
-            'ditolak'            => 'Ditolak',
-            default              => ucfirst($this->status),
+            'disetujui' => 'Disetujui',
+            'ditolak' => 'Ditolak',
+            default => ucfirst($this->status),
         };
     }
 
@@ -118,11 +118,11 @@ class UploadPaket extends Model
     public function getWarnaBadgeAttribute(): string
     {
         return match ($this->status) {
-            'menunggu'           => 'yellow',
+            'menunggu' => 'yellow',
             'disetujui_sebagian' => 'blue',
-            'disetujui'          => 'green',
-            'ditolak'            => 'red',
-            default              => 'gray',
+            'disetujui' => 'green',
+            'ditolak' => 'red',
+            default => 'gray',
         };
     }
 }

@@ -19,13 +19,13 @@ class LofbiApiTest extends TestCase
     public function test_user_can_login_and_access_me_endpoint(): void
     {
         User::factory()->create([
-            'email'    => 'admin@lofbi.test',
+            'email' => 'admin@lofbi.test',
             'password' => Hash::make('password'),
-            'role'     => 'admin',
+            'role' => 'admin',
         ]);
 
         $login = $this->postJson('/api/login', [
-            'email'    => 'admin@lofbi.test',
+            'email' => 'admin@lofbi.test',
             'password' => 'password',
         ])->assertOk();
 
@@ -37,45 +37,45 @@ class LofbiApiTest extends TestCase
 
     public function test_validator_approval_cuts_inventory_fifo_across_batches(): void
     {
-        $admin     = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin']);
         $validator = User::factory()->create(['role' => 'validator']);
-        $kategori  = Kategori::create(['nama' => 'ATK', 'tipe' => 'persediaan']);
-        $jenis     = JenisBarang::create(['nama_generik' => 'Pulpen', 'kategori_id' => $kategori->id]);
+        $kategori = Kategori::create(['nama' => 'ATK', 'tipe' => 'persediaan']);
+        $jenis = JenisBarang::create(['nama_generik' => 'Pulpen', 'kategori_id' => $kategori->id]);
         $persediaan = Persediaan::create([
             'jenis_barang_id' => $jenis->id,
-            'satuan'          => 'pcs',
-            'stok_minimum'    => 5,
+            'satuan' => 'pcs',
+            'stok_minimum' => 5,
         ]);
 
         $batch1 = BatchPersediaan::create([
             'persediaan_id' => $persediaan->id,
-            'no_batch'      => 1,
+            'no_batch' => 1,
             'tanggal_masuk' => '2026-01-01',
-            'jumlah_masuk'  => 10,
-            'harga_satuan'  => 1000,
-            'sisa_stok'     => 3,
+            'jumlah_masuk' => 10,
+            'harga_satuan' => 1000,
+            'sisa_stok' => 3,
         ]);
         $batch2 = BatchPersediaan::create([
             'persediaan_id' => $persediaan->id,
-            'no_batch'      => 2,
+            'no_batch' => 2,
             'tanggal_masuk' => '2026-01-02',
-            'jumlah_masuk'  => 10,
-            'harga_satuan'  => 1200,
-            'sisa_stok'     => 10,
+            'jumlah_masuk' => 10,
+            'harga_satuan' => 1200,
+            'sisa_stok' => 10,
         ]);
 
         $pengajuan = TransaksiPersediaan::create([
-            'persediaan_id'      => $persediaan->id,
-            'jenis'              => 'keluar',
-            'jumlah'             => 8,
-            'tanggal'            => '2026-07-29',
+            'persediaan_id' => $persediaan->id,
+            'jenis' => 'keluar',
+            'jumlah' => 8,
+            'tanggal' => '2026-07-29',
             'unit_kerja_penerima' => 'TU',
-            'diajukan_oleh'      => $admin->id,
-            'status'             => 'menunggu',
+            'diajukan_oleh' => $admin->id,
+            'status' => 'menunggu',
         ]);
 
         $token = $this->postJson('/api/login', [
-            'email'    => $validator->email,
+            'email' => $validator->email,
             'password' => 'password',
         ])->json('access_token');
 
@@ -91,25 +91,25 @@ class LofbiApiTest extends TestCase
 
     public function test_operator_can_view_persediaan_and_create_pengajuan_keluar_via_api(): void
     {
-        $operator   = User::factory()->create(['role' => 'operator']);
-        $kategori   = Kategori::create(['nama' => 'ATK', 'tipe' => 'persediaan']);
-        $jenis      = JenisBarang::create(['nama_generik' => 'Kertas A4', 'kategori_id' => $kategori->id]);
+        $operator = User::factory()->create(['role' => 'operator']);
+        $kategori = Kategori::create(['nama' => 'ATK', 'tipe' => 'persediaan']);
+        $jenis = JenisBarang::create(['nama_generik' => 'Kertas A4', 'kategori_id' => $kategori->id]);
         $persediaan = Persediaan::create([
             'jenis_barang_id' => $jenis->id,
-            'satuan'          => 'rim',
-            'stok_minimum'    => 5,
+            'satuan' => 'rim',
+            'stok_minimum' => 5,
         ]);
         BatchPersediaan::create([
             'persediaan_id' => $persediaan->id,
-            'no_batch'      => 1,
+            'no_batch' => 1,
             'tanggal_masuk' => '2026-01-01',
-            'jumlah_masuk'  => 20,
-            'harga_satuan'  => 50000,
-            'sisa_stok'     => 20,
+            'jumlah_masuk' => 20,
+            'harga_satuan' => 50000,
+            'sisa_stok' => 20,
         ]);
 
         $token = $this->postJson('/api/login', [
-            'email'    => $operator->email,
+            'email' => $operator->email,
             'password' => 'password',
         ])->json('access_token');
 
@@ -126,8 +126,8 @@ class LofbiApiTest extends TestCase
         // 3. Operator bisa membuat pengajuan barang keluar
         $this->withToken($token)
             ->postJson("/api/persediaan/{$persediaan->id}/pengajuan-keluar", [
-                'jumlah'              => 5,
-                'tanggal'             => '2026-08-10',
+                'jumlah' => 5,
+                'tanggal' => '2026-08-10',
                 'unit_kerja_penerima' => 'Seksi Kepegawaian',
             ])
             ->assertCreated();
@@ -135,17 +135,17 @@ class LofbiApiTest extends TestCase
 
     public function test_pimpinan_cannot_mutate_data_via_api(): void
     {
-        $pimpinan   = User::factory()->create(['role' => 'pimpinan']);
-        $kategori   = Kategori::create(['nama' => 'ATK', 'tipe' => 'persediaan']);
-        $jenis      = JenisBarang::create(['nama_generik' => 'Buku', 'kategori_id' => $kategori->id]);
+        $pimpinan = User::factory()->create(['role' => 'pimpinan']);
+        $kategori = Kategori::create(['nama' => 'ATK', 'tipe' => 'persediaan']);
+        $jenis = JenisBarang::create(['nama_generik' => 'Buku', 'kategori_id' => $kategori->id]);
         $persediaan = Persediaan::create([
             'jenis_barang_id' => $jenis->id,
-            'satuan'          => 'buah',
-            'stok_minimum'    => 5,
+            'satuan' => 'buah',
+            'stok_minimum' => 5,
         ]);
 
         $token = $this->postJson('/api/login', [
-            'email'    => $pimpinan->email,
+            'email' => $pimpinan->email,
             'password' => 'password',
         ])->json('access_token');
 
@@ -160,8 +160,8 @@ class LofbiApiTest extends TestCase
         // 3. Pimpinan DILARANG membuat pengajuan keluar (403)
         $this->withToken($token)
             ->postJson("/api/persediaan/{$persediaan->id}/pengajuan-keluar", [
-                'jumlah'              => 2,
-                'tanggal'             => '2026-08-10',
+                'jumlah' => 2,
+                'tanggal' => '2026-08-10',
                 'unit_kerja_penerima' => 'Unit Pimpinan',
             ])
             ->assertForbidden();
@@ -183,7 +183,7 @@ class LofbiApiTest extends TestCase
         $operator = User::factory()->create(['role' => 'operator']);
 
         $token = $this->postJson('/api/login', [
-            'email'    => $operator->email,
+            'email' => $operator->email,
             'password' => 'password',
         ])->json('access_token');
 
@@ -206,17 +206,17 @@ class LofbiApiTest extends TestCase
 
     public function test_validator_can_see_pengajuan_list_but_cannot_create_pengajuan_keluar_via_api(): void
     {
-        $validator  = User::factory()->create(['role' => 'validator']);
-        $kategori   = Kategori::create(['nama' => 'ATK', 'tipe' => 'persediaan']);
-        $jenis      = JenisBarang::create(['nama_generik' => 'Map Folio', 'kategori_id' => $kategori->id]);
+        $validator = User::factory()->create(['role' => 'validator']);
+        $kategori = Kategori::create(['nama' => 'ATK', 'tipe' => 'persediaan']);
+        $jenis = JenisBarang::create(['nama_generik' => 'Map Folio', 'kategori_id' => $kategori->id]);
         $persediaan = Persediaan::create([
             'jenis_barang_id' => $jenis->id,
-            'satuan'          => 'buah',
-            'stok_minimum'    => 2,
+            'satuan' => 'buah',
+            'stok_minimum' => 2,
         ]);
 
         $token = $this->postJson('/api/login', [
-            'email'    => $validator->email,
+            'email' => $validator->email,
             'password' => 'password',
         ])->json('access_token');
 
@@ -229,8 +229,8 @@ class LofbiApiTest extends TestCase
         // Validator DILARANG membuat pengajuan keluar (hanya admin & operator)
         $this->withToken($token)
             ->postJson("/api/persediaan/{$persediaan->id}/pengajuan-keluar", [
-                'jumlah'              => 1,
-                'tanggal'             => '2026-08-10',
+                'jumlah' => 1,
+                'tanggal' => '2026-08-10',
                 'unit_kerja_penerima' => 'Seksi Test',
             ])
             ->assertForbidden();

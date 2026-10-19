@@ -3,11 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
-
-use App\Models\AuditLog;
-use App\Models\OpnameDetail;
 use App\Models\OpnameSesi;
-use App\Models\Persediaan;
 use App\Services\Opname\OpnameService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -26,6 +22,7 @@ class OpnameController extends Controller
         $sesi = OpnameSesi::with(['admin', 'approver', 'details'])
             ->latest()
             ->get();
+
         return view('opname.index', compact('sesi'));
     }
 
@@ -49,15 +46,15 @@ class OpnameController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'periode'    => 'required|string|max:50',
-            'tanggal'    => 'required|date',
+            'periode' => 'required|string|max:50',
+            'tanggal' => 'required|date',
             'keterangan' => 'nullable|string|max:500',
         ]);
 
         $data = [
             'ruangan_id' => $request->ruangan_id ?? null,
-            'tanggal'    => $request->tanggal,
-            'periode'    => $request->periode,
+            'tanggal' => $request->tanggal,
+            'periode' => $request->periode,
             'keterangan' => $request->keterangan,
         ];
 
@@ -90,9 +87,9 @@ class OpnameController extends Controller
             ->findOrFail($id);
 
         // Hanya bisa input jika status draft atau ditolak
-        if (!in_array($sesi->status, ['draft', 'ditolak'])) {
+        if (! in_array($sesi->status, ['draft', 'ditolak'])) {
             return redirect()->route('opname.show', $id)
-                ->with('error', 'Sesi ini tidak dapat diedit karena statusnya: ' . $sesi->statusLabel());
+                ->with('error', 'Sesi ini tidak dapat diedit karena statusnya: '.$sesi->statusLabel());
         }
 
         return view('opname.input_fisik', compact('sesi'));
@@ -104,15 +101,15 @@ class OpnameController extends Controller
     {
         $sesi = OpnameSesi::findOrFail($id);
 
-        if (!in_array($sesi->status, ['draft', 'ditolak'])) {
+        if (! in_array($sesi->status, ['draft', 'ditolak'])) {
             return redirect()->route('opname.show', $id)
                 ->with('error', 'Sesi ini tidak dapat diedit.');
         }
 
         $request->validate([
-            'stok_fisik'   => 'required|array',
+            'stok_fisik' => 'required|array',
             'stok_fisik.*' => 'required|integer|min:0',
-            'catatan'      => 'nullable|array',
+            'catatan' => 'nullable|array',
         ]);
 
         try {

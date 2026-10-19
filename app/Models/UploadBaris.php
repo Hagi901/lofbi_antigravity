@@ -11,28 +11,28 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * Satu record per baris data dalam file upload (staging).
  * Setelah disetujui validator, baris ini dipromosikan ke tabel resmi.
  *
- * @property int    $id
- * @property int    $upload_paket_id
- * @property int    $nomor_baris
- * @property string $status          'menunggu' | 'disetujui' | 'ditolak'
+ * @property int $id
+ * @property int $upload_paket_id
+ * @property int $nomor_baris
+ * @property string $status 'menunggu' | 'disetujui' | 'ditolak'
  * @property string|null $deskripsi_revisi
- * @property int|null    $ditindak_oleh
+ * @property int|null $ditindak_oleh
  * @property string|null $ditindak_pada
  *
  * -- Field Persediaan SAKTI --
- * @property string|null $kode_barang_lengkap  (16 digit string, JANGAN dikonversi ke int/float)
+ * @property string|null $kode_barang_lengkap (16 digit string, JANGAN dikonversi ke int/float)
  * @property string|null $kb_lvl1 .. $kb_lvl5, $kb_seq
  * @property string|null $nama_barang
  * @property string|null $satuan
- * @property int|null    $saldo_sistem
- * @property int|null    $hasil_opsik
+ * @property int|null $saldo_sistem
+ * @property int|null $hasil_opsik
  * @property string|null $kategori_sakti
- * @property float|null  $harga_satuan         (null jika belum diisi)
- * @property bool        $harga_belum_diisi
- * @property bool        $is_placeholder
- * @property bool        $perlu_perhatian
+ * @property float|null $harga_satuan (null jika belum diisi)
+ * @property bool $harga_belum_diisi
+ * @property bool $is_placeholder
+ * @property bool $perlu_perhatian
  * @property string|null $catatan_parser
- * @property int|null    $batch_persediaan_id  (terisi setelah disetujui)
+ * @property int|null $batch_persediaan_id (terisi setelah disetujui)
  */
 class UploadBaris extends Model
 {
@@ -71,13 +71,13 @@ class UploadBaris extends Model
     protected function casts(): array
     {
         return [
-            'harga_satuan'      => 'decimal:2',
+            'harga_satuan' => 'decimal:2',
             'harga_belum_diisi' => 'boolean',
-            'is_placeholder'    => 'boolean',
-            'perlu_perhatian'   => 'boolean',
-            'ditindak_pada'     => 'datetime',
-            'tgl_dok'           => 'date',
-            'tgl_buku'          => 'date',
+            'is_placeholder' => 'boolean',
+            'perlu_perhatian' => 'boolean',
+            'ditindak_pada' => 'datetime',
+            'tgl_dok' => 'date',
+            'tgl_buku' => 'date',
         ];
     }
 
@@ -106,7 +106,7 @@ class UploadBaris extends Model
      */
     public function kunciUnik(): string
     {
-        return ($this->kode_barang_lengkap ?? '') . '|' . ($this->no_dokumen ?? '');
+        return ($this->kode_barang_lengkap ?? '').'|'.($this->no_dokumen ?? '');
     }
 
     /**
@@ -115,10 +115,10 @@ class UploadBaris extends Model
     public function getLabelStatusAttribute(): string
     {
         return match ($this->status) {
-            'menunggu'  => 'Menunggu',
+            'menunggu' => 'Menunggu',
             'disetujui' => 'Disetujui',
-            'ditolak'   => 'Ditolak',
-            default     => ucfirst($this->status),
+            'ditolak' => 'Ditolak',
+            default => ucfirst($this->status),
         };
     }
 
@@ -128,10 +128,10 @@ class UploadBaris extends Model
     public function getWarnaBadgeAttribute(): string
     {
         return match ($this->status) {
-            'menunggu'  => 'yellow',
+            'menunggu' => 'yellow',
             'disetujui' => 'green',
-            'ditolak'   => 'red',
-            default     => 'gray',
+            'ditolak' => 'red',
+            default => 'gray',
         };
     }
 }

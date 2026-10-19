@@ -2,6 +2,7 @@
 
 namespace App\Services\Report;
 
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use ZipArchive;
 
 /**
@@ -11,6 +12,7 @@ use ZipArchive;
 class ExcelBuilder
 {
     private array $sheets = [];
+
     private string $title;
 
     public function __construct(string $title = 'Laporan LOFBI')
@@ -25,26 +27,27 @@ class ExcelBuilder
     public function addSheet(string $name, array $headings, array $rows): static
     {
         $this->sheets[] = compact('name', 'headings', 'rows');
+
         return $this;
     }
 
     /**
      * Generate dan kirim file .xlsx sebagai HTTP download response.
      */
-    public function download(string $filename): \Symfony\Component\HttpFoundation\BinaryFileResponse
+    public function download(string $filename): BinaryFileResponse
     {
-        $tmpPath = tempnam(sys_get_temp_dir(), 'xlsx_') . '.xlsx';
+        $tmpPath = tempnam(sys_get_temp_dir(), 'xlsx_').'.xlsx';
         $this->write($tmpPath);
 
         return response()->download($tmpPath, $filename, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ])->deleteFileAfterSend(true);
     }
 
     private function write(string $path): void
     {
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
         $zip->open($path, ZipArchive::CREATE | ZipArchive::OVERWRITE);
 
         $sheetCount = count($this->sheets);
@@ -85,14 +88,15 @@ class ExcelBuilder
 
     private function cell(string $col, int $row, mixed $value, bool $bold = false, bool $isHeader = false): string
     {
-        $ref = $col . $row;
+        $ref = $col.$row;
         $styleIdx = $isHeader ? '1' : (is_numeric($value) ? '2' : '0');
 
-        if (is_numeric($value) && !$isHeader) {
+        if (is_numeric($value) && ! $isHeader) {
             return "<c r=\"{$ref}\" s=\"{$styleIdx}\" t=\"n\"><v>{$value}</v></c>";
         }
 
-        $escaped = htmlspecialchars((string)$value, ENT_XML1, 'UTF-8');
+        $escaped = htmlspecialchars((string) $value, ENT_XML1, 'UTF-8');
+
         return "<c r=\"{$ref}\" s=\"{$styleIdx}\" t=\"inlineStr\"><is><t>{$escaped}</t></is></c>";
     }
 
@@ -100,15 +104,16 @@ class ExcelBuilder
     {
         $letter = '';
         while ($index >= 0) {
-            $letter = chr(65 + ($index % 26)) . $letter;
+            $letter = chr(65 + ($index % 26)).$letter;
             $index = intdiv($index, 26) - 1;
         }
+
         return $letter;
     }
 
     private function worksheet(array $headings, array $rows): string
     {
-        $xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' . "\n";
+        $xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'."\n";
         $xml .= '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">';
         $xml .= '<sheetView workbookViewId="0"><selection/></sheetView>';
         $xml .= '<sheetData>';
@@ -134,6 +139,7 @@ class ExcelBuilder
         }
 
         $xml .= '</sheetData></worksheet>';
+
         return $xml;
     }
 
@@ -143,6 +149,7 @@ class ExcelBuilder
         for ($i = 1; $i <= $sheetCount; $i++) {
             $sheets .= "<Override PartName=\"/xl/worksheets/sheet{$i}.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml\"/>";
         }
+
         return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
   <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
@@ -151,7 +158,7 @@ class ExcelBuilder
   <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
   <Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
   <Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
-  ' . $sheets . '
+  '.$sheets.'
 </Types>';
     }
 
@@ -170,12 +177,13 @@ class ExcelBuilder
         $sheets = '';
         foreach ($sheetNames as $idx => $name) {
             $sheetNum = $idx + 1;
-            $sheets .= "<sheet name=\"" . htmlspecialchars($name, ENT_XML1) . "\" sheetId=\"{$sheetNum}\" r:id=\"rId{$sheetNum}\"/>";
+            $sheets .= '<sheet name="'.htmlspecialchars($name, ENT_XML1)."\" sheetId=\"{$sheetNum}\" r:id=\"rId{$sheetNum}\"/>";
         }
+
         return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
           xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-  <sheets>' . $sheets . '</sheets>
+  <sheets>'.$sheets.'</sheets>
 </workbook>';
     }
 
@@ -187,8 +195,9 @@ class ExcelBuilder
         }
         $styleId = $sheetCount + 1;
         $rels .= "<Relationship Id=\"rId{$styleId}\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles\" Target=\"styles.xml\"/>";
+
         return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' . $rels . '</Relationships>';
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'.$rels.'</Relationships>';
     }
 
     private function styles(): string
@@ -225,8 +234,9 @@ class ExcelBuilder
 
     private function docPropsApp(array $sheetNames): string
     {
-        $titles = implode('', array_map(fn($n) => "<vt:lpstr>{$n}</vt:lpstr>", $sheetNames));
+        $titles = implode('', array_map(fn ($n) => "<vt:lpstr>{$n}</vt:lpstr>", $sheetNames));
         $count = count($sheetNames);
+
         return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"
             xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
@@ -234,22 +244,23 @@ class ExcelBuilder
   <HeadingPairs>
     <vt:vector size="2" baseType="variant">
       <vt:variant><vt:lpstr>Worksheets</vt:lpstr></vt:variant>
-      <vt:variant><vt:i4>' . $count . '</vt:i4></vt:variant>
+      <vt:variant><vt:i4>'.$count.'</vt:i4></vt:variant>
     </vt:vector>
   </HeadingPairs>
-  <TitlesOfParts><vt:vector size="' . $count . '" baseType="lpstr">' . $titles . '</vt:vector></TitlesOfParts>
+  <TitlesOfParts><vt:vector size="'.$count.'" baseType="lpstr">'.$titles.'</vt:vector></TitlesOfParts>
 </Properties>';
     }
 
     private function docPropsCore(): string
     {
         $now = date('Y-m-d\TH:i:s\Z');
+
         return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties"
                    xmlns:dc="http://purl.org/dc/elements/1.1/"
                    xmlns:dcterms="http://purl.org/dc/terms/">
   <dc:creator>LOFBI KSOP Kelas I Banten</dc:creator>
-  <dcterms:created xsi:type="dcterms:W3CDTF" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">' . $now . '</dcterms:created>
+  <dcterms:created xsi:type="dcterms:W3CDTF" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'.$now.'</dcterms:created>
 </cp:coreProperties>';
     }
 }

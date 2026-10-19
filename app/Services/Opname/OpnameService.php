@@ -35,11 +35,11 @@ class OpnameService
         return DB::transaction(function () use ($data, $userId, $userName) {
             $sesi = OpnameSesi::create([
                 'ruangan_id' => $data['ruangan_id'] ?? null,
-                'admin_id'   => $userId,
-                'tanggal'    => $data['tanggal'],
-                'periode'    => $data['periode'],
+                'admin_id' => $userId,
+                'tanggal' => $data['tanggal'],
+                'periode' => $data['periode'],
                 'keterangan' => $data['keterangan'] ?? null,
-                'status'     => 'draft',
+                'status' => 'draft',
             ]);
 
             $persediaans = Persediaan::with('batches')->get();
@@ -47,21 +47,21 @@ class OpnameService
                 $stokBuku = (int) $p->batches->sum('sisa_stok');
                 OpnameDetail::create([
                     'opname_sesi_id' => $sesi->id,
-                    'persediaan_id'  => $p->id,
-                    'stok_buku'      => $stokBuku,
-                    'stok_fisik'     => null,
-                    'selisih'        => null,
-                    'satuan'         => $p->satuan ?? '-',
-                    'catatan'        => null,
+                    'persediaan_id' => $p->id,
+                    'stok_buku' => $stokBuku,
+                    'stok_fisik' => null,
+                    'selisih' => null,
+                    'satuan' => $p->satuan ?? '-',
+                    'catatan' => null,
                 ]);
             }
 
             AuditLog::create([
-                'user_id'   => $userId,
+                'user_id' => $userId,
                 'user_name' => $userName,
-                'modul'     => 'Opname',
-                'aksi'      => 'Buka Sesi Opname',
-                'detail'    => 'Buka sesi opname ' . $data['periode'] . ' - ' . $persediaans->count() . ' jenis barang di-snapshot',
+                'modul' => 'Opname',
+                'aksi' => 'Buka Sesi Opname',
+                'detail' => 'Buka sesi opname '.$data['periode'].' - '.$persediaans->count().' jenis barang di-snapshot',
             ]);
 
             return $sesi;
@@ -79,9 +79,9 @@ class OpnameService
         return DB::transaction(function () use ($data, $userId) {
             $sesi = OpnameSesi::create([
                 'ruangan_id' => $data['ruangan_id'],
-                'admin_id'   => $userId,
-                'tanggal'    => $data['tanggal'],
-                'status'     => $data['status'] ?? 'selesai',
+                'admin_id' => $userId,
+                'tanggal' => $data['tanggal'],
+                'status' => $data['status'] ?? 'selesai',
             ]);
 
             $sesi->details()->createMany($data['details']);
@@ -95,7 +95,7 @@ class OpnameService
      */
     public function simpanHasilFisik(OpnameSesi $sesi, array $stokFisik, array $catatan = [], ?User $user = null): OpnameSesi
     {
-        if (!in_array($sesi->status, ['draft', 'ditolak'])) {
+        if (! in_array($sesi->status, ['draft', 'ditolak'])) {
             throw ValidationException::withMessages([
                 'opname' => 'Sesi ini tidak dapat diedit.',
             ]);
@@ -114,19 +114,19 @@ class OpnameService
 
                 $detail->update([
                     'stok_fisik' => (int) $jumlahFisik,
-                    'selisih'    => $selisih,
-                    'catatan'    => $catatan[$detailId] ?? null,
+                    'selisih' => $selisih,
+                    'catatan' => $catatan[$detailId] ?? null,
                 ]);
             }
 
             $sesi->update(['status' => 'menunggu_persetujuan']);
 
             AuditLog::create([
-                'user_id'   => $userId,
+                'user_id' => $userId,
                 'user_name' => $userName,
-                'modul'     => 'Opname',
-                'aksi'      => 'Submit Hasil Fisik',
-                'detail'    => 'Sesi #' . $sesi->id . ' diajukan ke approver',
+                'modul' => 'Opname',
+                'aksi' => 'Submit Hasil Fisik',
+                'detail' => 'Sesi #'.$sesi->id.' diajukan ke approver',
             ]);
 
             return $sesi->fresh();
@@ -154,27 +154,27 @@ class OpnameService
                 }
 
                 $p = $detail->persediaan;
-                if (!$p) {
+                if (! $p) {
                     continue;
                 }
 
                 // Hitung harga satuan rata-rata dari batch aktif yang memiliki harga valid
-                $batchesValid = $p->batches->filter(fn($b) => !$b->harga_belum_diisi && !is_null($b->harga_satuan));
-                $totalNilai   = $batchesValid->sum(fn($b) => $b->sisa_stok * $b->harga_satuan);
-                $totalStok    = $batchesValid->sum('sisa_stok');
-                $hargaRata    = $totalStok > 0 ? round($totalNilai / $totalStok) : 0;
+                $batchesValid = $p->batches->filter(fn ($b) => ! $b->harga_belum_diisi && ! is_null($b->harga_satuan));
+                $totalNilai = $batchesValid->sum(fn ($b) => $b->sisa_stok * $b->harga_satuan);
+                $totalStok = $batchesValid->sum('sisa_stok');
+                $hargaRata = $totalStok > 0 ? round($totalNilai / $totalStok) : 0;
 
                 TransaksiPersediaan::create([
-                    'persediaan_id'       => $detail->persediaan_id,
-                    'jenis'               => $detail->selisih > 0 ? 'masuk' : 'keluar',
-                    'jumlah'              => abs($detail->selisih),
-                    'tanggal'             => $sesi->tanggal,
-                    'unit_kerja_penerima' => 'Penyesuaian Opname Fisik - ' . $sesi->periode,
-                    'diajukan_oleh'       => $sesi->admin_id,
-                    'diputuskan_oleh'     => $approverId,
-                    'status'              => 'disetujui',
-                    'catatan_penolakan'   => null,
-                    'tanggal_keputusan'   => now(),
+                    'persediaan_id' => $detail->persediaan_id,
+                    'jenis' => $detail->selisih > 0 ? 'masuk' : 'keluar',
+                    'jumlah' => abs($detail->selisih),
+                    'tanggal' => $sesi->tanggal,
+                    'unit_kerja_penerima' => 'Penyesuaian Opname Fisik - '.$sesi->periode,
+                    'diajukan_oleh' => $sesi->admin_id,
+                    'diputuskan_oleh' => $approverId,
+                    'status' => 'disetujui',
+                    'catatan_penolakan' => null,
+                    'tanggal_keputusan' => now(),
                 ]);
 
                 // Update sisa_stok batch FIFO jika selisih kurang
@@ -198,17 +198,17 @@ class OpnameService
             }
 
             $sesi->update([
-                'status'              => 'disetujui',
-                'approver_id'         => $approverId,
+                'status' => 'disetujui',
+                'approver_id' => $approverId,
                 'tanggal_persetujuan' => now()->toDateString(),
             ]);
 
             AuditLog::create([
-                'user_id'   => $approverId,
+                'user_id' => $approverId,
                 'user_name' => $approverName,
-                'modul'     => 'Opname',
-                'aksi'      => 'Setujui Opname',
-                'detail'    => 'Sesi #' . $sesi->id . ' (' . $sesi->periode . ') disetujui. Jurnal penyesuaian dibuat.',
+                'modul' => 'Opname',
+                'aksi' => 'Setujui Opname',
+                'detail' => 'Sesi #'.$sesi->id.' ('.$sesi->periode.') disetujui. Jurnal penyesuaian dibuat.',
             ]);
 
             return $sesi->fresh();
@@ -231,17 +231,17 @@ class OpnameService
 
         return DB::transaction(function () use ($sesi, $catatan, $approverId, $approverName) {
             $sesi->update([
-                'status'            => 'ditolak',
+                'status' => 'ditolak',
                 'catatan_penolakan' => $catatan,
-                'approver_id'       => $approverId,
+                'approver_id' => $approverId,
             ]);
 
             AuditLog::create([
-                'user_id'   => $approverId,
+                'user_id' => $approverId,
                 'user_name' => $approverName,
-                'modul'     => 'Opname',
-                'aksi'      => 'Tolak Opname',
-                'detail'    => 'Sesi #' . $sesi->id . ' ditolak: ' . $catatan,
+                'modul' => 'Opname',
+                'aksi' => 'Tolak Opname',
+                'detail' => 'Sesi #'.$sesi->id.' ditolak: '.$catatan,
             ]);
 
             return $sesi->fresh();
@@ -259,18 +259,18 @@ class OpnameService
 
         foreach ($sesi->details as $detail) {
             $p = $detail->persediaan;
-            if (!$p) {
+            if (! $p) {
                 continue;
             }
 
-            $batchKosong = $p->batches->filter(fn($b) => $b->harga_belum_diisi || is_null($b->harga_satuan));
+            $batchKosong = $p->batches->filter(fn ($b) => $b->harga_belum_diisi || is_null($b->harga_satuan));
             if ($batchKosong->isNotEmpty()) {
                 $jumlahTerdampak++;
             }
 
-            $batchesValid = $p->batches->filter(fn($b) => !$b->harga_belum_diisi && !is_null($b->harga_satuan));
+            $batchesValid = $p->batches->filter(fn ($b) => ! $b->harga_belum_diisi && ! is_null($b->harga_satuan));
             $stokValid = $batchesValid->sum('sisa_stok');
-            $nilaiValid = $batchesValid->sum(fn($b) => $b->sisa_stok * $b->harga_satuan);
+            $nilaiValid = $batchesValid->sum(fn ($b) => $b->sisa_stok * $b->harga_satuan);
             $hargaRata = $stokValid > 0 ? ($nilaiValid / $stokValid) : 0;
 
             $totalNilaiBuku += ($detail->stok_buku * $hargaRata);
@@ -280,10 +280,10 @@ class OpnameService
         }
 
         return [
-            'totalNilaiBuku'     => $totalNilaiBuku,
-            'totalNilaiSelisih'  => $totalNilaiSelisih,
+            'totalNilaiBuku' => $totalNilaiBuku,
+            'totalNilaiSelisih' => $totalNilaiSelisih,
             'hasHargaBelumDiisi' => ($jumlahTerdampak > 0),
-            'jumlahTerdampak'    => $jumlahTerdampak,
+            'jumlahTerdampak' => $jumlahTerdampak,
         ];
     }
 
@@ -294,7 +294,7 @@ class OpnameService
     {
         return [
             'ruangan' => $ruangan,
-            'aset'    => Aset::with('jenisBarang')
+            'aset' => Aset::with('jenisBarang')
                 ->where('ruangan_id', $ruangan->id)
                 ->orderBy('kode_aset')
                 ->get(),

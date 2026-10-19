@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Aset;
 use App\Models\Kategori;
+use App\Models\OpnameSesi;
 use App\Models\Persediaan;
 use App\Services\Report\ExcelBuilder;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
 class ReportController extends Controller
@@ -17,6 +19,7 @@ class ReportController extends Controller
     public function index()
     {
         $kategoris = Kategori::orderBy('nama')->get();
+
         return view('reports.index', compact('kategoris'));
     }
 
@@ -32,9 +35,10 @@ class ReportController extends Controller
         $filterInfo = ['label' => $kategoriLabel, 'bulan' => $request->bulan, 'tahun' => $request->tahun];
 
         if (class_exists('\Barryvdh\DomPDF\Facade\Pdf')) {
-            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('reports.pdf_aset', compact('assets', 'filterInfo'));
+            $pdf = Pdf::loadView('reports.pdf_aset', compact('assets', 'filterInfo'));
             $pdf->setPaper('A4', 'landscape');
-            return $pdf->download('Laporan_Aset_LOFBI_' . date('Ymd') . '.pdf');
+
+            return $pdf->download('Laporan_Aset_LOFBI_'.date('Ymd').'.pdf');
         }
 
         // Fallback: cetak langsung di browser
@@ -74,7 +78,7 @@ class ReportController extends Controller
             ];
         })->toArray();
 
-        $filename = 'Laporan_Aset_LOFBI_' . ($request->kategori ? $request->kategori . '_' : '') . date('Ymd') . '.xlsx';
+        $filename = 'Laporan_Aset_LOFBI_'.($request->kategori ? $request->kategori.'_' : '').date('Ymd').'.xlsx';
 
         return (new ExcelBuilder('Laporan Aset LOFBI'))
             ->addSheet("Aset - {$kategoriLabel}", $headings, $rows)
@@ -93,9 +97,10 @@ class ReportController extends Controller
         $filterInfo = ['label' => $kategoriLabel, 'bulan' => $request->bulan, 'tahun' => $request->tahun];
 
         if (class_exists('\Barryvdh\DomPDF\Facade\Pdf')) {
-            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('reports.pdf_persediaan', compact('items', 'filterInfo'));
+            $pdf = Pdf::loadView('reports.pdf_persediaan', compact('items', 'filterInfo'));
             $pdf->setPaper('A4', 'landscape');
-            return $pdf->download('Laporan_Persediaan_LOFBI_' . date('Ymd') . '.pdf');
+
+            return $pdf->download('Laporan_Persediaan_LOFBI_'.date('Ymd').'.pdf');
         }
 
         return view('reports.pdf_persediaan', compact('items', 'filterInfo'));
@@ -117,9 +122,10 @@ class ReportController extends Controller
         $rows = $items->values()->map(function ($item, $index) {
             $sisaStok = (int) $item->batches->sum('sisa_stok');
             $minStok = (int) ($item->stok_minimum ?? 0);
+
             return [
                 $index + 1,
-                'INV-' . str_pad($item->id, 3, '0', STR_PAD_LEFT),
+                'INV-'.str_pad($item->id, 3, '0', STR_PAD_LEFT),
                 $item->jenisBarang?->nama_generik ?? '-',
                 $item->merk ?? '-',
                 $item->jenisBarang?->kategori?->nama ?? '-',
@@ -131,7 +137,7 @@ class ReportController extends Controller
             ];
         })->toArray();
 
-        $filename = 'Laporan_Persediaan_LOFBI_' . ($request->kategori ? $request->kategori . '_' : '') . date('Ymd') . '.xlsx';
+        $filename = 'Laporan_Persediaan_LOFBI_'.($request->kategori ? $request->kategori.'_' : '').date('Ymd').'.xlsx';
 
         return (new ExcelBuilder('Laporan Persediaan LOFBI'))
             ->addSheet("Persediaan - {$kategoriLabel}", $headings, $rows)
@@ -145,24 +151,24 @@ class ReportController extends Controller
      */
     public function exportOpnamePdf(Request $request)
     {
-        $sesi = \App\Models\OpnameSesi::with(['admin', 'approver', 'details.persediaan.jenisBarang.kategori'])
-            ->when($request->sesi_id, fn($q) => $q->where('id', $request->sesi_id))
+        $sesi = OpnameSesi::with(['admin', 'approver', 'details.persediaan.jenisBarang.kategori'])
+            ->when($request->sesi_id, fn ($q) => $q->where('id', $request->sesi_id))
             ->latest()
             ->first();
 
-        if (!$sesi) {
+        if (! $sesi) {
             return back()->with('error', 'Belum ada data sesi opname fisik yang tercatat.');
         }
 
         if (class_exists('\Barryvdh\DomPDF\Facade\Pdf')) {
-            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('reports.pdf_opname', compact('sesi'));
+            $pdf = Pdf::loadView('reports.pdf_opname', compact('sesi'));
             $pdf->setPaper('A4', 'portrait');
-            return $pdf->download('Berita_Acara_Opname_LOFBI_' . $sesi->id . '.pdf');
+
+            return $pdf->download('Berita_Acara_Opname_LOFBI_'.$sesi->id.'.pdf');
         }
 
         return view('reports.pdf_opname', compact('sesi'));
     }
-
 
     // ── PRIVATE HELPERS ───────────────────────────────────────────────────────
 
@@ -172,7 +178,7 @@ class ReportController extends Controller
 
         if ($kategori) {
             $query->whereHas('jenisBarang.kategori', function ($q) use ($kategori) {
-                $q->where('nama', 'like', '%' . $kategori . '%');
+                $q->where('nama', 'like', '%'.$kategori.'%');
             });
         }
 
@@ -185,7 +191,7 @@ class ReportController extends Controller
 
         if ($kategori) {
             $query->whereHas('jenisBarang.kategori', function ($q) use ($kategori) {
-                $q->where('nama', 'like', '%' . $kategori . '%');
+                $q->where('nama', 'like', '%'.$kategori.'%');
             });
         }
 

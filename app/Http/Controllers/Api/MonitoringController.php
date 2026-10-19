@@ -34,7 +34,7 @@ class MonitoringController extends Controller
         $asetsBelumOpname = Aset::with(['jenisBarang', 'ruangan'])
             ->where(function ($q) use ($sixMonthsAgo) {
                 $q->whereNull('last_opname_date')
-                  ->orWhere('last_opname_date', '<=', $sixMonthsAgo);
+                    ->orWhere('last_opname_date', '<=', $sixMonthsAgo);
             })
             ->get();
 

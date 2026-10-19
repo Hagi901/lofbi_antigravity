@@ -29,7 +29,7 @@ class LaporanController extends Controller
             ->paginate(50);
     }
 
-        public function nilaiBuku(Request $request)
+    public function nilaiBuku(Request $request)
     {
         $hasil = Aset::with(['jenisBarang.kategori'])
             ->when($request->kategori_id, fn ($q, $id) => $q->whereHas('jenisBarang', fn ($inner) => $inner->where('kategori_id', $id)))
@@ -37,7 +37,7 @@ class LaporanController extends Controller
             ->orderBy('kode_aset')
             ->paginate(50);
 
-                $hasil->getCollection()->transform(function ($item) use ($applyFilters) {
+        $hasil->getCollection()->transform(function ($item) use ($applyFilters) {
             $q = $applyFilters(
                 Aset::where('jenis_barang_id', $item->jenis_barang_id)
             );
@@ -72,7 +72,7 @@ class LaporanController extends Controller
         // Ambil data tanpa pagination untuk keperluan export
         $data = match ($jenis) {
             'baop' => OpnameSesi::with(['ruangan', 'details'])->latest('tanggal')->get(),
-                        // akumulasi_penyusutan & nilai_buku dihitung live (bukan baca kolom
+            // akumulasi_penyusutan & nilai_buku dihitung live (bukan baca kolom
             // tersimpan) agar sinkron dengan tampilan web.
             'nilai-buku' => Aset::with(['jenisBarang.kategori'])
                 ->select('id', 'jenis_barang_id', 'kode_aset', 'nilai_perolehan', 'masa_manfaat', 'tanggal_perolehan', 'terakhir_dihitung_semester')

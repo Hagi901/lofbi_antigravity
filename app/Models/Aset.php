@@ -49,8 +49,9 @@ class Aset extends Model
     public function getNameAttribute(): string
     {
         $namaGenerik = $this->jenisBarang?->nama_generik ?? '';
-        $detail = trim(($this->merk ?? '') . ' ' . ($this->model ?? ''));
-        return trim($namaGenerik . ($detail ? ' ' . $detail : '')) ?: ($this->kode_aset ?? 'Aset');
+        $detail = trim(($this->merk ?? '').' '.($this->model ?? ''));
+
+        return trim($namaGenerik.($detail ? ' '.$detail : '')) ?: ($this->kode_aset ?? 'Aset');
     }
 
     public function getCategoryAttribute()
@@ -72,8 +73,8 @@ class Aset extends Model
     {
         return match ($this->kondisi) {
             'rusak_ringan' => 'Rusak Ringan',
-            'rusak_berat'  => 'Rusak Berat',
-            default        => 'Baik',
+            'rusak_berat' => 'Rusak Berat',
+            default => 'Baik',
         };
     }
 
@@ -110,18 +111,18 @@ class Aset extends Model
     public function hitungPenyusutanGarisLurus(): array
     {
         $nilaiPerolehan = (float) ($this->nilai_perolehan ?? 0);
-        $masaManfaat    = (int)   ($this->masa_manfaat ?? 0);
+        $masaManfaat = (int) ($this->masa_manfaat ?? 0);
 
         if ($nilaiPerolehan <= 0 || $masaManfaat <= 0) {
             return [
-                'semester_berjalan'  => 0,
-                'total_semester'     => 0,
+                'semester_berjalan' => 0,
+                'total_semester' => 0,
                 'susut_per_semester' => 0,
-                'susut_per_tahun'    => 0,
-                'tahun_berjalan'     => 0,
-                'akumulasi'          => 0,
-                'nilai_buku'         => $nilaiPerolehan,
-                'persen_susut'       => 0,
+                'susut_per_tahun' => 0,
+                'tahun_berjalan' => 0,
+                'akumulasi' => 0,
+                'nilai_buku' => $nilaiPerolehan,
+                'persen_susut' => 0,
             ];
         }
 
@@ -133,17 +134,17 @@ class Aset extends Model
         $bulanBerjalan = (int) $tglPerolehan->diffInMonths(Carbon::now());
 
         // Semester yang sudah berjalan (1 semester = 6 bulan), maks = total semester
-        $totalSemester    = $masaManfaat * 2;
+        $totalSemester = $masaManfaat * 2;
         $semesterBerjalan = min((int) floor($bulanBerjalan / 6), $totalSemester);
-        $tahunBerjalan    = min((int) floor($bulanBerjalan / 12), $masaManfaat);
+        $tahunBerjalan = min((int) floor($bulanBerjalan / 12), $masaManfaat);
 
         // ── Rumus SIMAN: Residu = 0, lock constraint Rp 1 ───────────────
         $susutPerSemester = $nilaiPerolehan / $totalSemester;
-        $susutPerTahun    = $susutPerSemester * 2;
+        $susutPerTahun = $susutPerSemester * 2;
 
         // Akumulasi tidak boleh melebihi (Nilai Perolehan − 1)
         $akumulasiMaks = $nilaiPerolehan - 1;
-        $akumulasi     = min($susutPerSemester * $semesterBerjalan, $akumulasiMaks);
+        $akumulasi = min($susutPerSemester * $semesterBerjalan, $akumulasiMaks);
 
         // Nilai Buku minimum Rp 1 (lock constraint SIMAN)
         $nilaiBuku = max($nilaiPerolehan - $akumulasi, 1);
@@ -154,14 +155,14 @@ class Aset extends Model
             : 0;
 
         return [
-            'semester_berjalan'  => $semesterBerjalan,
-            'total_semester'     => $totalSemester,
+            'semester_berjalan' => $semesterBerjalan,
+            'total_semester' => $totalSemester,
             'susut_per_semester' => $susutPerSemester,
-            'susut_per_tahun'    => $susutPerTahun,
-            'tahun_berjalan'     => $tahunBerjalan,
-            'akumulasi'          => $akumulasi,
-            'nilai_buku'         => $nilaiBuku,
-            'persen_susut'       => $persenSusut,
+            'susut_per_tahun' => $susutPerTahun,
+            'tahun_berjalan' => $tahunBerjalan,
+            'akumulasi' => $akumulasi,
+            'nilai_buku' => $nilaiBuku,
+            'persen_susut' => $persenSusut,
         ];
     }
 
@@ -201,4 +202,3 @@ class Aset extends Model
         return $this->hitungPenyusutanGarisLurus()['tahun_berjalan'];
     }
 }
-

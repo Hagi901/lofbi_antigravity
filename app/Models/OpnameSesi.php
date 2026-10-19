@@ -14,7 +14,7 @@ class OpnameSesi extends Model
     protected function casts(): array
     {
         return [
-            'tanggal'             => 'date',
+            'tanggal' => 'date',
             'tanggal_persetujuan' => 'date',
         ];
     }
@@ -47,11 +47,11 @@ class OpnameSesi extends Model
     public function statusLabel(): string
     {
         return match ($this->status) {
-            'draft'                  => 'Draft',
-            'menunggu_persetujuan'   => 'Menunggu Persetujuan',
-            'disetujui'              => 'Disetujui',
-            'ditolak'                => 'Ditolak',
-            default                  => ucfirst($this->status),
+            'draft' => 'Draft',
+            'menunggu_persetujuan' => 'Menunggu Persetujuan',
+            'disetujui' => 'Disetujui',
+            'ditolak' => 'Ditolak',
+            default => ucfirst($this->status),
         };
     }
 
@@ -59,11 +59,11 @@ class OpnameSesi extends Model
     public function statusBadgeClass(): string
     {
         return match ($this->status) {
-            'draft'                  => 'bg-secondary-subtle text-secondary border-secondary',
-            'menunggu_persetujuan'   => 'bg-warning-subtle text-warning border-warning',
-            'disetujui'              => 'bg-success-subtle text-success border-success',
-            'ditolak'                => 'bg-danger-subtle text-danger border-danger',
-            default                  => 'bg-light text-muted border',
+            'draft' => 'bg-secondary-subtle text-secondary border-secondary',
+            'menunggu_persetujuan' => 'bg-warning-subtle text-warning border-warning',
+            'disetujui' => 'bg-success-subtle text-success border-success',
+            'ditolak' => 'bg-danger-subtle text-danger border-danger',
+            default => 'bg-light text-muted border',
         };
     }
 

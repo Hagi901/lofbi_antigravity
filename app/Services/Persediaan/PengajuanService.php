@@ -30,22 +30,22 @@ class PengajuanService
 
         return DB::transaction(function () use ($persediaan, $data, $userId, $userName, $qty, $logAudit) {
             $transaksi = TransaksiPersediaan::create([
-                'persediaan_id'       => $persediaan->id,
-                'diajukan_oleh'       => $userId,
-                'jenis'               => 'keluar',
-                'jumlah'              => $qty,
-                'tanggal'             => $data['tanggal'] ?? now()->toDateString(),
-                'status'              => 'menunggu',
+                'persediaan_id' => $persediaan->id,
+                'diajukan_oleh' => $userId,
+                'jenis' => 'keluar',
+                'jumlah' => $qty,
+                'tanggal' => $data['tanggal'] ?? now()->toDateString(),
+                'status' => 'menunggu',
                 'unit_kerja_penerima' => $data['unit_kerja_penerima'],
             ]);
 
             if ($logAudit) {
                 AuditLog::create([
-                    'user_id'   => $userId,
+                    'user_id' => $userId,
                     'user_name' => $userName,
-                    'modul'     => 'Persediaan',
-                    'aksi'      => 'Pengajuan Keluar',
-                    'detail'    => 'Mengajukan pengeluaran ' . $qty . ' ' . ($persediaan->satuan ?? 'unit') . ' ' . $persediaan->name . ' untuk ' . $data['unit_kerja_penerima'] . ' - menunggu persetujuan Validator.',
+                    'modul' => 'Persediaan',
+                    'aksi' => 'Pengajuan Keluar',
+                    'detail' => 'Mengajukan pengeluaran '.$qty.' '.($persediaan->satuan ?? 'unit').' '.$persediaan->name.' untuk '.$data['unit_kerja_penerima'].' - menunggu persetujuan Validator.',
                 ]);
             }
 
@@ -61,10 +61,6 @@ class PengajuanService
      * - 'recordDetail': bool (true untuk mencatat DetailPemotonganBatch pada API).
      * - 'logAudit': bool (true untuk mencatat riwayat pemotongan ke AuditLog pada Web).
      *
-     * @param TransaksiPersediaan $transaksi
-     * @param User|null $approver
-     * @param array $options
-     * @return TransaksiPersediaan
      * @throws ValidationException
      */
     public function setujui(TransaksiPersediaan $transaksi, ?User $approver = null, array $options = []): TransaksiPersediaan
@@ -119,29 +115,29 @@ class PengajuanService
                 if ($recordDetail) {
                     DetailPemotonganBatch::create([
                         'transaksi_persediaan_id' => $transaksi->id,
-                        'batch_id'                => $batch->id,
-                        'jumlah_diambil'          => $ambil,
-                        'harga_satuan_saat_itu'   => $batch->harga_satuan,
+                        'batch_id' => $batch->id,
+                        'jumlah_diambil' => $ambil,
+                        'harga_satuan_saat_itu' => $batch->harga_satuan,
                     ]);
                 }
 
                 $sisaKebutuhan -= $ambil;
-                $rincianPemotongan[] = "Batch #" . $batch->no_batch . " (-{$ambil})";
+                $rincianPemotongan[] = 'Batch #'.$batch->no_batch." (-{$ambil})";
             }
 
             $transaksi->update([
-                'status'            => 'disetujui',
-                'diputuskan_oleh'   => $approverId,
+                'status' => 'disetujui',
+                'diputuskan_oleh' => $approverId,
                 'tanggal_keputusan' => now(),
             ]);
 
             if ($logAudit) {
                 AuditLog::create([
-                    'user_id'   => $approverId,
+                    'user_id' => $approverId,
                     'user_name' => $approverName,
-                    'modul'     => 'Persediaan',
-                    'aksi'      => 'Setujui Keluar',
-                    'detail'    => 'Menyetujui pengeluaran ' . $qtyDiminta . ' ' . ($persediaan->satuan ?? 'unit') . ' ' . ($persediaan->name ?? 'item') . '. FIFO: ' . implode(', ', $rincianPemotongan),
+                    'modul' => 'Persediaan',
+                    'aksi' => 'Setujui Keluar',
+                    'detail' => 'Menyetujui pengeluaran '.$qtyDiminta.' '.($persediaan->satuan ?? 'unit').' '.($persediaan->name ?? 'item').'. FIFO: '.implode(', ', $rincianPemotongan),
                 ]);
             }
 
@@ -159,19 +155,19 @@ class PengajuanService
 
         return DB::transaction(function () use ($transaksi, $alasan, $approverId, $approverName, $logAudit) {
             $transaksi->update([
-                'status'            => 'ditolak',
-                'diputuskan_oleh'   => $approverId,
+                'status' => 'ditolak',
+                'diputuskan_oleh' => $approverId,
                 'tanggal_keputusan' => now(),
                 'catatan_penolakan' => $alasan,
             ]);
 
             if ($logAudit) {
                 AuditLog::create([
-                    'user_id'   => $approverId,
+                    'user_id' => $approverId,
                     'user_name' => $approverName,
-                    'modul'     => 'Persediaan',
-                    'aksi'      => 'Tolak Keluar',
-                    'detail'    => 'Menolak pengajuan pengeluaran ' . $transaksi->jumlah . ' unit ' . ($transaksi->persediaan?->name ?? '#' . $transaksi->persediaan_id) . '. Alasan: ' . $alasan,
+                    'modul' => 'Persediaan',
+                    'aksi' => 'Tolak Keluar',
+                    'detail' => 'Menolak pengajuan pengeluaran '.$transaksi->jumlah.' unit '.($transaksi->persediaan?->name ?? '#'.$transaksi->persediaan_id).'. Alasan: '.$alasan,
                 ]);
             }
 

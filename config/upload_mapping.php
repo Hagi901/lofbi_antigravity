@@ -34,10 +34,10 @@ return [
         'column_map' => [
             'kode_barang' => ['kode barang', 'kode_barang', 'kode'],
             'nama_barang' => ['nama barang', 'nama_barang', 'nama'],
-            'satuan'      => ['satuan'],
+            'satuan' => ['satuan'],
             'saldo_sistem' => ['saldo di sistem', 'saldo sistem', 'saldo', 'stok'],
             'hasil_opsik' => ['hasil opsik', 'hasil opname', 'hasil fisik'],
-            'kategori'    => ['kategori'],
+            'kategori' => ['kategori'],
             'tgl_perolehan' => ['tanggal perolehan', 'tgl perolehan', 'tgl_perolehan'],
         ],
 
@@ -79,8 +79,8 @@ return [
     // Ekstensi yang ditolak dengan pesan jelas
     'rejected_extensions' => [
         'docx' => 'File Word (.docx) tidak didukung. Gunakan file Excel (.xlsx) atau CSV.',
-        'doc'  => 'File Word (.doc) tidak didukung. Gunakan file Excel (.xlsx) atau CSV.',
-        'pdf'  => 'Upload PDF belum didukung di tahap ini. Gunakan file Excel (.xlsx).',
+        'doc' => 'File Word (.doc) tidak didukung. Gunakan file Excel (.xlsx) atau CSV.',
+        'pdf' => 'Upload PDF belum didukung di tahap ini. Gunakan file Excel (.xlsx).',
     ],
 
     // Batas ukuran file upload (dalam KB)

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,6 +13,7 @@ class ProfileController extends Controller
     public function index()
     {
         $user = Auth::user();
+
         return view('profile', compact('user'));
     }
 
@@ -22,12 +22,12 @@ class ProfileController extends Controller
         $user = Auth::user();
 
         $request->validate([
-            'name'  => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,'.$user->id,
         ]);
 
         $user->update([
-            'name'  => $request->name,
+            'name' => $request->name,
             'email' => $request->email,
         ]);
 
@@ -36,7 +36,7 @@ class ProfileController extends Controller
             'user_name' => $user->name,
             'modul' => 'Profil',
             'aksi' => 'Update',
-            'detail' => 'Memperbarui profil akun: ' . $user->email,
+            'detail' => 'Memperbarui profil akun: '.$user->email,
         ]);
 
         return back()->with('success', 'Profil berhasil diperbarui!');
@@ -48,7 +48,7 @@ class ProfileController extends Controller
 
         $request->validate([
             'current_password' => 'required',
-            'password'         => 'required|min:6|confirmed',
+            'password' => 'required|min:6|confirmed',
         ]);
 
         if (! Hash::check($request->current_password, $user->password)) {

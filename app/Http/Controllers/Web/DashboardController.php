@@ -3,14 +3,11 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\Aset;
 use App\Models\AuditLog;
 use App\Models\BatchPersediaan;
 use App\Models\Persediaan;
 use App\Models\TransaksiPersediaan;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -18,7 +15,7 @@ class DashboardController extends Controller
     {
         $asets = Aset::with(['jenisBarang.kategori', 'ruangan'])->get();
         $totalAset = $asets->count();
-        $totalNilaiBuku = $asets->sum(fn($a) => $a->nilai_buku_dinamis);
+        $totalNilaiBuku = $asets->sum(fn ($a) => $a->nilai_buku_dinamis);
 
         $persediaans = Persediaan::with(['jenisBarang', 'batches'])->get();
         $totalPersediaan = $persediaans->count();
@@ -26,6 +23,7 @@ class DashboardController extends Controller
 
         $lowStockItems = $persediaans->filter(function ($p) {
             $sisa = $p->batches->sum('sisa_stok');
+
             return $sisa <= ($p->stok_minimum ?? 0);
         });
         $stokMenipis = $lowStockItems->count();
@@ -41,7 +39,7 @@ class DashboardController extends Controller
 
         // Data chart mutasi 6 bulan terakhir
         $chartLabels = ['Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags'];
-        $chartMasuk  = [10, 25, 50, 40, 30, (int) TransaksiPersediaan::where('jenis', 'masuk')->sum('jumlah')];
+        $chartMasuk = [10, 25, 50, 40, 30, (int) TransaksiPersediaan::where('jenis', 'masuk')->sum('jumlah')];
         $chartKeluar = [5, 12, 20, 15, 25, (int) TransaksiPersediaan::where('jenis', 'keluar')->where('status', 'disetujui')->sum('jumlah')];
 
         return view('dashboard', compact(

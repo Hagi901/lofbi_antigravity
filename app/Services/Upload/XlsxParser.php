@@ -2,8 +2,8 @@
 
 namespace App\Services\Upload;
 
-use ZipArchive;
 use SimpleXMLElement;
+use ZipArchive;
 
 /**
  * XlsxParser - Parser file .xlsx & .csv murni berbasis PHP native (ZipArchive & SimpleXMLElement).
@@ -14,8 +14,8 @@ class XlsxParser
     /**
      * Membaca file spreadsheet (.xlsx atau .csv) dan mengembalikan array of rows.
      *
-     * @param string $filePath Path absolut ke file
-     * @param string|null $sheetName Nama sheet spesifik yang ingin dibaca (untuk .xlsx)
+     * @param  string  $filePath  Path absolut ke file
+     * @param  string|null  $sheetName  Nama sheet spesifik yang ingin dibaca (untuk .xlsx)
      * @return array Array berisi baris-baris data (array of arrays)
      */
     public static function parse(string $filePath, ?string $sheetName = null): array
@@ -40,12 +40,12 @@ class XlsxParser
     private static function parseCsv(string $filePath): array
     {
         $rows = [];
-        if (!file_exists($filePath) || !is_readable($filePath)) {
+        if (! file_exists($filePath) || ! is_readable($filePath)) {
             return $rows;
         }
 
         $handle = fopen($filePath, 'r');
-        if (!$handle) {
+        if (! $handle) {
             return $rows;
         }
 
@@ -62,22 +62,20 @@ class XlsxParser
 
         while (($data = fgetcsv($handle, 4096, $delimiter)) !== false) {
             // Trim setiap cell
-            $cleaned = array_map(fn($v) => trim((string)$v), $data);
+            $cleaned = array_map(fn ($v) => trim((string) $v), $data);
             // Lewati baris yang sepenuhnya kosong
-            if (!empty(array_filter($cleaned, fn($v) => $v !== ''))) {
+            if (! empty(array_filter($cleaned, fn ($v) => $v !== ''))) {
                 $rows[] = $cleaned;
             }
         }
 
         fclose($handle);
+
         return $rows;
     }
 
     /**
      * Dapatkan daftar nama sheet dari file .xlsx
-     *
-     * @param string $filePath
-     * @return array
      */
     public static function getSheetNames(string $filePath): array
     {
@@ -86,7 +84,7 @@ class XlsxParser
             return [];
         }
 
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
         if ($zip->open($filePath) !== true) {
             return [];
         }
@@ -102,6 +100,7 @@ class XlsxParser
             }
         }
         $zip->close();
+
         return $names;
     }
 
@@ -111,7 +110,7 @@ class XlsxParser
     private static function parseXlsx(string $filePath, ?string $sheetName = null): array
     {
         $rows = [];
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
 
         if ($zip->open($filePath) !== true) {
             return $rows;
@@ -185,7 +184,7 @@ class XlsxParser
                         $currentIndex++;
                     }
 
-                    if (!empty(array_filter($rowData, fn($v) => $v !== ''))) {
+                    if (! empty(array_filter($rowData, fn ($v) => $v !== ''))) {
                         $rows[] = $rowData;
                     }
                 }
@@ -193,6 +192,7 @@ class XlsxParser
         }
 
         $zip->close();
+
         return $rows;
     }
 
@@ -208,7 +208,7 @@ class XlsxParser
         }
 
         $xml = simplexml_load_string($wbXml);
-        if (!$xml || !isset($xml->sheets->sheet)) {
+        if (! $xml || ! isset($xml->sheets->sheet)) {
             return $defaultPath;
         }
 
@@ -230,7 +230,7 @@ class XlsxParser
             }
         }
 
-        if (!$rId && $sheetName !== null) {
+        if (! $rId && $sheetName !== null) {
             // Cek kecocokan parsial
             foreach ($xml->sheets->sheet as $sheet) {
                 $name = (string) $sheet['name'];
@@ -242,11 +242,11 @@ class XlsxParser
             }
         }
 
-        if (!$rId) {
+        if (! $rId) {
             $rId = $firstRId;
         }
 
-        if (!$rId) {
+        if (! $rId) {
             return $defaultPath;
         }
 
@@ -259,9 +259,10 @@ class XlsxParser
                     if ((string) $rel['Id'] === $rId) {
                         $target = (string) $rel['Target'];
                         $cleanTarget = ltrim($target, '/');
-                        if (!str_starts_with($cleanTarget, 'xl/')) {
-                            return 'xl/' . $cleanTarget;
+                        if (! str_starts_with($cleanTarget, 'xl/')) {
+                            return 'xl/'.$cleanTarget;
                         }
+
                         return $cleanTarget;
                     }
                 }

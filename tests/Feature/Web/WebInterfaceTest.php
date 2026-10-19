@@ -3,8 +3,6 @@
 namespace Tests\Feature\Web;
 
 use App\Models\Aset;
-use App\Models\AuditLog;
-use App\Models\BatchPersediaan;
 use App\Models\Kategori;
 use App\Models\OpnameSesi;
 use App\Models\Persediaan;
@@ -75,15 +73,15 @@ class WebInterfaceTest extends TestCase
         $aset = Aset::first();
 
         // 1. Show Asset
-        $response = $this->actingAs($user)->get('/assets/' . $aset->id);
+        $response = $this->actingAs($user)->get('/assets/'.$aset->id);
         $response->assertStatus(200);
 
         // 2. Edit Asset Form
-        $response = $this->actingAs($user)->get('/assets/' . $aset->id . '/edit');
+        $response = $this->actingAs($user)->get('/assets/'.$aset->id.'/edit');
         $response->assertStatus(200);
 
         // 3. Update Asset
-        $response = $this->actingAs($user)->put('/assets/' . $aset->id, [
+        $response = $this->actingAs($user)->put('/assets/'.$aset->id, [
             'asset_code' => $aset->kode_aset,
             'name' => 'Laptop Test LOFBI Updated',
             'category_id' => $kategori->id,
@@ -98,7 +96,7 @@ class WebInterfaceTest extends TestCase
         $this->assertEquals('rusak_ringan', $aset->kondisi);
 
         // 4. Delete Asset
-        $response = $this->actingAs($user)->delete('/assets/' . $aset->id);
+        $response = $this->actingAs($user)->delete('/assets/'.$aset->id);
         $response->assertRedirect('/assets');
         $this->assertNull(Aset::find($aset->id));
     }
@@ -111,15 +109,15 @@ class WebInterfaceTest extends TestCase
         $item = Persediaan::first();
 
         // 1. Show Inventory Card
-        $response = $this->actingAs($user)->get('/inventory/' . $item->id);
+        $response = $this->actingAs($user)->get('/inventory/'.$item->id);
         $response->assertStatus(200);
 
         // 2. Edit Form
-        $response = $this->actingAs($user)->get('/inventory/' . $item->id . '/edit');
+        $response = $this->actingAs($user)->get('/inventory/'.$item->id.'/edit');
         $response->assertStatus(200);
 
         // 3. Update Master
-        $response = $this->actingAs($user)->put('/inventory/' . $item->id, [
+        $response = $this->actingAs($user)->put('/inventory/'.$item->id, [
             'name' => 'Buku Pelaut Uji Coba Updated',
             'category_id' => $kategori->id,
             'satuan' => 'BUAH',
@@ -129,7 +127,7 @@ class WebInterfaceTest extends TestCase
         $response->assertRedirect('/inventory');
 
         // 4. Delete Master
-        $response = $this->actingAs($user)->delete('/inventory/' . $item->id);
+        $response = $this->actingAs($user)->delete('/inventory/'.$item->id);
         $response->assertRedirect('/inventory');
     }
 
@@ -162,7 +160,7 @@ class WebInterfaceTest extends TestCase
         $this->assertNotNull($transaksi);
 
         // Approve request
-        $response = $this->actingAs($validator)->patch('/inventory/' . $transaksi->id . '/approve');
+        $response = $this->actingAs($validator)->patch('/inventory/'.$transaksi->id.'/approve');
         $response->assertRedirect('/inventory/pengajuan');
 
         $transaksi->refresh();
@@ -180,12 +178,12 @@ class WebInterfaceTest extends TestCase
         // (b) Aset - lihat daftar & detail
         $this->actingAs($operator)->get('/assets')->assertStatus(200);
         $aset = Aset::first();
-        $this->actingAs($operator)->get('/assets/' . $aset->id)->assertStatus(200);
+        $this->actingAs($operator)->get('/assets/'.$aset->id)->assertStatus(200);
 
         // (c) Persediaan - lihat daftar & detail
         $this->actingAs($operator)->get('/inventory')->assertStatus(200);
         $item = Persediaan::first();
-        $this->actingAs($operator)->get('/inventory/' . $item->id)->assertStatus(200);
+        $this->actingAs($operator)->get('/inventory/'.$item->id)->assertStatus(200);
 
         // (d) Form ajukan barang keluar
         $this->actingAs($operator)->get('/inventory/out')->assertStatus(200);
@@ -246,9 +244,9 @@ class WebInterfaceTest extends TestCase
         // (c) Pimpinan 200 pada: dashboard, daftar aset, daftar persediaan, laporan, notifikasi
         $this->actingAs($pimpinan)->get('/dashboard')->assertStatus(200);
         $this->actingAs($pimpinan)->get('/assets')->assertStatus(200);
-        $this->actingAs($pimpinan)->get('/assets/' . $aset->id)->assertStatus(200);
+        $this->actingAs($pimpinan)->get('/assets/'.$aset->id)->assertStatus(200);
         $this->actingAs($pimpinan)->get('/inventory')->assertStatus(200);
-        $this->actingAs($pimpinan)->get('/inventory/' . $item->id)->assertStatus(200);
+        $this->actingAs($pimpinan)->get('/inventory/'.$item->id)->assertStatus(200);
         $this->actingAs($pimpinan)->get('/reports')->assertStatus(200);
         $this->actingAs($pimpinan)->get('/notifications')->assertStatus(200);
         $this->actingAs($pimpinan)->get('/profile')->assertStatus(200);
@@ -265,7 +263,7 @@ class WebInterfaceTest extends TestCase
     {
         // (d) Hanya admin pada /settings dan backup
         $this->seed();
-        $admin    = User::where('role', 'admin')->first();
+        $admin = User::where('role', 'admin')->first();
         $operator = User::where('role', 'operator')->first();
         $validator = User::where('role', 'validator')->first();
         $pimpinan = User::where('role', 'pimpinan')->first();
@@ -290,7 +288,7 @@ class WebInterfaceTest extends TestCase
         $response->assertStatus(403);
 
         // Pimpinan dilarang mengakses form edit aset (hanya admin & operator)
-        $response = $this->actingAs($pimpinan)->get('/assets/' . $aset->id . '/edit');
+        $response = $this->actingAs($pimpinan)->get('/assets/'.$aset->id.'/edit');
         $response->assertStatus(403);
     }
 
@@ -349,8 +347,8 @@ class WebInterfaceTest extends TestCase
 
         // 1. Buka sesi opname baru (status: draft)
         $response = $this->actingAs($admin)->post('/opname', [
-            'periode'    => 'Semester I 2026',
-            'tanggal'    => date('Y-m-d'),
+            'periode' => 'Semester I 2026',
+            'tanggal' => date('Y-m-d'),
             'keterangan' => 'Opname Fisik Persediaan Semester I TA 2026',
         ]);
         $response->assertRedirect('/opname');
@@ -362,7 +360,7 @@ class WebInterfaceTest extends TestCase
         $this->assertGreaterThan(0, $sesi->details->count());
 
         // 2. Akses halaman Input Fisik
-        $response = $this->actingAs($admin)->get('/opname/' . $sesi->id . '/input-fisik');
+        $response = $this->actingAs($admin)->get('/opname/'.$sesi->id.'/input-fisik');
         $response->assertStatus(200);
 
         // 3. Simpan Hasil Hitung Fisik (status: menunggu_persetujuan)
@@ -372,28 +370,28 @@ class WebInterfaceTest extends TestCase
             $stokFisikData[$detail->id] = max(0, $detail->stok_buku - 1);
         }
 
-        $response = $this->actingAs($admin)->post('/opname/' . $sesi->id . '/save-fisik', [
+        $response = $this->actingAs($admin)->post('/opname/'.$sesi->id.'/save-fisik', [
             'stok_fisik' => $stokFisikData,
         ]);
-        $response->assertRedirect('/opname/' . $sesi->id);
+        $response->assertRedirect('/opname/'.$sesi->id);
 
         $sesi->refresh();
         $this->assertEquals('menunggu_persetujuan', $sesi->status);
 
         // 4. Validator Menyetujui Opname (status: disetujui)
-        $response = $this->actingAs($validator)->post('/opname/' . $sesi->id . '/approve');
-        $response->assertRedirect('/opname/' . $sesi->id);
+        $response = $this->actingAs($validator)->post('/opname/'.$sesi->id.'/approve');
+        $response->assertRedirect('/opname/'.$sesi->id);
 
         $sesi->refresh();
         $this->assertEquals('disetujui', $sesi->status);
         $this->assertEquals($validator->id, $sesi->approver_id);
 
         // 5. Show opname details
-        $response = $this->actingAs($admin)->get('/opname/' . $sesi->id);
+        $response = $this->actingAs($admin)->get('/opname/'.$sesi->id);
         $response->assertStatus(200);
 
         // 6. Export Berita Acara PDF
-        $response = $this->actingAs($admin)->get('/reports/opname/pdf?sesi_id=' . $sesi->id);
+        $response = $this->actingAs($admin)->get('/reports/opname/pdf?sesi_id='.$sesi->id);
         $response->assertStatus(200);
     }
 
@@ -403,8 +401,8 @@ class WebInterfaceTest extends TestCase
         $operator = User::where('role', 'operator')->first() ?? User::factory()->create(['role' => 'operator']);
 
         $response = $this->actingAs($operator)->post('/opname', [
-            'periode'    => 'Semester II 2026',
-            'tanggal'    => date('Y-m-d'),
+            'periode' => 'Semester II 2026',
+            'tanggal' => date('Y-m-d'),
             'keterangan' => 'Opname oleh Operator',
         ]);
         $response->assertRedirect('/opname');
@@ -413,8 +411,7 @@ class WebInterfaceTest extends TestCase
         $this->assertNotNull($sesi);
         $this->assertEquals('draft', $sesi->status);
 
-        $response = $this->actingAs($operator)->get('/opname/' . $sesi->id . '/input-fisik');
+        $response = $this->actingAs($operator)->get('/opname/'.$sesi->id.'/input-fisik');
         $response->assertStatus(200);
     }
-
 }

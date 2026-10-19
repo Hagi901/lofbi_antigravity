@@ -3,12 +3,10 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\Aset;
-use App\Models\JenisBarang;
+use App\Models\AuditLog;
 use App\Models\Kategori;
 use App\Models\Ruangan;
-use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -20,12 +18,9 @@ class AsetController extends Controller
     public function index()
     {
         $assets = Aset::with(['jenisBarang.kategori', 'ruangan'])->latest()->get();
+
         return view('assets.index', compact('assets'));
     }
-
-    /**
-     * Menampilkan detail informasi dan riwayat aset
-     */
 
     /**
      * Menampilkan detail informasi dan riwayat aset
@@ -33,6 +28,7 @@ class AsetController extends Controller
     public function show($id)
     {
         $asset = Aset::with(['jenisBarang.kategori', 'ruangan', 'riwayat'])->findOrFail($id);
+
         return view('assets.show', compact('asset'));
     }
 
@@ -44,10 +40,10 @@ class AsetController extends Controller
         $asset = Aset::with(['jenisBarang.kategori', 'ruangan'])->findOrFail($id);
         $categories = Kategori::all();
         $subCategories = collect([
-            (object)['id' => 'Peralatan Kantor', 'name' => 'Peralatan Kantor'],
-            (object)['id' => 'Elektronik & IT', 'name' => 'Elektronik & IT'],
-            (object)['id' => 'Kendaraan Dinas', 'name' => 'Kendaraan Dinas'],
-            (object)['id' => 'Meubelair', 'name' => 'Meubelair'],
+            (object) ['id' => 'Peralatan Kantor', 'name' => 'Peralatan Kantor'],
+            (object) ['id' => 'Elektronik & IT', 'name' => 'Elektronik & IT'],
+            (object) ['id' => 'Kendaraan Dinas', 'name' => 'Kendaraan Dinas'],
+            (object) ['id' => 'Meubelair', 'name' => 'Meubelair'],
         ]);
         $rooms = Ruangan::all();
 
@@ -62,7 +58,7 @@ class AsetController extends Controller
         $aset = Aset::findOrFail($id);
 
         $request->validate([
-            'asset_code' => 'required|unique:asets,kode_aset,' . $aset->id,
+            'asset_code' => 'required|unique:asets,kode_aset,'.$aset->id,
             'name' => 'required|string|max:255',
             'category_id' => 'required|exists:kategoris,id',
             'room_id' => 'required|exists:ruangans,id',
@@ -108,10 +104,10 @@ class AsetController extends Controller
             'user_name' => Auth::user()->name ?? 'Administrator',
             'modul' => 'Aset',
             'aksi' => 'Edit',
-            'detail' => 'Memperbarui data aset: ' . $aset->kode_aset . ' (' . $aset->merk . ')',
+            'detail' => 'Memperbarui data aset: '.$aset->kode_aset.' ('.$aset->merk.')',
         ]);
 
-        return redirect()->route('assets.index')->with('success', 'Data aset (' . $aset->kode_aset . ') berhasil diperbarui!');
+        return redirect()->route('assets.index')->with('success', 'Data aset ('.$aset->kode_aset.') berhasil diperbarui!');
     }
 
     /**
@@ -130,9 +126,9 @@ class AsetController extends Controller
             'user_name' => Auth::user()->name ?? 'Administrator',
             'modul' => 'Aset',
             'aksi' => 'Hapus',
-            'detail' => 'Menghapus aset: ' . $kode . ' (' . $merk . ')',
+            'detail' => 'Menghapus aset: '.$kode.' ('.$merk.')',
         ]);
 
-        return redirect()->route('assets.index')->with('success', 'Aset (' . $kode . ') berhasil dihapus!');
+        return redirect()->route('assets.index')->with('success', 'Aset ('.$kode.') berhasil dihapus!');
     }
 }

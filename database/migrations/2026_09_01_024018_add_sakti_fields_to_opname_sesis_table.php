@@ -26,7 +26,6 @@ return new class extends Migration
         });
     }
 
-
     public function down(): void
     {
         Schema::table('opname_sesis', function (Blueprint $table) {

@@ -6,20 +6,19 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\PengajuanKeluarRequest;
 use App\Http\Requests\StorePersediaanRequest;
 use App\Http\Resources\PengajuanResource;
-use App\Models\BatchPersediaan;
-use App\Models\DetailPemotonganBatch;
 use App\Models\JenisBarang;
 use App\Models\Persediaan;
 use App\Models\TransaksiPersediaan;
 use App\Services\Persediaan\PengajuanService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class PersediaanController extends Controller
 {
     public function __construct(
         protected PengajuanService $pengajuanService
     ) {}
+
     /**
      * Ringkasan persediaan dikelompokkan per jenis barang.
      * Dipaginasi 20 item per halaman.
@@ -106,7 +105,7 @@ class PersediaanController extends Controller
                 'recordDetail' => true,
                 'logAudit' => false,
             ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return response()->json(['message' => 'Stok tidak mencukupi untuk menyetujui pengajuan.'], 422);
         }
 

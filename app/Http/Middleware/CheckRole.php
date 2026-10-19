@@ -25,7 +25,7 @@ class CheckRole
                     'message' => 'Akses ditolak. Anda tidak memiliki izin.',
                 ], 403);
             }
-            abort(403, 'Akses ditolak. Role Anda (' . ($user->role ?? 'guest') . ') tidak memiliki izin untuk halaman ini.');
+            abort(403, 'Akses ditolak. Role Anda ('.($user->role ?? 'guest').') tidak memiliki izin untuk halaman ini.');
         }
 
         return $next($request);

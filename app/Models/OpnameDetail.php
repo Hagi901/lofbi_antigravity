@@ -40,8 +40,13 @@ class OpnameDetail extends Model
     /** Label selisih dengan tanda (+/-) */
     public function selisihLabel(): string
     {
-        if ($this->selisih === null) return '-';
-        if ($this->selisih > 0) return '+' . $this->selisih;
+        if ($this->selisih === null) {
+            return '-';
+        }
+        if ($this->selisih > 0) {
+            return '+'.$this->selisih;
+        }
+
         return (string) $this->selisih;
     }
 
@@ -54,6 +59,7 @@ class OpnameDetail extends Model
         if ($this->selisih > 0) {
             return 'bg-info-subtle text-info border-info';
         }
+
         return 'bg-danger-subtle text-danger border-danger';
     }
 }

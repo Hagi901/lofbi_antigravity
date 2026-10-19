@@ -10,11 +10,12 @@ use App\Models\OpnameDetail;
 use App\Models\OpnameSesi;
 use App\Models\Persediaan;
 use App\Models\Ruangan;
-use App\Models\UploadBaris;
 use App\Models\UploadPaket;
 use App\Models\User;
+use App\Services\Upload\UploadService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class UploadStagingValidationTest extends TestCase
@@ -22,9 +23,13 @@ class UploadStagingValidationTest extends TestCase
     use RefreshDatabase;
 
     protected User $admin;
+
     protected User $operator;
+
     protected User $validator;
+
     protected User $pimpinan;
+
     protected Ruangan $ruangan;
 
     protected function setUp(): void
@@ -32,11 +37,11 @@ class UploadStagingValidationTest extends TestCase
         parent::setUp();
         $this->seed();
 
-        $this->admin     = User::where('role', 'admin')->first() ?? User::factory()->create(['role' => 'admin']);
-        $this->operator  = User::where('role', 'operator')->first() ?? User::factory()->create(['role' => 'operator']);
+        $this->admin = User::where('role', 'admin')->first() ?? User::factory()->create(['role' => 'admin']);
+        $this->operator = User::where('role', 'operator')->first() ?? User::factory()->create(['role' => 'operator']);
         $this->validator = User::where('role', 'validator')->first() ?? User::factory()->create(['role' => 'validator']);
-        $this->pimpinan  = User::where('role', 'pimpinan')->first() ?? User::factory()->create(['role' => 'pimpinan']);
-        $this->ruangan   = Ruangan::first() ?? Ruangan::create(['nama' => 'Gudang Utama']);
+        $this->pimpinan = User::where('role', 'pimpinan')->first() ?? User::factory()->create(['role' => 'pimpinan']);
+        $this->ruangan = Ruangan::first() ?? Ruangan::create(['nama' => 'Gudang Utama']);
     }
 
     /**
@@ -70,15 +75,15 @@ class UploadStagingValidationTest extends TestCase
         $file = $this->createDummySaktiCsv();
 
         $response = $this->actingAs($this->operator)->post('/upload', [
-            'file'       => $file,
+            'file' => $file,
             'ruangan_id' => $this->ruangan->id,
         ]);
 
         $response->assertRedirect();
         $this->assertDatabaseHas('upload_pakets', [
             'diunggah_oleh' => $this->operator->id,
-            'status'        => 'menunggu',
-            'jumlah_baris'  => 3,
+            'status' => 'menunggu',
+            'jumlah_baris' => 3,
         ]);
 
         // Verifikasi TIDAK langsung masuk ke batch_persediaans resmi
@@ -89,7 +94,7 @@ class UploadStagingValidationTest extends TestCase
         // Verifikasi notifikasi terkirim ke validator
         $this->assertDatabaseHas('notifikasis', [
             'penerima_id' => $this->validator->id,
-            'jenis'       => 'upload_baru',
+            'jenis' => 'upload_baru',
         ]);
     }
 
@@ -113,7 +118,7 @@ class UploadStagingValidationTest extends TestCase
         ]);
 
         $response->assertSessionHas('error');
-        $this->assertStringContainsString('tidak didukung', (string)session('error'));
+        $this->assertStringContainsString('tidak didukung', (string) session('error'));
     }
 
     public function test_staging_skips_repeated_headers_and_flags_placeholders(): void
@@ -170,7 +175,7 @@ class UploadStagingValidationTest extends TestCase
         // Notifikasi ke pengunggah
         $this->assertDatabaseHas('notifikasis', [
             'penerima_id' => $paket->diunggah_oleh,
-            'jenis'       => 'ada_ditolak',
+            'jenis' => 'ada_ditolak',
         ]);
     }
 
@@ -209,7 +214,7 @@ class UploadStagingValidationTest extends TestCase
         $paket = UploadPaket::latest()->first();
 
         $barisDisetujui = $paket->baris()->where('kode_barang_lengkap', '1010301014000037')->first();
-        $barisDitolak   = $paket->baris()->where('kode_barang_lengkap', '1010104001000013')->first();
+        $barisDitolak = $paket->baris()->where('kode_barang_lengkap', '1010104001000013')->first();
 
         // Setujui baris 1
         $this->actingAs($this->validator)->post("/upload/baris/{$barisDisetujui->id}/setujui");
@@ -293,26 +298,26 @@ class UploadStagingValidationTest extends TestCase
         $this->actingAs($this->pimpinan)->post("/upload/{$paket->id}/setujui-semua")->assertStatus(403);
 
         // 4. Verifikasi sisi server (UploadService) menolak pemanggilan langsung oleh selain validator
-        $uploadService = app(\App\Services\Upload\UploadService::class);
+        $uploadService = app(UploadService::class);
 
         try {
             $uploadService->setujuiBaris($baris, $this->admin);
             $this->fail('Harusnya melempar HttpException 403 untuk Admin');
-        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+        } catch (HttpException $e) {
             $this->assertEquals(403, $e->getStatusCode());
         }
 
         try {
             $uploadService->tolakBaris($baris, $this->operator, 'Alasan');
             $this->fail('Harusnya melempar HttpException 403 untuk Operator');
-        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+        } catch (HttpException $e) {
             $this->assertEquals(403, $e->getStatusCode());
         }
 
         try {
             $uploadService->setujuiSemua($paket, $this->pimpinan);
             $this->fail('Harusnya melempar HttpException 403 untuk Pimpinan');
-        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+        } catch (HttpException $e) {
             $this->assertEquals(403, $e->getStatusCode());
         }
 
@@ -368,7 +373,7 @@ class UploadStagingValidationTest extends TestCase
         $this->assertEquals($this->validator->id, $notifBaru->penerima_id);
         $this->assertNotEquals($this->operator->id, $notifBaru->penerima_id);
 
-        $barisDitolak   = $paket->baris()->first();
+        $barisDitolak = $paket->baris()->first();
         $barisDisetujui = $paket->baris()->skip(1)->first();
 
         // 2. Tipe 'ada_ditolak': Validator menolak baris -> notifikasi terkirim ke Pengunggah (Operator)
@@ -396,31 +401,31 @@ class UploadStagingValidationTest extends TestCase
         $jenis = JenisBarang::create(['nama_generik' => 'Kertas Segel BMN', 'kategori_id' => $kategori->id]);
         $persediaan = Persediaan::create([
             'jenis_barang_id' => $jenis->id,
-            'satuan'          => 'rim',
-            'stok_minimum'    => 5,
-            'ruangan_id'      => $this->ruangan->id,
+            'satuan' => 'rim',
+            'stok_minimum' => 5,
+            'ruangan_id' => $this->ruangan->id,
         ]);
 
         // Batch 1: Ada harga (10 rim @ Rp 50.000 = Rp 500.000)
         BatchPersediaan::create([
-            'persediaan_id'     => $persediaan->id,
-            'no_batch'          => 1,
-            'tanggal_masuk'     => '2026-01-01',
-            'jumlah_masuk'      => 10,
-            'harga_satuan'      => 50000,
+            'persediaan_id' => $persediaan->id,
+            'no_batch' => 1,
+            'tanggal_masuk' => '2026-01-01',
+            'jumlah_masuk' => 10,
+            'harga_satuan' => 50000,
             'harga_belum_diisi' => false,
-            'sisa_stok'         => 10,
+            'sisa_stok' => 10,
         ]);
 
         // Batch 2: Harga kosong / null dari opname fisik (20 rim @ NULL)
         BatchPersediaan::create([
-            'persediaan_id'     => $persediaan->id,
-            'no_batch'          => 2,
-            'tanggal_masuk'     => '2026-02-01',
-            'jumlah_masuk'      => 20,
-            'harga_satuan'      => null,
+            'persediaan_id' => $persediaan->id,
+            'no_batch' => 2,
+            'tanggal_masuk' => '2026-02-01',
+            'jumlah_masuk' => 20,
+            'harga_satuan' => null,
             'harga_belum_diisi' => true,
-            'sisa_stok'         => 20,
+            'sisa_stok' => 20,
         ]);
 
         $response = $this->actingAs($this->admin)->get("/inventory/{$persediaan->id}");
@@ -438,37 +443,37 @@ class UploadStagingValidationTest extends TestCase
         $jenis = JenisBarang::create(['nama_generik' => 'Spidol Whiteboard', 'kategori_id' => $kategori->id]);
         $persediaan = Persediaan::create([
             'jenis_barang_id' => $jenis->id,
-            'satuan'          => 'buah',
-            'stok_minimum'    => 5,
-            'ruangan_id'      => $this->ruangan->id,
+            'satuan' => 'buah',
+            'stok_minimum' => 5,
+            'ruangan_id' => $this->ruangan->id,
         ]);
 
         // Batch dengan harga kosong
         BatchPersediaan::create([
-            'persediaan_id'     => $persediaan->id,
-            'no_batch'          => 1,
-            'tanggal_masuk'     => '2026-01-01',
-            'jumlah_masuk'      => 15,
-            'harga_satuan'      => null,
+            'persediaan_id' => $persediaan->id,
+            'no_batch' => 1,
+            'tanggal_masuk' => '2026-01-01',
+            'jumlah_masuk' => 15,
+            'harga_satuan' => null,
             'harga_belum_diisi' => true,
-            'sisa_stok'         => 15,
+            'sisa_stok' => 15,
         ]);
 
         $sesi = OpnameSesi::create([
             'ruangan_id' => $this->ruangan->id,
-            'admin_id'   => $this->admin->id,
-            'tanggal'    => '2026-08-01',
-            'periode'    => 'Semester II 2026',
-            'status'     => 'draft',
+            'admin_id' => $this->admin->id,
+            'tanggal' => '2026-08-01',
+            'periode' => 'Semester II 2026',
+            'status' => 'draft',
         ]);
 
         OpnameDetail::create([
             'opname_sesi_id' => $sesi->id,
-            'persediaan_id'  => $persediaan->id,
-            'stok_buku'      => 15,
-            'stok_fisik'     => 15,
-            'selisih'        => 0,
-            'satuan'         => 'buah',
+            'persediaan_id' => $persediaan->id,
+            'stok_buku' => 15,
+            'stok_fisik' => 15,
+            'selisih' => 0,
+            'satuan' => 'buah',
         ]);
 
         $response = $this->actingAs($this->admin)->get("/opname/{$sesi->id}");
@@ -477,4 +482,3 @@ class UploadStagingValidationTest extends TestCase
         $response->assertSee('1');
     }
 }
-

@@ -11,8 +11,7 @@ use Illuminate\Http\Request;
 
 class AsetController extends Controller
 {
-  
-          public function ringkas(Request $request)
+    public function ringkas(Request $request)
     {
         $applyFilters = function ($q) use ($request) {
             return $q
@@ -108,7 +107,7 @@ class AsetController extends Controller
 
         return response()->json([
             'kode_aset' => $aset->kode_aset,
-            'nama_barang' => $aset->jenisBarang?->nama_generik . ' ' . $aset->merk . ' ' . $aset->model,
+            'nama_barang' => $aset->jenisBarang?->nama_generik.' '.$aset->merk.' '.$aset->model,
             'lokasi' => $aset->ruangan?->nama ?? 'Belum ditentukan',
             'kondisi' => $aset->kondisi,
             'qr_payload' => json_encode([

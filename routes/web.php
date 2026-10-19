@@ -41,15 +41,15 @@ use Illuminate\Support\Facades\Route;
 */
 
 // Rute Autentikasi Publik & Profil/Notifikasi
-require __DIR__ . '/web/auth.php';
+require __DIR__.'/web/auth.php';
 
 // Rute Terlindungi - Wajib Login
 Route::middleware(['auth'])->group(function () {
-    require __DIR__ . '/web/dashboard.php';
-    require __DIR__ . '/web/aset.php';
-    require __DIR__ . '/web/persediaan.php';
-    require __DIR__ . '/web/opname.php';
-    require __DIR__ . '/web/upload.php';
-    require __DIR__ . '/web/laporan.php';
-    require __DIR__ . '/web/pengaturan.php';
+    require __DIR__.'/web/dashboard.php';
+    require __DIR__.'/web/aset.php';
+    require __DIR__.'/web/persediaan.php';
+    require __DIR__.'/web/opname.php';
+    require __DIR__.'/web/upload.php';
+    require __DIR__.'/web/laporan.php';
+    require __DIR__.'/web/pengaturan.php';
 });

@@ -9,6 +9,7 @@ use App\Models\UploadPaket;
 use App\Services\Upload\UploadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class UploadController extends Controller
 {
@@ -38,10 +39,10 @@ class UploadController extends Controller
         $ruangans = Ruangan::orderBy('nama')->get();
 
         // Statistik ringkas
-        $statMenunggu   = UploadPaket::where('status', 'menunggu')->count();
-        $statSebagian   = UploadPaket::where('status', 'disetujui_sebagian')->count();
-        $statDisetujui  = UploadPaket::where('status', 'disetujui')->count();
-        $statDitolak    = UploadPaket::where('status', 'ditolak')->count();
+        $statMenunggu = UploadPaket::where('status', 'menunggu')->count();
+        $statSebagian = UploadPaket::where('status', 'disetujui_sebagian')->count();
+        $statDisetujui = UploadPaket::where('status', 'disetujui')->count();
+        $statDitolak = UploadPaket::where('status', 'ditolak')->count();
 
         return view('upload.index', compact('pakets', 'ruangans', 'statMenunggu', 'statSebagian', 'statDisetujui', 'statDitolak'));
     }
@@ -52,7 +53,7 @@ class UploadController extends Controller
     public function store(Request $request)
     {
         $file = $request->file('file');
-        if (!$file) {
+        if (! $file) {
             return back()->with('error', 'Berkas upload wajib dipilih.');
         }
 
@@ -76,12 +77,13 @@ class UploadController extends Controller
             );
 
             return redirect()->route('upload.show', $paket->id)
-                ->with('success', 'Berkas berhasil diunggah! Sebanyak ' . $paket->jumlah_baris . ' baris masuk ke antrean validasi.');
-        } catch (\Illuminate\Validation\ValidationException $ve) {
+                ->with('success', 'Berkas berhasil diunggah! Sebanyak '.$paket->jumlah_baris.' baris masuk ke antrean validasi.');
+        } catch (ValidationException $ve) {
             $firstError = collect($ve->errors())->flatten()->first();
+
             return back()->with('error', $firstError ?: 'Validasi berkas gagal.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Terjadi kesalahan saat memproses berkas: ' . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan saat memproses berkas: '.$e->getMessage());
         }
     }
 
@@ -102,10 +104,10 @@ class UploadController extends Controller
 
         $barisList = $barisQuery->paginate(25)->withQueryString();
 
-        $countTotal     = $paket->baris()->count();
-        $countMenunggu  = $paket->baris()->where('status', 'menunggu')->count();
+        $countTotal = $paket->baris()->count();
+        $countMenunggu = $paket->baris()->where('status', 'menunggu')->count();
         $countDisetujui = $paket->baris()->where('status', 'disetujui')->count();
-        $countDitolak   = $paket->baris()->where('status', 'ditolak')->count();
+        $countDitolak = $paket->baris()->where('status', 'ditolak')->count();
 
         return view('upload.show', compact('paket', 'barisList', 'filter', 'countTotal', 'countMenunggu', 'countDisetujui', 'countDitolak'));
     }
@@ -123,7 +125,7 @@ class UploadController extends Controller
         }
 
         $file = $request->file('file');
-        if (!$file) {
+        if (! $file) {
             return back()->with('error', 'Berkas revisi wajib dipilih.');
         }
 
@@ -138,11 +140,12 @@ class UploadController extends Controller
 
             return redirect()->route('upload.show', $paket->id)
                 ->with('success', 'Berkas revisi berhasil diunggah. Baris yang ditolak telah diperbarui dan menunggu validasi ulang.');
-        } catch (\Illuminate\Validation\ValidationException $ve) {
+        } catch (ValidationException $ve) {
             $firstError = collect($ve->errors())->flatten()->first();
+
             return back()->with('error', $firstError ?: 'Validasi berkas revisi gagal.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal memproses revisi: ' . $e->getMessage());
+            return back()->with('error', 'Gagal memproses revisi: '.$e->getMessage());
         }
     }
 
@@ -162,11 +165,11 @@ class UploadController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Baris berhasil disetujui dan dipromosikan ke inventaris.',
-                'status'  => $baris->fresh()->status,
+                'status' => $baris->fresh()->status,
             ]);
         }
 
-        return back()->with('success', 'Baris ke-' . $baris->nomor_baris . ' (' . ($baris->nama_barang ?: 'Item') . ') berhasil disetujui.');
+        return back()->with('success', 'Baris ke-'.$baris->nomor_baris.' ('.($baris->nama_barang ?: 'Item').') berhasil disetujui.');
     }
 
     /**
@@ -182,7 +185,7 @@ class UploadController extends Controller
             'deskripsi_revisi' => 'required|string|min:3|max:1000',
         ], [
             'deskripsi_revisi.required' => 'Deskripsi alasan penolakan/revisi wajib diisi.',
-            'deskripsi_revisi.min'      => 'Deskripsi revisi minimal 3 karakter.',
+            'deskripsi_revisi.min' => 'Deskripsi revisi minimal 3 karakter.',
         ]);
 
         $baris = UploadBaris::findOrFail($barisId);
@@ -192,11 +195,11 @@ class UploadController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Baris ditolak dengan catatan revisi.',
-                'status'  => $baris->fresh()->status,
+                'status' => $baris->fresh()->status,
             ]);
         }
 
-        return back()->with('success', 'Baris ke-' . $baris->nomor_baris . ' telah ditolak.');
+        return back()->with('success', 'Baris ke-'.$baris->nomor_baris.' telah ditolak.');
     }
 
     /**
@@ -215,7 +218,7 @@ class UploadController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => "Sebanyak {$count} baris berhasil disetujui.",
-                'count'   => $count,
+                'count' => $count,
             ]);
         }
 

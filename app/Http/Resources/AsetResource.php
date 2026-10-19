@@ -29,7 +29,7 @@ class AsetResource extends JsonResource
             ]),
             'nilai_perolehan' => (float) $this->nilai_perolehan,
             'tanggal_perolehan' => $this->tanggal_perolehan?->toDateString(),
-                        // Dihitung live (bukan baca kolom tersimpan) agar selalu sinkron dengan
+            // Dihitung live (bukan baca kolom tersimpan) agar selalu sinkron dengan
             // tampilan web, yang juga menghitung live — bukan menunggu jadwal
             // command lofbi:hitung-penyusutan yang hanya jalan tiap 1 Jan & 1 Jul.
             'akumulasi_penyusutan' => (float) $this->akumulasi_dinamis,

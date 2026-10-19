@@ -27,7 +27,7 @@ class AuditController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('user_name', 'like', "%{$search}%")
-                  ->orWhere('detail', 'like', "%{$search}%");
+                    ->orWhere('detail', 'like', "%{$search}%");
             });
         }
 
