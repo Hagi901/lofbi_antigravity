@@ -48,4 +48,9 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function notifikasis()
+    {
+        return $this->hasMany(Notifikasi::class, 'penerima_id')->latest();
+    }
 }

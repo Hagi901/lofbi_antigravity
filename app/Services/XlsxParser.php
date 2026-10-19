@@ -15,9 +15,10 @@ class XlsxParser
      * Membaca file spreadsheet (.xlsx atau .csv) dan mengembalikan array of rows.
      *
      * @param string $filePath Path absolut ke file
+     * @param string|null $sheetName Nama sheet spesifik yang ingin dibaca (untuk .xlsx)
      * @return array Array berisi baris-baris data (array of arrays)
      */
-    public static function parse(string $filePath): array
+    public static function parse(string $filePath, ?string $sheetName = null): array
     {
         $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
 
@@ -26,7 +27,7 @@ class XlsxParser
         }
 
         if ($ext === 'xlsx') {
-            return self::parseXlsx($filePath);
+            return self::parseXlsx($filePath, $sheetName);
         }
 
         // Fallback coba baca sebagai CSV
@@ -73,9 +74,41 @@ class XlsxParser
     }
 
     /**
+     * Dapatkan daftar nama sheet dari file .xlsx
+     *
+     * @param string $filePath
+     * @return array
+     */
+    public static function getSheetNames(string $filePath): array
+    {
+        $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+        if ($ext !== 'xlsx') {
+            return [];
+        }
+
+        $zip = new ZipArchive();
+        if ($zip->open($filePath) !== true) {
+            return [];
+        }
+
+        $names = [];
+        $wbXml = $zip->getFromName('xl/workbook.xml');
+        if ($wbXml !== false) {
+            $xml = simplexml_load_string($wbXml);
+            if ($xml && isset($xml->sheets->sheet)) {
+                foreach ($xml->sheets->sheet as $sh) {
+                    $names[] = (string) $sh['name'];
+                }
+            }
+        }
+        $zip->close();
+        return $names;
+    }
+
+    /**
      * Parse file .xlsx OpenXML Spreadsheet.
      */
-    private static function parseXlsx(string $filePath): array
+    private static function parseXlsx(string $filePath, ?string $sheetName = null): array
     {
         $rows = [];
         $zip = new ZipArchive();
@@ -106,8 +139,15 @@ class XlsxParser
             }
         }
 
-        // 2. Baca sheet pertama (sheet1.xml)
-        $sheetXml = $zip->getFromName('xl/worksheets/sheet1.xml');
+        // 2. Tentukan target worksheet berdasarkan nama sheet atau default
+        $sheetPath = self::resolveWorksheetPath($zip, $sheetName);
+        $sheetXml = $zip->getFromName($sheetPath);
+
+        // Fallback jika tidak ditemukan
+        if ($sheetXml === false && $sheetPath !== 'xl/worksheets/sheet1.xml') {
+            $sheetXml = $zip->getFromName('xl/worksheets/sheet1.xml');
+        }
+
         if ($sheetXml !== false) {
             $xml = simplexml_load_string($sheetXml);
             if ($xml && isset($xml->sheetData->row)) {
@@ -154,6 +194,81 @@ class XlsxParser
 
         $zip->close();
         return $rows;
+    }
+
+    /**
+     * Resolusi path file XML worksheet dari nama sheet pada xl/workbook.xml
+     */
+    private static function resolveWorksheetPath(ZipArchive $zip, ?string $sheetName = null): string
+    {
+        $defaultPath = 'xl/worksheets/sheet1.xml';
+        $wbXml = $zip->getFromName('xl/workbook.xml');
+        if ($wbXml === false) {
+            return $defaultPath;
+        }
+
+        $xml = simplexml_load_string($wbXml);
+        if (!$xml || !isset($xml->sheets->sheet)) {
+            return $defaultPath;
+        }
+
+        $rId = null;
+        $firstRId = null;
+
+        foreach ($xml->sheets->sheet as $sheet) {
+            $name = (string) $sheet['name'];
+            $relAttrs = $sheet->attributes('http://schemas.openxmlformats.org/officeDocument/2006/relationships');
+            $currentRId = (string) ($relAttrs['id'] ?? $sheet['id'] ?? '');
+
+            if ($firstRId === null) {
+                $firstRId = $currentRId;
+            }
+
+            if ($sheetName !== null && strcasecmp(trim($name), trim($sheetName)) === 0) {
+                $rId = $currentRId;
+                break;
+            }
+        }
+
+        if (!$rId && $sheetName !== null) {
+            // Cek kecocokan parsial
+            foreach ($xml->sheets->sheet as $sheet) {
+                $name = (string) $sheet['name'];
+                if (str_contains(strtolower($name), strtolower(trim($sheetName)))) {
+                    $relAttrs = $sheet->attributes('http://schemas.openxmlformats.org/officeDocument/2006/relationships');
+                    $rId = (string) ($relAttrs['id'] ?? $sheet['id'] ?? '');
+                    break;
+                }
+            }
+        }
+
+        if (!$rId) {
+            $rId = $firstRId;
+        }
+
+        if (!$rId) {
+            return $defaultPath;
+        }
+
+        // Cari relasi di xl/_rels/workbook.xml.rels
+        $relsXml = $zip->getFromName('xl/_rels/workbook.xml.rels');
+        if ($relsXml !== false) {
+            $rXml = simplexml_load_string($relsXml);
+            if ($rXml && isset($rXml->Relationship)) {
+                foreach ($rXml->Relationship as $rel) {
+                    if ((string) $rel['Id'] === $rId) {
+                        $target = (string) $rel['Target'];
+                        $cleanTarget = ltrim($target, '/');
+                        if (!str_starts_with($cleanTarget, 'xl/')) {
+                            return 'xl/' . $cleanTarget;
+                        }
+                        return $cleanTarget;
+                    }
+                }
+            }
+        }
+
+        return $defaultPath;
     }
 
     /**

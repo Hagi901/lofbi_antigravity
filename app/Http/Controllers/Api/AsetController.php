@@ -73,18 +73,6 @@ class AsetController extends Controller
         return AsetResource::collection($asets);
     }
 
-    public function store(StoreAsetRequest $request)
-    {
-        $data = $request->validated();
-        $data['nilai_buku'] = $data['nilai_buku'] ?? $data['nilai_perolehan'];
-
-        $aset = Aset::create($data)->load(['jenisBarang.kategori', 'ruangan']);
-
-        return (new AsetResource($aset))
-            ->response()
-            ->setStatusCode(201);
-    }
-
     public function show(Aset $aset)
     {
         return new AsetResource(

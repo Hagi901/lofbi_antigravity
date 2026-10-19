@@ -259,35 +259,6 @@
 					}
 				},
 				{
-					"name": "Tambah Aset Baru",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"jenis_barang_id\": 1,\n  \"kode_aset\": \"ELK-LAP-003\",\n  \"merk\": \"Dell\",\n  \"model\": \"Latitude 3420\",\n  \"kondisi\": \"baik\",\n  \"ruangan_id\": 1,\n  \"nilai_perolehan\": 14000000,\n  \"tanggal_perolehan\": \"2026-02-01\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/aset",
-							"host": ["{{base_url}}"],
-							"path": ["aset"]
-						}
-					}
-				},
-				{
 					"name": "Show Detail Aset (ID=1)",
 					"request": {
 						"method": "GET",
@@ -381,35 +352,6 @@
 							"raw": "{{base_url}}/persediaan/ringkas",
 							"host": ["{{base_url}}"],
 							"path": ["persediaan", "ringkas"]
-						}
-					}
-				},
-				{
-					"name": "Input Barang Masuk (Batch Baru)",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"jumlah\": 30,\n  \"tanggal\": \"2026-08-01\",\n  \"harga_satuan\": 3500\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/persediaan/1/barang-masuk",
-							"host": ["{{base_url}}"],
-							"path": ["persediaan", "1", "barang-masuk"]
 						}
 					}
 				},

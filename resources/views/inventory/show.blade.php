@@ -29,8 +29,8 @@
 
                     <div class="d-flex gap-2">
                         @if(in_array(Auth::user()->role ?? '', ['admin', 'operator']))
-                            <a href="{{ route('inventory.in.create') }}" class="btn btn-success btn-sm fw-bold px-3 shadow-sm">
-                                <i class="fa-solid fa-plus me-1"></i> Tambah Batch Masuk
+                            <a href="{{ route('upload.index') }}" class="btn btn-outline-primary btn-sm fw-semibold px-3 shadow-sm">
+                                <i class="fa-solid fa-cloud-arrow-up me-1"></i> Upload Berkas
                             </a>
                             <a href="{{ route('inventory.out.create') }}" class="btn btn-danger btn-sm fw-bold px-3 shadow-sm">
                                 <i class="fa-solid fa-minus me-1"></i> Ajukan Keluar

@@ -32,18 +32,15 @@ class WebInterfaceTest extends TestCase
         $response = $this->actingAs($user)->get('/assets');
         $response->assertStatus(200);
 
-        // 3. Assets Create
-        $response = $this->actingAs($user)->get('/assets/create');
+        // 3. Upload & Validasi Staging
+        $response = $this->actingAs($user)->get('/upload');
         $response->assertStatus(200);
 
         // 4. Inventory
         $response = $this->actingAs($user)->get('/inventory');
         $response->assertStatus(200);
 
-        // 5. Inventory In & Out
-        $response = $this->actingAs($user)->get('/inventory/in');
-        $response->assertStatus(200);
-
+        // 5. Inventory Out (Pengajuan)
         $response = $this->actingAs($user)->get('/inventory/out');
         $response->assertStatus(200);
 
@@ -69,40 +66,25 @@ class WebInterfaceTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_authenticated_user_can_create_update_and_delete_asset(): void
+    public function test_authenticated_user_can_view_update_and_delete_asset(): void
     {
         $this->seed();
         $user = User::where('role', 'admin')->first() ?? User::first();
-        $kategori = Kategori::where('tipe', 'aset')->first();
+        $kategori = Kategori::where('tipe', 'aset')->first() ?? Kategori::first();
         $ruangan = Ruangan::first();
+        $aset = Aset::first();
 
-        // 1. Create Asset
-        $response = $this->actingAs($user)->post('/assets', [
-            'asset_code' => 'TEST-AST-001',
-            'name' => 'Laptop Test LOFBI',
-            'category_id' => $kategori->id,
-            'room_id' => $ruangan->id,
-            'condition' => 'Baik',
-            'acquisition_value' => 10000000,
-            'useful_life_years' => 4,
-        ]);
-        $response->assertRedirect('/assets');
-
-        $aset = Aset::where('kode_aset', 'TEST-AST-001')->first();
-        $this->assertNotNull($aset);
-        $this->assertEquals(10000000, $aset->nilai_perolehan);
-
-        // 2. Show Asset
+        // 1. Show Asset
         $response = $this->actingAs($user)->get('/assets/' . $aset->id);
         $response->assertStatus(200);
 
-        // 3. Edit Asset Form
+        // 2. Edit Asset Form
         $response = $this->actingAs($user)->get('/assets/' . $aset->id . '/edit');
         $response->assertStatus(200);
 
-        // 4. Update Asset
+        // 3. Update Asset
         $response = $this->actingAs($user)->put('/assets/' . $aset->id, [
-            'asset_code' => 'TEST-AST-001',
+            'asset_code' => $aset->kode_aset,
             'name' => 'Laptop Test LOFBI Updated',
             'category_id' => $kategori->id,
             'room_id' => $ruangan->id,
@@ -115,47 +97,28 @@ class WebInterfaceTest extends TestCase
         $aset->refresh();
         $this->assertEquals('rusak_ringan', $aset->kondisi);
 
-        // 5. Delete Asset
+        // 4. Delete Asset
         $response = $this->actingAs($user)->delete('/assets/' . $aset->id);
         $response->assertRedirect('/assets');
         $this->assertNull(Aset::find($aset->id));
     }
 
-    public function test_authenticated_user_can_crud_master_persediaan(): void
+    public function test_authenticated_user_can_view_update_and_delete_persediaan(): void
     {
         $this->seed();
         $user = User::where('role', 'admin')->first() ?? User::first();
         $kategori = Kategori::where('tipe', 'persediaan')->first() ?? Kategori::first();
+        $item = Persediaan::first();
 
-        // 1. Create Form
-        $response = $this->actingAs($user)->get('/inventory/create');
-        $response->assertStatus(200);
-
-        // 2. Store Master
-        $response = $this->actingAs($user)->post('/inventory', [
-            'name' => 'Buku Pelaut Uji Coba',
-            'category_id' => $kategori->id,
-            'satuan' => 'BUAH',
-            'merk' => 'Standar Hubla',
-            'stok_minimum' => 50,
-            'initial_qty' => 100,
-            'initial_price' => 50000,
-        ]);
-        $response->assertRedirect('/inventory');
-
-        $item = Persediaan::with('jenisBarang')->get()->last();
-        $this->assertNotNull($item);
-        $this->assertStringContainsString('Buku Pelaut Uji Coba', $item->name);
-
-        // 3. Show Inventory Card
+        // 1. Show Inventory Card
         $response = $this->actingAs($user)->get('/inventory/' . $item->id);
         $response->assertStatus(200);
 
-        // 4. Edit Form
+        // 2. Edit Form
         $response = $this->actingAs($user)->get('/inventory/' . $item->id . '/edit');
         $response->assertStatus(200);
 
-        // 5. Update Master
+        // 3. Update Master
         $response = $this->actingAs($user)->put('/inventory/' . $item->id, [
             'name' => 'Buku Pelaut Uji Coba Updated',
             'category_id' => $kategori->id,
@@ -165,26 +128,18 @@ class WebInterfaceTest extends TestCase
         ]);
         $response->assertRedirect('/inventory');
 
-        // 6. Delete Master
+        // 4. Delete Master
         $response = $this->actingAs($user)->delete('/inventory/' . $item->id);
         $response->assertRedirect('/inventory');
     }
 
-    public function test_authenticated_user_can_record_inventory_in_and_out(): void
+    public function test_authenticated_user_can_record_inventory_out(): void
     {
         $this->seed();
         $user = User::where('role', 'admin')->first() ?? User::first();
         $persediaan = Persediaan::first();
 
-        // 1. Store In
-        $response = $this->actingAs($user)->post('/inventory/in', [
-            'inventory_item_id' => $persediaan->id,
-            'qty_received' => 25,
-            'purchase_price' => 50000,
-        ]);
-        $response->assertRedirect('/inventory');
-
-        // 2. Store Out (creates pending request)
+        // Store Out (creates pending request)
         $response = $this->actingAs($user)->post('/inventory/out', [
             'inventory_item_id' => $persediaan->id,
             'qty_out' => 5,

@@ -28,99 +28,12 @@ class PersediaanController extends Controller
         // Hitung ringkasan statistik
         $totalItems = $items->count();
         $totalStok = $items->sum(fn($i) => $i->batches->sum('sisa_stok'));
-        $totalNilaiRupiah = $items->sum(fn($i) => $i->batches->sum(fn($b) => $b->sisa_stok * $b->harga_satuan));
 
-        return view('inventory.index', compact('items', 'pengajuanMenunggu', 'totalItems', 'totalStok', 'totalNilaiRupiah'));
-    }
+        // Exclude NULL-harga atau harga_belum_diisi dari kalkulasi nilai rupiah
+        $hasHargaBelumDiisi = BatchPersediaan::where('harga_belum_diisi', true)->orWhereNull('harga_satuan')->exists();
+        $totalNilaiRupiah = $items->sum(fn($i) => $i->batches->where('harga_belum_diisi', false)->whereNotNull('harga_satuan')->sum(fn($b) => $b->sisa_stok * $b->harga_satuan));
 
-    /**
-     * Form Tambah Master Barang Persediaan Baru
-     */
-    public function create()
-    {
-        $categories = Kategori::where('tipe', 'persediaan')->orWhereNull('tipe')->orderBy('nama')->get();
-        if ($categories->isEmpty()) {
-            $categories = Kategori::orderBy('nama')->get();
-        }
-        $rooms = Ruangan::orderBy('nama')->get();
-
-        return view('inventory.create', compact('categories', 'rooms'));
-    }
-
-    /**
-     * Simpan Master Barang Baru (beserta opsi saldo awal / batch pertama)
-     */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'name'          => 'required|string|max:255',
-            'category_id'   => 'required|exists:kategoris,id',
-            'satuan'        => 'required|string|max:50',
-            'merk'          => 'nullable|string|max:100',
-            'stok_minimum'  => 'nullable|integer|min:0',
-            'ruangan_id'    => 'nullable|exists:ruangans,id',
-            'initial_qty'   => 'nullable|integer|min:0',
-            'initial_price' => 'nullable|numeric|min:0',
-            'no_faktur'     => 'nullable|string|max:100',
-            'supplier'      => 'nullable|string|max:255',
-        ]);
-
-        $persediaan = DB::transaction(function () use ($request) {
-            $jenis = JenisBarang::create([
-                'nama_generik' => $request->name,
-                'kategori_id'  => $request->category_id,
-            ]);
-
-            $p = Persediaan::create([
-                'jenis_barang_id' => $jenis->id,
-                'merk'            => $request->merk,
-                'satuan'          => strtoupper($request->satuan),
-                'stok_minimum'    => (int) ($request->stok_minimum ?? 0),
-                'ruangan_id'      => $request->ruangan_id,
-            ]);
-
-            // Jika ada saldo awal
-            if ($request->filled('initial_qty') && (int) $request->initial_qty > 0) {
-                $qty = (int) $request->initial_qty;
-                $harga = (float) ($request->initial_price ?? 0);
-
-                BatchPersediaan::create([
-                    'persediaan_id' => $p->id,
-                    'no_batch'      => 1,
-                    'no_referensi'  => 'REF-' . date('YmdHis'),
-                    'no_faktur'     => $request->no_faktur ?: 'SALDO-AWAL-' . date('Y'),
-                    'nota_dinas'    => 'ND/' . date('Y/m'),
-                    'supplier'      => $request->supplier ?: 'Penyedia Barang KSOP',
-                    'tanggal_masuk' => now()->toDateString(),
-                    'jumlah_masuk'  => $qty,
-                    'harga_satuan'  => $harga,
-                    'sisa_stok'     => $qty,
-                ]);
-
-                TransaksiPersediaan::create([
-                    'persediaan_id'       => $p->id,
-                    'diajukan_oleh'       => Auth::id() ?? 1,
-                    'diputuskan_oleh'     => Auth::id() ?? 1,
-                    'jenis'               => 'masuk',
-                    'jumlah'              => $qty,
-                    'tanggal'             => now()->toDateString(),
-                    'status'              => 'disetujui',
-                    'unit_kerja_penerima' => 'Gudang Persediaan KSOP',
-                ]);
-            }
-
-            AuditLog::create([
-                'user_id'   => Auth::id() ?? 1,
-                'user_name' => Auth::user()->name ?? 'Administrator',
-                'modul'     => 'Persediaan',
-                'aksi'      => 'Tambah Master',
-                'detail'    => 'Menambahkan master barang: ' . $request->name . ' (' . strtoupper($request->satuan) . ')',
-            ]);
-
-            return $p;
-        });
-
-        return redirect()->route('inventory.index')->with('success', 'Master barang ' . $request->name . ' berhasil ditambahkan!');
+        return view('inventory.index', compact('items', 'pengajuanMenunggu', 'totalItems', 'totalStok', 'totalNilaiRupiah', 'hasHargaBelumDiisi'));
     }
 
     /**
@@ -222,68 +135,7 @@ class PersediaanController extends Controller
         return redirect()->route('inventory.index')->with('success', 'Barang ' . $namaBarang . ' beserta riwayat batch-nya berhasil dihapus!');
     }
 
-    // ── PENCATATAN MASUK & KELUAR ──────────────────────────────────────────
-
-    /**
-     * Menampilkan form pencatatan Barang Masuk (Batch Baru)
-     */
-    public function createIn()
-    {
-        $items = Persediaan::with('jenisBarang')->get();
-        return view('inventory.in', compact('items'));
-    }
-
-    /**
-     * Menyimpan data Barang Masuk & membuat batch baru
-     */
-    public function storeIn(Request $request)
-    {
-        $request->validate([
-            'inventory_item_id' => 'required|exists:persediaans,id',
-            'qty_received'      => 'required|integer|min:1',
-            'purchase_price'    => 'required|numeric|min:0',
-        ]);
-
-        $persediaan = Persediaan::findOrFail($request->inventory_item_id);
-
-        DB::transaction(function () use ($persediaan, $request) {
-            $nextBatchNo = ($persediaan->batches()->max('no_batch') ?? 0) + 1;
-
-            BatchPersediaan::create([
-                'persediaan_id' => $persediaan->id,
-                'no_batch'      => $nextBatchNo,
-                'no_referensi'  => $request->no_referensi ?? ('REF-' . date('YmdHis')),
-                'no_faktur'     => $request->no_faktur ?? ('FAK-' . date('YmdHis')),
-                'nota_dinas'    => $request->nota_dinas ?? ('ND/' . date('Y/m')),
-                'supplier'      => $request->supplier ?? 'Penyedia Barang KSOP',
-                'tanggal_masuk' => $request->tanggal ?? now()->toDateString(),
-                'jumlah_masuk'  => $request->qty_received,
-                'harga_satuan'  => $request->purchase_price,
-                'sisa_stok'     => $request->qty_received,
-            ]);
-
-            TransaksiPersediaan::create([
-                'persediaan_id'       => $persediaan->id,
-                'diajukan_oleh'       => Auth::id() ?? 1,
-                'diputuskan_oleh'     => Auth::id() ?? 1,
-                'jenis'               => 'masuk',
-                'jumlah'              => $request->qty_received,
-                'tanggal'             => $request->tanggal ?? now()->toDateString(),
-                'status'              => 'disetujui',
-                'unit_kerja_penerima' => 'Gudang Utama KSOP',
-            ]);
-
-            AuditLog::create([
-                'user_id'   => Auth::id() ?? 1,
-                'user_name' => Auth::user()->name ?? 'Administrator',
-                'modul'     => 'Persediaan',
-                'aksi'      => 'Barang Masuk',
-                'detail'    => 'Menambahkan ' . $request->qty_received . ' unit ' . $persediaan->name . ' (Batch #' . $nextBatchNo . ') @ Rp ' . number_format($request->purchase_price),
-            ]);
-        });
-
-        return redirect()->route('inventory.index')->with('success', 'Barang Masuk sebanyak ' . $request->qty_received . ' ' . $persediaan->satuan . ' berhasil dicatat!');
-    }
+    // ── PENGAJUAN BARANG KELUAR (FIFO) ─────────────────────────────────────
 
     /**
      * Menampilkan form pengeluaran barang (buat pengajuan)

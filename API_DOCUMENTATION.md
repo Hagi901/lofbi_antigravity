@@ -1,5 +1,5 @@
 # LOFBI REST API Specification
-### Dokumentasi API Backend (Laravel 12 Sanctum) — KSOP Kelas I Banten
+### Dokumentasi API Backend (Laravel 12 Sanctum) - KSOP Kelas I Banten
 
 **Base URL**: `http://127.0.0.1:8000/api`  
 **Authentication Header**: `Authorization: Bearer {sanctum_token}`
@@ -42,32 +42,14 @@
 
 ## 📦 2. Modul Manajemen Aset (KBM & BMN)
 
+> **Catatan Alur Masuk Data**: Input manual aset (`POST /api/aset`) telah ditiadakan sesuai tata kelola satu pintu. Seluruh data aset masuk melalui modul Upload Berkas Staging (SIMAN) dan divalidasi oleh Validator sebelum disetujui masuk ke master data resmi.
+
 ### `GET /api/aset/ringkas`
 - **Query Params**: `kategori_id`, `kondisi`, `ruangan_id`, `search`, `page`
 - **Response**: Ringkasan daftar aset dikelompokkan per jenis barang (paginasi 20).
 
 ### `GET /api/aset/jenis/{jenisBarang}/unit`
 - **Response**: List unit aset per jenis barang.
-
-### `POST /api/aset`
-- **Protected** (`auth:sanctum`)
-- **Body Request**:
-  ```json
-  {
-    "kode_aset": "ELK-LAP-003",
-    "jenis_barang_id": 1,
-    "sub_kategori": "Elektronik",
-    "merk": "Dell",
-    "model": "Latitude 3420",
-    "kondisi": "baik",
-    "ruangan_id": 1,
-    "nilai_perolehan": 15000000,
-    "tanggal_perolehan": "2026-08-01",
-    "masa_manfaat": 5,
-    "metode_penyusutan": "Garis Lurus"
-  }
-  ```
-- **Response (201 Created)**: Objek aset baru beserta relasinya.
 
 ### `GET /api/aset/{aset}`
 - **Response**: Detail informasi aset beserta penyusutan & riwayat mutasi.
@@ -88,42 +70,17 @@
 
 ## 🗃️ 3. Modul Persediaan & Batch FIFO
 
+> **Catatan Alur Masuk Data**: Input manual persediaan dan barang masuk manual (`POST /api/persediaan`, `POST /api/persediaan/{id}/barang-masuk`, `POST /api/persediaan/transfer-masuk`) telah ditiadakan. Seluruh data saldo/batch persediaan bersumber dari berkas resmi SAKTI (`bahan_opname_fisik.xlsx`) melalui modul Upload Berkas Staging, diperiksa per baris oleh Validator, dan dipromosikan otomatis ke batch persediaan berstatus disetujui.
+
 ### `GET /api/persediaan/ringkas`
 - **Response**: Ringkasan stok persediaan per jenis barang.
 
 ### `GET /api/persediaan/jenis/{jenisBarang}/detail`
 - **Response**: Detail persediaan beserta daftar batch stoknya.
 
-### `POST /api/persediaan/{persediaan}/barang-masuk`
-- **Body Request**:
-  ```json
-  {
-    "no_referensi": "REF-2026-001",
-    "no_faktur": "INV-2026-089",
-    "nota_dinas": "ND/2026/08",
-    "supplier": "Sinar Dunia",
-    "tanggal": "2026-08-10",
-    "jumlah": 50,
-    "harga_satuan": 45000
-  }
-  ```
-- **Response (201 Created)**: Mengenerate nomor batch baru dan menambah sisa stok.
-
 ### `POST /api/persediaan/{persediaan}/pengajuan-keluar`
 - **Body Request**: `{"jumlah": 10, "tanggal": "2026-08-10", "unit_kerja_penerima": "Seksi Kepegawaian"}`
 - **Response (201 Created)**: Membuat transaksi pengajuan berstatus `menunggu`.
-
-### `POST /api/persediaan/transfer-masuk`
-- **Body Request**:
-  ```json
-  {
-    "ruangan_asal_id": 2,
-    "ruangan_tujuan_id": 1,
-    "persediaan_id": 1,
-    "jumlah": 20,
-    "catatan": "Mutasi barang untuk ruang TU"
-  }
-  ```
 
 ### `GET /api/persediaan/pengajuan`
 - **Query Params**: `status` (`menunggu`, `disetujui`, `ditolak`)

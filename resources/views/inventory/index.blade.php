@@ -44,7 +44,12 @@
                 </div>
                 <div>
                     <p class="text-muted small fw-bold mb-1">Total Nilai Persediaan</p>
-                    <h3 class="fw-bold mb-0 text-dark" style="font-size: 1.15rem;">Rp {{ number_format($totalNilaiRupiah ?? 0, 0, ',', '.') }}</h3>
+                    <h3 class="fw-bold mb-0 text-dark" style="font-size: 1.15rem;">
+                        Rp {{ number_format($totalNilaiRupiah ?? 0, 0, ',', '.') }}
+                        @if($hasHargaBelumDiisi ?? false)
+                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning ms-1" style="font-size: 10px;">Nilai belum lengkap</span>
+                        @endif
+                    </h3>
                 </div>
             </div>
         </div>
@@ -64,11 +69,8 @@
                 </a>
             @endif
             @if(in_array(Auth::user()->role ?? '', ['admin', 'operator']))
-                <a href="{{ route('inventory.create') }}" class="btn btn-primary btn-sm fw-bold px-3 shadow-sm rounded-pill">
-                    <i class="fa-solid fa-plus me-1"></i> Tambah Master Barang
-                </a>
-                <a href="{{ route('inventory.in.create') }}" class="btn btn-success btn-sm fw-bold px-3 shadow-sm">
-                    <i class="fa-solid fa-arrow-right-to-bracket me-1"></i> Input Masuk
+                <a href="{{ route('upload.index') }}" class="btn btn-primary btn-sm fw-bold px-3 shadow-sm rounded-pill">
+                    <i class="fa-solid fa-cloud-arrow-up me-1"></i> Upload Berkas
                 </a>
                 <a href="{{ route('inventory.out.create') }}" class="btn btn-danger btn-sm fw-bold px-3 shadow-sm">
                     <i class="fa-solid fa-arrow-right-from-bracket me-1"></i> Ajukan Keluar

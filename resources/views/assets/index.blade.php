@@ -68,8 +68,8 @@
         </div>
         
         @if(in_array(Auth::user()->role ?? '', ['admin', 'operator']))
-        <a href="{{ route('assets.create') }}" class="btn btn-primary btn-sm fw-bold px-3 shadow-sm rounded-pill">
-            <i class="fa-solid fa-plus me-1"></i> Tambah Aset Baru
+        <a href="{{ route('upload.index') }}" class="btn btn-primary btn-sm fw-bold px-3 shadow-sm rounded-pill">
+            <i class="fa-solid fa-cloud-arrow-up me-1"></i> Upload Berkas
         </a>
         @endif
     </div>

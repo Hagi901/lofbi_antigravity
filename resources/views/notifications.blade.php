@@ -7,6 +7,69 @@
     <!-- Kolom Kiri: Peringatan Kritis -->
     <div class="col-lg-8 mb-4">
         
+        {{-- 0. Notifikasi Sistem Validasi Upload --}}
+        @if(isset($notifikasiSistem) && $notifikasiSistem->count() > 0)
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-header bg-white border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold text-dark mb-0">
+                        <i class="fa-solid fa-bell text-primary me-2"></i>Pemberitahuan Sistem & Validasi
+                    </h6>
+                    <form action="{{ route('notifications.markAllRead') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill px-3" style="font-size: 11px;">
+                            <i class="fa-solid fa-check-double me-1"></i> Tandai Semua Dibaca
+                        </button>
+                    </form>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        @foreach($notifikasiSistem as $notif)
+                            <div class="list-group-item p-3 border-bottom {{ is_null($notif->dibaca_pada) ? 'bg-white' : 'bg-light text-muted' }}">
+                                <div class="d-flex gap-3 align-items-start">
+                                    <div class="rounded-circle p-2 mt-1 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px;
+                                        {{ $notif->jenis === 'upload_baru' ? 'background-color: #EBF5FF; color: #1E40AF;' : ($notif->jenis === 'ada_ditolak' ? 'background-color: #FEE2E2; color: #DC2626;' : 'background-color: #ECFDF5; color: #059669;') }}">
+                                        @if($notif->jenis === 'upload_baru')
+                                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                                        @elseif($notif->jenis === 'ada_ditolak')
+                                            <i class="fa-solid fa-triangle-exclamation"></i>
+                                        @else
+                                            <i class="fa-solid fa-circle-check"></i>
+                                        @endif
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
+                                            <h6 class="mb-0 fw-bold {{ is_null($notif->dibaca_pada) ? 'text-dark' : 'text-secondary' }}" style="font-size: 13.5px;">
+                                                {{ $notif->judul }}
+                                            </h6>
+                                            <span class="text-muted text-nowrap" style="font-size: 11px;">
+                                                {{ $notif->created_at->diffForHumans() }}
+                                            </span>
+                                        </div>
+                                        <p class="mb-2 small {{ is_null($notif->dibaca_pada) ? 'text-secondary' : 'text-muted' }}" style="font-size: 12.5px;">
+                                            {{ $notif->pesan }}
+                                        </p>
+                                        @if($notif->tautan)
+                                            <a href="{{ $notif->tautan }}" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold shadow-none" style="font-size: 11px;">
+                                                @if($notif->jenis === 'upload_baru')
+                                                    <i class="fa-solid fa-magnifying-glass me-1"></i> Periksa Berkas
+                                                @elseif($notif->jenis === 'ada_ditolak')
+                                                    <i class="fa-solid fa-filter me-1"></i> Lihat yang Ditolak
+                                                @elseif($notif->jenis === 'disetujui')
+                                                    <i class="fa-solid fa-boxes-stacked me-1"></i> Lihat Data
+                                                @else
+                                                    <i class="fa-solid fa-arrow-right me-1"></i> Buka
+                                                @endif
+                                            </a>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        @endif
+
         {{-- 1. Pengajuan Menunggu --}}
         @if($pengajuanMenunggu->count() > 0)
             <div class="card border-0 shadow-sm rounded-4 mb-4 border-start border-warning border-4">

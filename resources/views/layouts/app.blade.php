@@ -89,6 +89,9 @@
             <a href="{{ url('/reports') }}" class="{{ request()->is('reports*') ? 'active' : '' }}">
                 <i class="fa-solid fa-file-pdf me-2"></i> Laporan
             </a>
+            <a href="{{ route('upload.index') }}" class="{{ request()->is('upload*') ? 'active' : '' }}">
+                <i class="fa-solid fa-cloud-arrow-up me-2"></i> Upload & Validasi
+            </a>
             @if(in_array($userRole, ['admin', 'operator']))
             <a href="{{ route('import.index') }}" class="{{ request()->is('import*') ? 'active' : '' }}">
                 <i class="fa-solid fa-file-import me-2"></i> Input File Dokumen
@@ -116,45 +119,21 @@
             
             <div class="ms-auto d-flex align-items-center">
                 
-                <!-- DROPDOWN NOTIFIKASI -->
+                <!-- TOMBOL DRAWER NOTIFIKASI -->
                 @php
-                    $pendingNotifCount = \App\Models\TransaksiPersediaan::where('jenis','keluar')->where('status','menunggu')->count();
+                    $unreadNotifCount = Auth::user() ? \App\Models\Notifikasi::where('penerima_id', Auth::id())->whereNull('dibaca_pada')->count() : 0;
+                    $pendingOutCount  = in_array($userRole, ['validator', 'admin']) ? \App\Models\TransaksiPersediaan::where('jenis','keluar')->where('status','menunggu')->count() : 0;
+                    $totalBadgeCount  = $unreadNotifCount + $pendingOutCount;
                 @endphp
-                <div class="dropdown me-3">
-                    <button class="btn btn-light rounded-circle position-relative border-0 d-flex align-items-center justify-content-center" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="width: 40px; height: 40px;">
+                <div class="me-3">
+                    <button class="btn btn-light rounded-circle position-relative border-0 d-flex align-items-center justify-content-center shadow-sm" type="button" data-bs-toggle="offcanvas" data-bs-target="#notificationDrawer" aria-controls="notificationDrawer" style="width: 40px; height: 40px;" title="Buka Pusat Notifikasi">
                         <i class="fa-regular fa-bell text-secondary fs-5"></i>
-                        @if($pendingNotifCount > 0)
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 10px;">
-                            {{ $pendingNotifCount }}
+                        @if($totalBadgeCount > 0)
+                        <span id="unreadNotifBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 10px;">
+                            {{ $totalBadgeCount }}
                         </span>
                         @endif
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2" style="width: 320px;">
-                        <li class="px-3 py-3 border-bottom bg-light d-flex justify-content-between align-items-center">
-                            <h6 class="mb-0 fw-bold text-dark"><i class="fa-solid fa-bell text-warning me-2"></i>Notifikasi</h6>
-                            <a href="{{ route('notifications.index') }}" class="small text-decoration-none fw-bold">Semua &rarr;</a>
-                        </li>
-                        @if($pendingNotifCount > 0)
-                        <li>
-                            <a class="dropdown-item py-3 border-bottom" href="{{ route('notifications.index') }}">
-                                <div class="d-flex align-items-center">
-                                    <div class="bg-warning bg-opacity-25 text-warning rounded-circle p-2 me-3 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
-                                        <i class="fa-solid fa-clock text-warning"></i>
-                                    </div>
-                                    <div>
-                                        <p class="mb-0 small fw-bold text-dark">{{ $pendingNotifCount }} Pengajuan Menunggu</p>
-                                        <p class="mb-0 small text-muted" style="font-size: 11px;">Barang keluar menunggu validasi.</p>
-                                    </div>
-                                </div>
-                            </a>
-                        </li>
-                        @else
-                        <li class="px-3 py-3 text-center text-muted small">
-                            <i class="fa-solid fa-circle-check text-success me-1"></i> Tidak ada notifikasi baru.
-                        </li>
-                        @endif
-                        <li><a class="dropdown-item text-center small text-primary fw-bold py-2 bg-light" href="{{ route('notifications.index') }}">Buka Pusat Notifikasi</a></li>
-                    </ul>
                 </div>
 
                 <!-- DROPDOWN PROFIL -->
@@ -205,6 +184,94 @@
         </div>
     </div>
 
+    <!-- OFFCANVAS DRAWER NOTIFIKASI (~50% Lebar Layar) -->
+    <div class="offcanvas offcanvas-end border-0 shadow-lg" tabindex="-1" id="notificationDrawer" aria-labelledby="notificationDrawerLabel" style="width: 50vw; min-width: 320px; max-width: 640px;">
+        <div class="offcanvas-header bg-white border-bottom p-4">
+            <div class="d-flex align-items-center gap-2">
+                <div class="bg-primary bg-opacity-10 text-primary rounded-3 p-2 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+                    <i class="fa-solid fa-bell fs-5"></i>
+                </div>
+                <div>
+                    <h5 class="offcanvas-title fw-bold text-dark mb-0" id="notificationDrawerLabel">Pusat Notifikasi</h5>
+                    <span class="text-muted small">Pemberitahuan alur validasi dan operasional</span>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <form action="{{ route('notifications.markAllRead') }}" method="POST" class="d-inline" id="formMarkAllRead">
+                    @csrf
+                    <button type="submit" class="btn btn-light btn-sm text-primary fw-semibold rounded-pill px-3 border shadow-none" style="font-size: 11.5px;">
+                        <i class="fa-solid fa-check-double me-1"></i> Tandai Dibaca
+                    </button>
+                </form>
+                <button type="button" class="btn-close text-reset shadow-none" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+        </div>
+        <div class="offcanvas-body p-0 d-flex flex-column bg-light bg-opacity-50">
+            @php
+                $drawerNotifs = Auth::user() ? \App\Models\Notifikasi::where('penerima_id', Auth::id())->latest()->take(25)->get() : collect();
+            @endphp
+
+            @if($drawerNotifs->count() > 0)
+                <div class="list-group list-group-flush">
+                    @foreach($drawerNotifs as $notif)
+                        <div class="list-group-item p-3 border-bottom {{ is_null($notif->dibaca_pada) ? 'bg-white' : 'bg-transparent text-muted' }}">
+                            <div class="d-flex gap-3 align-items-start">
+                                <div class="rounded-circle p-2 mt-1 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; 
+                                    {{ $notif->jenis === 'upload_baru' ? 'background-color: #EBF5FF; color: #1E40AF;' : ($notif->jenis === 'ada_ditolak' ? 'background-color: #FEE2E2; color: #DC2626;' : 'background-color: #ECFDF5; color: #059669;') }}">
+                                    @if($notif->jenis === 'upload_baru')
+                                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                                    @elseif($notif->jenis === 'ada_ditolak')
+                                        <i class="fa-solid fa-triangle-exclamation"></i>
+                                    @else
+                                        <i class="fa-solid fa-circle-check"></i>
+                                    @endif
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
+                                        <h6 class="mb-0 fw-bold {{ is_null($notif->dibaca_pada) ? 'text-dark' : 'text-secondary' }}" style="font-size: 13px;">
+                                            {{ $notif->judul }}
+                                        </h6>
+                                        <span class="text-muted text-nowrap" style="font-size: 10.5px;">
+                                            {{ $notif->created_at->diffForHumans() }}
+                                        </span>
+                                    </div>
+                                    <p class="mb-2 small {{ is_null($notif->dibaca_pada) ? 'text-secondary' : 'text-muted' }}" style="font-size: 12px; line-height: 1.4;">
+                                        {{ $notif->pesan }}
+                                    </p>
+                                    @if($notif->tautan)
+                                        <div>
+                                            <a href="{{ $notif->tautan }}" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold shadow-none" style="font-size: 11px;">
+                                                @if($notif->jenis === 'upload_baru')
+                                                    <i class="fa-solid fa-magnifying-glass me-1"></i> Periksa Berkas
+                                                @elseif($notif->jenis === 'ada_ditolak')
+                                                    <i class="fa-solid fa-filter me-1"></i> Lihat yang Ditolak
+                                                @elseif($notif->jenis === 'disetujui')
+                                                    <i class="fa-solid fa-boxes-stacked me-1"></i> Lihat Data
+                                                @else
+                                                    <i class="fa-solid fa-arrow-right me-1"></i> Buka Tautan
+                                                @endif
+                                            </a>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="text-center py-5 my-auto text-muted">
+                    <i class="fa-solid fa-bell-slash fs-1 text-secondary opacity-25 mb-2 d-block"></i>
+                    <p class="small mb-0">Tidak ada notifikasi baru saat ini.</p>
+                </div>
+            @endif
+        </div>
+        <div class="p-3 bg-white border-top text-center">
+            <a href="{{ route('notifications.index') }}" class="small text-primary text-decoration-none fw-bold">
+                Buka Halaman Lengkap Notifikasi &rarr;
+            </a>
+        </div>
+    </div>
+
     <!-- Script Bootstrap & Interaktivitas -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
@@ -230,6 +297,23 @@
                 backdrop.addEventListener('click', function() {
                     sidebar.classList.remove('show');
                     backdrop.classList.remove('show');
+                });
+            }
+
+            // Auto mark read saat drawer dibuka
+            const drawerEl = document.getElementById('notificationDrawer');
+            if (drawerEl) {
+                drawerEl.addEventListener('show.bs.offcanvas', function () {
+                    fetch('{{ route("notifications.markAllRead") }}', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        }
+                    }).then(() => {
+                        const badge = document.getElementById('unreadNotifBadge');
+                        if (badge) badge.remove();
+                    }).catch(err => console.error(err));
                 });
             }
         });

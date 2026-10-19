@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\BarangMasukRequest;
 use App\Http\Requests\PengajuanKeluarRequest;
 use App\Http\Requests\StorePersediaanRequest;
 use App\Http\Resources\PengajuanResource;
@@ -40,83 +39,11 @@ class PersediaanController extends Controller
             ->get();
     }
 
-    public function store(StorePersediaanRequest $request)
-    {
-        return response()->json(
-            Persediaan::create($request->validated())->load(['jenisBarang.kategori', 'ruangan']),
-            201
-        );
-    }
-
     public function update(StorePersediaanRequest $request, Persediaan $persediaan)
     {
         $persediaan->update($request->validated());
 
         return $persediaan->load(['jenisBarang.kategori', 'ruangan']);
-    }
-
-    public function barangMasuk(BarangMasukRequest $request, Persediaan $persediaan)
-    {
-        $data = $request->validated();
-
-        return DB::transaction(function () use ($data, $persediaan) {
-            $lastBatch = BatchPersediaan::where('persediaan_id', $persediaan->id)->lockForUpdate()->max('no_batch') ?? 0;
-            $batch = BatchPersediaan::create([
-                'persediaan_id' => $persediaan->id,
-                'no_batch' => $lastBatch + 1,
-                'no_referensi' => $data['no_referensi'] ?? null,
-                'no_faktur' => $data['no_faktur'] ?? null,
-                'nota_dinas' => $data['nota_dinas'] ?? null,
-                'supplier' => $data['supplier'] ?? null,
-                'tanggal_masuk' => $data['tanggal'],
-                'jumlah_masuk' => $data['jumlah'],
-                'harga_satuan' => $data['harga_satuan'],
-                'sisa_stok' => $data['jumlah'],
-            ]);
-
-            $transaksi = TransaksiPersediaan::create([
-                'persediaan_id' => $persediaan->id,
-                'jenis' => 'masuk',
-                'jumlah' => $data['jumlah'],
-                'tanggal' => $data['tanggal'],
-                'status' => 'disetujui',
-                'tanggal_keputusan' => now(),
-            ]);
-
-            return response()->json(['batch' => $batch, 'transaksi' => $transaksi], 201);
-        });
-    }
-
-    /**
-     * Transfer persediaan antar ruangan / gudang.
-     */
-    public function transferMasuk(Request $request)
-    {
-        $data = $request->validate([
-            'ruangan_asal_id' => ['required', 'exists:ruangans,id'],
-            'ruangan_tujuan_id' => ['required', 'exists:ruangans,id', 'different:ruangan_asal_id'],
-            'persediaan_id' => ['required', 'exists:persediaans,id'],
-            'jumlah' => ['required', 'integer', 'min:1'],
-            'catatan' => ['nullable', 'string'],
-        ]);
-
-        return DB::transaction(function () use ($data, $request) {
-            $transaksi = TransaksiPersediaan::create([
-                'persediaan_id' => $data['persediaan_id'],
-                'jenis' => 'masuk',
-                'jumlah' => $data['jumlah'],
-                'tanggal' => now()->toDateString(),
-                'unit_kerja_penerima' => 'Transfer Ruangan ID #' . $data['ruangan_tujuan_id'],
-                'diajukan_oleh' => $request->user()->id,
-                'status' => 'disetujui',
-                'tanggal_keputusan' => now(),
-            ]);
-
-            return response()->json([
-                'message' => 'Transfer masuk antar ruangan berhasil dicatat.',
-                'transaksi' => $transaksi,
-            ], 201);
-        });
     }
 
     /**
