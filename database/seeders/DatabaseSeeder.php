@@ -23,7 +23,7 @@ class DatabaseSeeder extends Seeder
 
     public function run(): void
     {
-        // ── 5 Role Users sesuai Requirement LOFBI ──────────────────────────────
+        // ── Role Users sesuai Tiga Aktor LOFBI ──────────────────────────────
         $admin = User::updateOrCreate(['email' => 'admin@lofbi.test'], [
             'name' => 'Admin LOFBI',
             'role' => 'admin', // Administrator
@@ -39,12 +39,6 @@ class DatabaseSeeder extends Seeder
         $validator = User::updateOrCreate(['email' => 'validator@lofbi.test'], [
             'name' => 'Validator LOFBI',
             'role' => 'validator', // Validator
-            'password' => Hash::make('password'),
-        ]);
-
-        $viewer = User::updateOrCreate(['email' => 'viewer@lofbi.test'], [
-            'name' => 'Viewer LOFBI',
-            'role' => 'viewer', // Viewer
             'password' => Hash::make('password'),
         ]);
 

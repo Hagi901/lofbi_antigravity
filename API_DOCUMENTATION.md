@@ -8,18 +8,18 @@
 
 ## 👥 Matriks Hak Akses Peran (Role-Based Access Control)
 
-| Modul & Endpoint | Admin | Operator | Validator | Pimpinan | Viewer |
-|---|:---:|:---:|:---:|:---:|:---:|
-| Lihat Data Aset (`GET /api/aset/*`) | Ya | Ya | Ya | Ya | Ya |
-| Edit & Hapus Aset (`PUT/DELETE /api/aset/*`) | Ya | Tidak | Tidak | Tidak | Tidak |
-| Lihat Persediaan (`GET /api/persediaan/*`) | Ya | Ya | Ya | Ya | Ya |
-| Edit Master Persediaan (`PUT /api/persediaan/*`) | Ya | Tidak | Tidak | Tidak | Tidak |
-| Buat Pengajuan Keluar (`POST /api/persediaan/*/pengajuan-keluar`) | Ya | Ya | Tidak | Tidak | Tidak |
-| Validasi Pengajuan Keluar (`POST /api/persediaan/pengajuan/*/setujui|tolak`) | Ya | Tidak | Ya | Tidak | Tidak |
-| Buat Sesi Opname (`POST /api/opname`) | Ya | Ya | Tidak | Tidak | Tidak |
-| Lihat Riwayat Opname (`GET /api/opname/*`) | Ya | Ya | Ya | Ya | Tidak |
-| Monitoring & Laporan (`GET /api/monitoring/*`, `GET /api/laporan/*`) | Ya | Tidak | Ya | Ya | Tidak |
-| Pengaturan & Backup Sistem (`/api/settings`, `/api/backup`, `/api/audit-trail`) | Ya | Tidak | Tidak | Tidak | Tidak |
+| Modul & Endpoint | Admin | Operator | Validator | Pimpinan |
+|---|:---:|:---:|:---:|:---:|
+| Lihat Data Aset (`GET /api/aset/*`) | Ya | Ya | Ya | Ya |
+| Edit & Hapus Aset (`PUT/DELETE /api/aset/*`) | Ya | Tidak | Tidak | Tidak |
+| Lihat Persediaan (`GET /api/persediaan/*`) | Ya | Ya | Ya | Ya |
+| Edit Master Persediaan (`PUT /api/persediaan/*`) | Ya | Tidak | Tidak | Tidak |
+| Buat Pengajuan Keluar (`POST /api/persediaan/*/pengajuan-keluar`) | Ya | Ya | Tidak | Tidak |
+| Validasi Pengajuan Keluar (`POST /api/persediaan/pengajuan/*/setujui|tolak`) | Ya | Tidak | Ya | Tidak |
+| Buat Sesi Opname (`POST /api/opname`) | Ya | Ya | Tidak | Tidak |
+| Lihat Riwayat Opname (`GET /api/opname/*`) | Ya | Ya | Ya | Ya |
+| Monitoring & Laporan (`GET /api/monitoring/*`, `GET /api/laporan/*`) | Ya | Tidak | Ya | Ya |
+| Pengaturan & Backup Sistem (`/api/settings`, `/api/backup`, `/api/audit-trail`) | Ya | Tidak | Tidak | Tidak |
 
 ---
 
@@ -62,16 +62,16 @@
 > **Catatan Alur Masuk Data**: Input manual aset (`POST /api/aset`) telah ditiadakan sesuai tata kelola satu pintu. Seluruh data aset masuk melalui modul Upload Berkas Staging (SIMAN) dan divalidasi oleh Validator sebelum disetujui masuk ke master data resmi.
 
 ### `GET /api/aset/ringkas`
-- **Protected** (`role:admin,operator,validator,pimpinan,viewer`)
+- **Protected** (`role:admin,operator,validator,pimpinan`)
 - **Query Params**: `kategori_id`, `kondisi`, `ruangan_id`, `search`, `page`
 - **Response**: Ringkasan daftar aset dikelompokkan per jenis barang (paginasi 20).
 
 ### `GET /api/aset/jenis/{jenisBarang}/unit`
-- **Protected** (`role:admin,operator,validator,pimpinan,viewer`)
+- **Protected** (`role:admin,operator,validator,pimpinan`)
 - **Response**: List unit aset per jenis barang.
 
 ### `GET /api/aset/{aset}`
-- **Protected** (`role:admin,operator,validator,pimpinan,viewer`)
+- **Protected** (`role:admin,operator,validator,pimpinan`)
 - **Response**: Detail informasi aset beserta penyusutan & riwayat mutasi.
 
 ### `PUT /api/aset/{aset}`
@@ -83,11 +83,11 @@
 - **Response (204 No Content)**.
 
 ### `GET /api/aset/{aset}/riwayat`
-- **Protected** (`role:admin,operator,validator,pimpinan,viewer`)
+- **Protected** (`role:admin,operator,validator,pimpinan`)
 - **Response**: Riwayat mutasi/perpindahan lokasi & kondisi aset.
 
 ### `GET /api/aset/{aset}/qr`
-- **Protected** (`role:admin,operator,validator,pimpinan,viewer`)
+- **Protected** (`role:admin,operator,validator,pimpinan`)
 - **Response**: Payload QR Code aset (Kode Aset, Lokasi, Kondisi, Metadata).
 
 ---
@@ -97,19 +97,19 @@
 > **Catatan Alur Masuk Data**: Input manual persediaan dan barang masuk manual (`POST /api/persediaan`, `POST /api/persediaan/{id}/barang-masuk`, `POST /api/persediaan/transfer-masuk`) telah ditiadakan. Seluruh data saldo/batch persediaan bersumber dari berkas resmi SAKTI (`bahan_opname_fisik.xlsx`) melalui modul Upload Berkas Staging, diperiksa per baris oleh Validator, dan dipromosikan otomatis ke batch persediaan berstatus disetujui.
 
 ### `GET /api/persediaan/ringkas`
-- **Protected** (`role:admin,operator,validator,pimpinan,viewer`)
+- **Protected** (`role:admin,operator,validator,pimpinan`)
 - **Response**: Ringkasan stok persediaan per jenis barang.
 
 ### `GET /api/persediaan/jenis/{jenisBarang}/detail`
-- **Protected** (`role:admin,operator,validator,pimpinan,viewer`)
+- **Protected** (`role:admin,operator,validator,pimpinan`)
 - **Response**: Detail persediaan beserta daftar batch stoknya.
 
 ### `GET /api/persediaan/{persediaan}/batch`
-- **Protected** (`role:admin,operator,validator,pimpinan,viewer`)
+- **Protected** (`role:admin,operator,validator,pimpinan`)
 - **Response**: Daftar riwayat batch masuk persediaan (diurutkan FIFO).
 
 ### `GET /api/persediaan/{persediaan}`
-- **Protected** (`role:admin,operator,validator,pimpinan,viewer`)
+- **Protected** (`role:admin,operator,validator,pimpinan`)
 - **Response**: Detail satu master persediaan.
 
 ### `PUT /api/persediaan/{persediaan}`

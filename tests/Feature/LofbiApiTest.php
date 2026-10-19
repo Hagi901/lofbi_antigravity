@@ -133,9 +133,9 @@ class LofbiApiTest extends TestCase
             ->assertCreated();
     }
 
-    public function test_viewer_can_read_only_and_forbidden_from_mutating_via_api(): void
+    public function test_pimpinan_cannot_mutate_data_via_api(): void
     {
-        $viewer = User::factory()->create(['role' => 'viewer']);
+        $pimpinan = User::factory()->create(['role' => 'pimpinan']);
         $kategori = Kategori::create(['nama' => 'ATK', 'tipe' => 'persediaan']);
         $jenis = JenisBarang::create(['nama_generik' => 'Buku', 'kategori_id' => $kategori->id]);
         $persediaan = Persediaan::create([
@@ -145,11 +145,11 @@ class LofbiApiTest extends TestCase
         ]);
 
         $token = $this->postJson('/api/login', [
-            'email' => $viewer->email,
+            'email' => $pimpinan->email,
             'password' => 'password',
         ])->json('access_token');
 
-        // 1. Viewer bisa membaca data persediaan dan aset
+        // 1. Pimpinan bisa membaca data persediaan dan aset
         $this->withToken($token)
             ->getJson('/api/persediaan/ringkas')
             ->assertOk();
@@ -158,16 +158,16 @@ class LofbiApiTest extends TestCase
             ->getJson('/api/aset/ringkas')
             ->assertOk();
 
-        // 2. Viewer DILARANG membuat pengajuan keluar (403)
+        // 2. Pimpinan DILARANG membuat pengajuan keluar (403)
         $this->withToken($token)
             ->postJson("/api/persediaan/{$persediaan->id}/pengajuan-keluar", [
                 'jumlah' => 2,
                 'tanggal' => '2026-08-10',
-                'unit_kerja_penerima' => 'Viewer Unit',
+                'unit_kerja_penerima' => 'Unit Pimpinan',
             ])
             ->assertForbidden();
 
-        // 3. Viewer DILARANG mengubah master persediaan (403)
+        // 3. Pimpinan DILARANG mengubah master persediaan (403)
         $this->withToken($token)
             ->putJson("/api/persediaan/{$persediaan->id}", [
                 'satuan' => 'dus',

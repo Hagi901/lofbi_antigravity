@@ -43,11 +43,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // Operator   : Lihat
     // Validator  : Lihat
     // Pimpinan   : Lihat
-    // Viewer     : Lihat (read-only)
     // ======================================================================
 
     // Semua role authenticated dapat melihat data Aset
-    Route::middleware('role:admin,operator,validator,pimpinan,viewer')->group(function () {
+    Route::middleware('role:admin,operator,validator,pimpinan')->group(function () {
 
         Route::get('/aset/ringkas', [AsetController::class, 'ringkas']);
 
@@ -86,11 +85,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // Operator   : Lihat + pengajuan-keluar
     // Validator  : Lihat + validasi pengajuan keluar
     // Pimpinan   : Lihat
-    // Viewer     : Lihat (read-only)
     // ======================================================================
 
     // Semua role authenticated dapat melihat Persediaan
-    Route::middleware('role:admin,operator,validator,pimpinan,viewer')->group(function () {
+    Route::middleware('role:admin,operator,validator,pimpinan')->group(function () {
 
         Route::get(
             '/persediaan/ringkas',

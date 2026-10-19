@@ -24,7 +24,7 @@ class UploadStagingValidationTest extends TestCase
     protected User $admin;
     protected User $operator;
     protected User $validator;
-    protected User $viewer;
+    protected User $pimpinan;
     protected Ruangan $ruangan;
 
     protected function setUp(): void
@@ -35,7 +35,7 @@ class UploadStagingValidationTest extends TestCase
         $this->admin     = User::where('role', 'admin')->first() ?? User::factory()->create(['role' => 'admin']);
         $this->operator  = User::where('role', 'operator')->first() ?? User::factory()->create(['role' => 'operator']);
         $this->validator = User::where('role', 'validator')->first() ?? User::factory()->create(['role' => 'validator']);
-        $this->viewer    = User::where('role', 'viewer')->first() ?? User::factory()->create(['role' => 'viewer']);
+        $this->pimpinan  = User::where('role', 'pimpinan')->first() ?? User::factory()->create(['role' => 'pimpinan']);
         $this->ruangan   = Ruangan::first() ?? Ruangan::create(['nama' => 'Gudang Utama']);
     }
 
@@ -93,11 +93,11 @@ class UploadStagingValidationTest extends TestCase
         ]);
     }
 
-    public function test_viewer_is_forbidden_from_uploading(): void
+    public function test_pimpinan_is_forbidden_from_uploading(): void
     {
         $file = $this->createDummySaktiCsv();
 
-        $response = $this->actingAs($this->viewer)->post('/upload', [
+        $response = $this->actingAs($this->pimpinan)->post('/upload', [
             'file' => $file,
         ]);
 

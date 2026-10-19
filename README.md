@@ -16,12 +16,11 @@ Aplikasi **Sistem Layanan Operasional & Form BMN / Inventarisasi (LOFBI)** untuk
 ## ✨ Fitur Utama
 
 - 🔑 **Autentikasi Bearer Token (Sanctum)** - Keamanan endpoint dengan sistem perizinan berbasis peran (*Role-Based Access Control*).
-- 👥 **Multi Role User**:
+- 👥 **Aktor Pengguna (Multi-Role User)**:
   - `admin`: Pengelolaan sistem, upload berkas staging, revisi berkas, pengajuan keluar, dan opname fisik.
   - `operator`: Upload berkas staging, revisi berkas, pengajuan barang keluar, dan opname fisik.
   - `validator`: Validasi baris berkas staging (setujui/tolak per baris atau sekaligus), approval pengajuan barang keluar (pemotongan stok FIFO), dan monitoring.
   - `pimpinan`: Monitoring dashboard dan laporan resmi (setara Kasubbag/Pimpinan di lapangan).
-  - `viewer`: Read-only seluruh modul data.
 - 📂 **Satu Pintu Input Data via Upload Staging & Validasi**:
   - Seluruh data masuk hanya melalui modul **Upload Berkas** (file Excel SAKTI `bahan_opname_fisik.xlsx`).
   - Fitur input manual ("Tambah Master Barang", "Tambah Barang Masuk", dan "Tambah Aset") ditiadakan demi integritas data terpusat.
@@ -112,7 +111,6 @@ Password semua akun demo: `password`
 | **Operator** | `operator@lofbi.test` | Upload berkas staging, revisi berkas, pengajuan keluar, opname fisik |
 | **Validator** | `validator@lofbi.test` | Validasi berkas staging (setujui/tolak per baris), approval pengajuan barang keluar (potong stok FIFO) |
 | **Pimpinan** | `pimpinan@lofbi.test` | Read-only + laporan resmi (setara Kasubbag di lapangan) |
-| **Viewer** | `viewer@lofbi.test` | Read-only semua halaman |
 
 ---
 

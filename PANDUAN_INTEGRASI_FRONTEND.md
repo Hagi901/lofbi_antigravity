@@ -13,17 +13,16 @@ Dokumen ini disusun untuk memudahkan tim Frontend dalam menghubungkan antarmuka 
 
 ---
 
-## 🔑 2. Akun Demo untuk Pengujian (5 Role)
+## 🔑 2. Akun Demo untuk Pengujian (3 Aktor / 4 Role)
 
 Semua akun menggunakan password: **`password`**
 
 | Role | Email Login | Hak Akses Utama |
 |---|---|---|
 | **Administrator** | `admin@lofbi.test` | Akses penuh CRUD seluruh modul & setting |
-| **Operator** | `operator@lofbi.test` | Input Aset, Catat Barang Masuk, & Monitoring |
-| **Validator** | `validator@lofbi.test` | Verifikasi Aset, Validasi Opname, & Approval |
-| **Viewer** | `viewer@lofbi.test` | Hanya melihat data (*read-only*) |
-| **Pimpinan** | `pimpinan@lofbi.test` | Monitoring laporan, audit trail, & approval |
+| **Operator** | `operator@lofbi.test` | Pengajuan Barang Keluar, Upload Staging, & Opname |
+| **Validator** | `validator@lofbi.test` | Validasi Staging, Verifikasi Opname, & Approval |
+| **Pimpinan** | `pimpinan@lofbi.test` | Monitoring laporan, audit trail, & pengawasan |
 
 ---
 

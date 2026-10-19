@@ -60,8 +60,12 @@
             <h4 class="text-warning fw-bold mb-0">LOFBI</h4>
             <small class="text-light">KSOP Kelas I Banten</small>
         </div>
-        @php $userRole = Auth::user()->role ?? 'viewer'; @endphp
+        @php
+            $userRole = Auth::user()->role ?? '';
+            $knownRoles = ['admin', 'operator', 'validator', 'pimpinan'];
+        @endphp
         <div class="mt-3">
+            @if(in_array($userRole, $knownRoles))
             <a href="{{ url('/dashboard') }}" class="{{ request()->is('dashboard') ? 'active' : '' }}">
                 <i class="fa-solid fa-chart-pie me-2"></i> Dashboard
             </a>
@@ -97,6 +101,7 @@
             <a href="{{ route('settings.index') }}" class="{{ request()->is('settings*') ? 'active' : '' }}">
                 <i class="fa-solid fa-sliders me-2"></i> Pengaturan Sistem
             </a>
+            @endif
             @endif
         </div>
     </div>

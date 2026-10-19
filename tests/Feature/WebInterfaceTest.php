@@ -169,17 +169,18 @@ class WebInterfaceTest extends TestCase
         $this->assertEquals('disetujui', $transaksi->status);
     }
 
-    public function test_role_access_control_blocks_viewer_from_admin_actions(): void
+    public function test_role_access_control_blocks_pimpinan_from_admin_actions(): void
     {
         $this->seed();
-        $viewer = User::where('role', 'viewer')->first();
+        $pimpinan = User::where('role', 'pimpinan')->first() ?? User::factory()->create(['role' => 'pimpinan']);
+        $aset = Aset::first();
 
-        // Viewer should not be allowed to access settings
-        $response = $this->actingAs($viewer)->get('/settings');
+        // Pimpinan dilarang mengakses pengaturan sistem (hanya admin)
+        $response = $this->actingAs($pimpinan)->get('/settings');
         $response->assertStatus(403);
 
-        // Viewer should not be allowed to create asset
-        $response = $this->actingAs($viewer)->get('/assets/create');
+        // Pimpinan dilarang mengakses form edit aset (hanya admin)
+        $response = $this->actingAs($pimpinan)->get('/assets/' . $aset->id . '/edit');
         $response->assertStatus(403);
     }
 
