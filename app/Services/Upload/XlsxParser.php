@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Upload;
 
 use ZipArchive;
 use SimpleXMLElement;

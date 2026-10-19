@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Web;
 
+use App\Http\Controllers\Controller;
 use App\Models\Aset;
 use App\Models\Kategori;
 use App\Models\Persediaan;
-use App\Services\ExcelBuilder;
+use App\Services\Report\ExcelBuilder;
 use Illuminate\Http\Request;
 
 class ReportController extends Controller

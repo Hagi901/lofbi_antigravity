@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature;
+namespace Tests\Feature\Upload;
 
 use App\Models\BatchPersediaan;
 use App\Models\JenisBarang;
@@ -293,7 +293,7 @@ class UploadStagingValidationTest extends TestCase
         $this->actingAs($this->pimpinan)->post("/upload/{$paket->id}/setujui-semua")->assertStatus(403);
 
         // 4. Verifikasi sisi server (UploadService) menolak pemanggilan langsung oleh selain validator
-        $uploadService = app(\App\Services\UploadService::class);
+        $uploadService = app(\App\Services\Upload\UploadService::class);
 
         try {
             $uploadService->setujuiBaris($baris, $this->admin);
