@@ -11,11 +11,15 @@ use App\Models\DetailPemotonganBatch;
 use App\Models\JenisBarang;
 use App\Models\Persediaan;
 use App\Models\TransaksiPersediaan;
+use App\Services\Persediaan\PengajuanService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class PersediaanController extends Controller
 {
+    public function __construct(
+        protected PengajuanService $pengajuanService
+    ) {}
     /**
      * Ringkasan persediaan dikelompokkan per jenis barang.
      * Dipaginasi 20 item per halaman.
@@ -60,17 +64,14 @@ class PersediaanController extends Controller
     {
         $request->ensureStokCukup($persediaan);
 
-        $data = $request->validated();
+        $transaksi = $this->pengajuanService->ajukan(
+            $persediaan,
+            $request->validated(),
+            $request->user(),
+            false
+        );
 
-        return response()->json(TransaksiPersediaan::create([
-            'persediaan_id' => $persediaan->id,
-            'jenis' => 'keluar',
-            'jumlah' => $data['jumlah'],
-            'tanggal' => $data['tanggal'],
-            'unit_kerja_penerima' => $data['unit_kerja_penerima'],
-            'diajukan_oleh' => $request->user()->id,
-            'status' => 'menunggu',
-        ]), 201);
+        return response()->json($transaksi, 201);
     }
 
     /**
@@ -99,44 +100,19 @@ class PersediaanController extends Controller
             return response()->json(['message' => 'Pengajuan tidak dapat diproses.'], 422);
         }
 
-        return DB::transaction(function () use ($transaksi) {
-            $remaining = $transaksi->jumlah;
-            $batches = BatchPersediaan::where('persediaan_id', $transaksi->persediaan_id)
-                ->where('sisa_stok', '>', 0)
-                ->orderBy('no_batch')
-                ->lockForUpdate()
-                ->get();
-
-            if ($batches->sum('sisa_stok') < $remaining) {
-                return response()->json(['message' => 'Stok tidak mencukupi untuk menyetujui pengajuan.'], 422);
-            }
-
-            foreach ($batches as $batch) {
-                if ($remaining <= 0) {
-                    break;
-                }
-
-                $taken = min($remaining, $batch->sisa_stok);
-                $batch->decrement('sisa_stok', $taken);
-                DetailPemotonganBatch::create([
-                    'transaksi_persediaan_id' => $transaksi->id,
-                    'batch_id' => $batch->id,
-                    'jumlah_diambil' => $taken,
-                    'harga_satuan_saat_itu' => $batch->harga_satuan,
-                ]);
-                $remaining -= $taken;
-            }
-
-            $transaksi->update([
-                'status' => 'disetujui',
-                'diputuskan_oleh' => request()->user()->id,
-                'tanggal_keputusan' => now(),
+        try {
+            $transaksi = $this->pengajuanService->setujui($transaksi, request()->user(), [
+                'orderBy' => 'no_batch',
+                'recordDetail' => true,
+                'logAudit' => false,
             ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['message' => 'Stok tidak mencukupi untuk menyetujui pengajuan.'], 422);
+        }
 
-            return new PengajuanResource(
-                $transaksi->load(['detailPemotongan.batch', 'persediaan.jenisBarang'])
-            );
-        });
+        return new PengajuanResource(
+            $transaksi->load(['detailPemotongan.batch', 'persediaan.jenisBarang'])
+        );
     }
 
     /**
@@ -150,12 +126,12 @@ class PersediaanController extends Controller
             'catatan_penolakan' => ['required', 'string'],
         ]);
 
-        $transaksi->update([
-            'status' => 'ditolak',
-            'diputuskan_oleh' => $request->user()->id,
-            'catatan_penolakan' => $data['catatan_penolakan'],
-            'tanggal_keputusan' => now(),
-        ]);
+        $transaksi = $this->pengajuanService->tolak(
+            $transaksi,
+            $data['catatan_penolakan'],
+            $request->user(),
+            false
+        );
 
         return new PengajuanResource($transaksi);
     }

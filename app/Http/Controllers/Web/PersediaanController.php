@@ -11,12 +11,16 @@ use App\Models\Kategori;
 use App\Models\Persediaan;
 use App\Models\Ruangan;
 use App\Models\TransaksiPersediaan;
+use App\Services\Persediaan\PengajuanService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class PersediaanController extends Controller
 {
+    public function __construct(
+        protected PengajuanService $pengajuanService
+    ) {}
     /**
      * Menampilkan daftar persediaan dan sisa stok FIFO
      */
@@ -188,23 +192,11 @@ class PersediaanController extends Controller
             ]);
         }
 
-        TransaksiPersediaan::create([
-            'persediaan_id'       => $persediaan->id,
-            'diajukan_oleh'       => Auth::id() ?? 1,
-            'jenis'               => 'keluar',
+        $this->pengajuanService->ajukan($persediaan, [
             'jumlah'              => $qtyDiminta,
-            'tanggal'             => $request->tanggal ?? now()->toDateString(),
-            'status'              => 'menunggu',
+            'tanggal'             => $request->tanggal,
             'unit_kerja_penerima' => $request->unit_kerja_penerima,
-        ]);
-
-        AuditLog::create([
-            'user_id'   => Auth::id() ?? 1,
-            'user_name' => Auth::user()->name ?? 'Administrator',
-            'modul'     => 'Persediaan',
-            'aksi'      => 'Pengajuan Keluar',
-            'detail'    => 'Mengajukan pengeluaran ' . $qtyDiminta . ' ' . $persediaan->satuan . ' ' . $persediaan->name . ' untuk ' . $request->unit_kerja_penerima . ' - menunggu persetujuan Validator.',
-        ]);
+        ], Auth::user(), logAudit: true);
 
         return redirect()->route('inventory.index')->with('success', 'Pengajuan barang keluar sebanyak ' . $qtyDiminta . ' ' . $persediaan->satuan . ' berhasil diajukan! Menunggu persetujuan Validator.');
     }
@@ -233,7 +225,7 @@ class PersediaanController extends Controller
     }
 
     /**
-     * Validator menyetujui pengajuan → eksekusi potong stok FIFO
+     * Validator menyetujui pengajuan - eksekusi potong stok FIFO
      */
     public function approve($id)
     {
@@ -247,41 +239,15 @@ class PersediaanController extends Controller
             return back()->withErrors(['approve' => 'Stok tidak mencukupi! Sisa stok: ' . $totalStok . ' ' . $persediaan->satuan . '. Tidak dapat disetujui.']);
         }
 
-        DB::transaction(function () use ($transaksi, $persediaan, $qtyDiminta) {
-            // Potong stok FIFO
-            $batches = $persediaan->batches()
-                ->where('sisa_stok', '>', 0)
-                ->orderBy('tanggal_masuk', 'asc')
-                ->orderBy('id', 'asc')
-                ->lockForUpdate()
-                ->get();
-
-            $sisaKebutuhan = $qtyDiminta;
-            $rincianPemotongan = [];
-
-            foreach ($batches as $batch) {
-                if ($sisaKebutuhan <= 0) break;
-                $ambil = min($batch->sisa_stok, $sisaKebutuhan);
-                $batch->decrement('sisa_stok', $ambil);
-                $sisaKebutuhan -= $ambil;
-                $rincianPemotongan[] = "Batch #" . $batch->no_batch . " (-{$ambil})";
-            }
-
-            // Update status transaksi
-            $transaksi->update([
-                'status'            => 'disetujui',
-                'diputuskan_oleh'   => Auth::id(),
-                'tanggal_keputusan' => now(),
+        try {
+            $this->pengajuanService->setujui($transaksi, Auth::user(), [
+                'orderBy'      => ['tanggal_masuk' => 'asc', 'id' => 'asc'],
+                'recordDetail' => false,
+                'logAudit'     => true,
             ]);
-
-            AuditLog::create([
-                'user_id'   => Auth::id() ?? 1,
-                'user_name' => Auth::user()->name ?? 'Validator',
-                'modul'     => 'Persediaan',
-                'aksi'      => 'Setujui Keluar',
-                'detail'    => 'Menyetujui pengeluaran ' . $qtyDiminta . ' ' . $persediaan->satuan . ' ' . $persediaan->name . '. FIFO: ' . implode(', ', $rincianPemotongan),
-            ]);
-        });
+        } catch (\Illuminate\Validation\ValidationException $ve) {
+            return back()->withErrors(['approve' => $ve->getMessage()]);
+        }
 
         return redirect()->route('inventory.pengajuan')->with('success', 'Pengajuan berhasil disetujui dan stok telah dikurangi secara FIFO!');
     }
@@ -293,20 +259,12 @@ class PersediaanController extends Controller
     {
         $transaksi = TransaksiPersediaan::where('status', 'menunggu')->findOrFail($id);
 
-        $transaksi->update([
-            'status'            => 'ditolak',
-            'diputuskan_oleh'   => Auth::id(),
-            'tanggal_keputusan' => now(),
-            'catatan_penolakan' => $request->alasan ?? 'Ditolak oleh Validator.',
-        ]);
-
-        AuditLog::create([
-            'user_id'   => Auth::id() ?? 1,
-            'user_name' => Auth::user()->name ?? 'Validator',
-            'modul'     => 'Persediaan',
-            'aksi'      => 'Tolak Keluar',
-            'detail'    => 'Menolak pengajuan pengeluaran ' . $transaksi->jumlah . ' unit ' . ($transaksi->persediaan?->name ?? '#' . $transaksi->persediaan_id) . '. Alasan: ' . ($request->alasan ?? '-'),
-        ]);
+        $this->pengajuanService->tolak(
+            $transaksi,
+            $request->alasan ?? 'Ditolak oleh Validator.',
+            Auth::user(),
+            logAudit: true
+        );
 
         return redirect()->route('inventory.pengajuan')->with('success', 'Pengajuan berhasil ditolak.');
     }

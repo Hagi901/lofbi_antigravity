@@ -8,13 +8,17 @@ use App\Models\AuditLog;
 use App\Models\OpnameDetail;
 use App\Models\OpnameSesi;
 use App\Models\Persediaan;
-use App\Models\TransaksiPersediaan;
+use App\Services\Opname\OpnameService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class OpnameController extends Controller
 {
+    public function __construct(
+        protected OpnameService $opnameService
+    ) {}
+
     // ── 1. Daftar Sesi Opname ────────────────────────────────────────────
 
     public function index()
@@ -50,40 +54,14 @@ class OpnameController extends Controller
             'keterangan' => 'nullable|string|max:500',
         ]);
 
-        DB::transaction(function () use ($request) {
-            // Buat sesi baru dengan status 'draft'
-            $sesi = OpnameSesi::create([
-                'ruangan_id' => $request->ruangan_id ?? null,
-                'admin_id'   => Auth::id() ?? 1,
-                'tanggal'    => $request->tanggal,
-                'periode'    => $request->periode,
-                'keterangan' => $request->keterangan,
-                'status'     => 'draft',
-            ]);
+        $data = [
+            'ruangan_id' => $request->ruangan_id ?? null,
+            'tanggal'    => $request->tanggal,
+            'periode'    => $request->periode,
+            'keterangan' => $request->keterangan,
+        ];
 
-            // Snapshot semua persediaan aktif beserta stok buku saat ini
-            $persediaans = Persediaan::with('batches')->get();
-            foreach ($persediaans as $p) {
-                $stokBuku = (int) $p->batches->sum('sisa_stok');
-                OpnameDetail::create([
-                    'opname_sesi_id' => $sesi->id,
-                    'persediaan_id'  => $p->id,
-                    'stok_buku'      => $stokBuku,
-                    'stok_fisik'     => null,   // diisi saat input fisik
-                    'selisih'        => null,
-                    'satuan'         => $p->satuan ?? '-',
-                    'catatan'        => null,
-                ]);
-            }
-
-            AuditLog::create([
-                'user_id'   => Auth::id(),
-                'user_name' => Auth::user()->name,
-                'modul'     => 'Opname',
-                'aksi'      => 'Buka Sesi Opname',
-                'detail'    => 'Buka sesi opname ' . $request->periode . ' - ' . $persediaans->count() . ' jenis barang di-snapshot',
-            ]);
-        });
+        $this->opnameService->bukaSesiWeb($data, Auth::user());
 
         return redirect()->route('opname.index')
             ->with('success', 'Sesi Opname Fisik berhasil dibuka. Silakan input hasil hitung fisik.');
@@ -99,33 +77,9 @@ class OpnameController extends Controller
             'details.persediaan.batches',
         ])->findOrFail($id);
 
-        $jumlahTerdampak = 0;
-        $totalNilaiBuku = 0;
-        $totalNilaiSelisih = 0;
+        $metrik = $this->opnameService->hitungNilai($sesi);
 
-        foreach ($sesi->details as $detail) {
-            $p = $detail->persediaan;
-            if (!$p) continue;
-
-            $batchKosong = $p->batches->filter(fn($b) => $b->harga_belum_diisi || is_null($b->harga_satuan));
-            if ($batchKosong->isNotEmpty()) {
-                $jumlahTerdampak++;
-            }
-
-            $batchesValid = $p->batches->filter(fn($b) => !$b->harga_belum_diisi && !is_null($b->harga_satuan));
-            $stokValid = $batchesValid->sum('sisa_stok');
-            $nilaiValid = $batchesValid->sum(fn($b) => $b->sisa_stok * $b->harga_satuan);
-            $hargaRata = $stokValid > 0 ? ($nilaiValid / $stokValid) : 0;
-
-            $totalNilaiBuku += ($detail->stok_buku * $hargaRata);
-            if ($detail->selisih !== null) {
-                $totalNilaiSelisih += ($detail->selisih * $hargaRata);
-            }
-        }
-
-        $hasHargaBelumDiisi = $jumlahTerdampak > 0;
-
-        return view('opname.show', compact('sesi', 'totalNilaiBuku', 'totalNilaiSelisih', 'hasHargaBelumDiisi', 'jumlahTerdampak'));
+        return view('opname.show', array_merge(['sesi' => $sesi], $metrik));
     }
 
     // ── 5. Form Input Fisik ──────────────────────────────────────────────
@@ -161,32 +115,17 @@ class OpnameController extends Controller
             'catatan'      => 'nullable|array',
         ]);
 
-        DB::transaction(function () use ($request, $sesi) {
-            foreach ($request->stok_fisik as $detailId => $jumlahFisik) {
-                $detail = OpnameDetail::where('id', $detailId)
-                    ->where('opname_sesi_id', $sesi->id)
-                    ->firstOrFail();
-
-                $selisih = (int) $jumlahFisik - (int) $detail->stok_buku;
-
-                $detail->update([
-                    'stok_fisik' => (int) $jumlahFisik,
-                    'selisih'    => $selisih,
-                    'catatan'    => $request->catatan[$detailId] ?? null,
-                ]);
-            }
-
-            // Ubah status menjadi menunggu_persetujuan
-            $sesi->update(['status' => 'menunggu_persetujuan']);
-
-            AuditLog::create([
-                'user_id'   => Auth::id(),
-                'user_name' => Auth::user()->name,
-                'modul'     => 'Opname',
-                'aksi'      => 'Submit Hasil Fisik',
-                'detail'    => 'Sesi #' . $sesi->id . ' diajukan ke approver',
-            ]);
-        });
+        try {
+            $this->opnameService->simpanHasilFisik(
+                $sesi,
+                $request->stok_fisik,
+                $request->catatan ?? [],
+                Auth::user()
+            );
+        } catch (ValidationException $e) {
+            return redirect()->route('opname.show', $id)
+                ->with('error', $e->errors()['opname'][0] ?? $e->getMessage());
+        }
 
         return redirect()->route('opname.show', $sesi->id)
             ->with('success', 'Hasil opname fisik berhasil disimpan dan diajukan ke Validator untuk disetujui.');
@@ -198,71 +137,12 @@ class OpnameController extends Controller
     {
         $sesi = OpnameSesi::with('details.persediaan.batches')->findOrFail($id);
 
-        if ($sesi->status !== 'menunggu_persetujuan') {
+        try {
+            $this->opnameService->setujui($sesi, Auth::user());
+        } catch (ValidationException $e) {
             return redirect()->route('opname.show', $id)
-                ->with('error', 'Sesi ini tidak dalam status menunggu persetujuan.');
+                ->with('error', $e->errors()['opname'][0] ?? $e->getMessage());
         }
-
-        DB::transaction(function () use ($sesi) {
-            // Buat jurnal penyesuaian otomatis untuk setiap item yang ada selisih
-            foreach ($sesi->details as $detail) {
-                if ($detail->selisih === null || $detail->selisih === 0) continue;
-
-                $p = $detail->persediaan;
-                if (!$p) continue;
-
-                // Hitung harga satuan rata-rata dari batch aktif yang memiliki harga valid
-                $batchesValid = $p->batches->filter(fn($b) => !$b->harga_belum_diisi && !is_null($b->harga_satuan));
-                $totalNilai   = $batchesValid->sum(fn($b) => $b->sisa_stok * $b->harga_satuan);
-                $totalStok    = $batchesValid->sum('sisa_stok');
-                $hargaRata    = $totalStok > 0 ? round($totalNilai / $totalStok) : 0;
-
-                TransaksiPersediaan::create([
-                    'persediaan_id'      => $detail->persediaan_id,
-                    'jenis'              => $detail->selisih > 0 ? 'masuk' : 'keluar',
-                    'jumlah'             => abs($detail->selisih),
-                    'tanggal'            => $sesi->tanggal,
-                    'unit_kerja_penerima' => 'Penyesuaian Opname Fisik - ' . $sesi->periode,
-                    'diajukan_oleh'      => $sesi->admin_id,
-                    'diputuskan_oleh'    => Auth::id(),
-                    'status'             => 'disetujui',
-                    'catatan_penolakan'  => null,
-                    'tanggal_keputusan'  => now(),
-                ]);
-
-                // Update sisa_stok batch FIFO jika selisih kurang
-                if ($detail->selisih < 0) {
-                    $kurang = abs($detail->selisih);
-                    foreach ($p->batches()->orderBy('tanggal_masuk')->get() as $batch) {
-                        if ($kurang <= 0) break;
-                        $potongan = min($batch->sisa_stok, $kurang);
-                        $batch->decrement('sisa_stok', $potongan);
-                        $kurang -= $potongan;
-                    }
-                } elseif ($detail->selisih > 0) {
-                    // Selisih lebih → tambahkan ke batch paling baru
-                    $batchTerbaru = $p->batches()->latest('tanggal_masuk')->first();
-                    if ($batchTerbaru) {
-                        $batchTerbaru->increment('sisa_stok', $detail->selisih);
-                    }
-                }
-            }
-
-            // Tutup sesi
-            $sesi->update([
-                'status'              => 'disetujui',
-                'approver_id'         => Auth::id(),
-                'tanggal_persetujuan' => now()->toDateString(),
-            ]);
-
-            AuditLog::create([
-                'user_id'   => Auth::id(),
-                'user_name' => Auth::user()->name,
-                'modul'     => 'Opname',
-                'aksi'      => 'Setujui Opname',
-                'detail'    => 'Sesi #' . $sesi->id . ' (' . $sesi->periode . ') disetujui. Jurnal penyesuaian dibuat.',
-            ]);
-        });
 
         return redirect()->route('opname.show', $id)
             ->with('success', 'Opname disetujui! Jurnal penyesuaian stok otomatis dibuat.');
@@ -274,28 +154,16 @@ class OpnameController extends Controller
     {
         $sesi = OpnameSesi::findOrFail($id);
 
-        if ($sesi->status !== 'menunggu_persetujuan') {
-            return redirect()->route('opname.show', $id)
-                ->with('error', 'Sesi ini tidak dalam status menunggu persetujuan.');
-        }
-
         $request->validate([
             'catatan_penolakan' => 'required|string|max:500',
         ]);
 
-        $sesi->update([
-            'status'            => 'ditolak',
-            'catatan_penolakan' => $request->catatan_penolakan,
-            'approver_id'       => Auth::id(),
-        ]);
-
-        AuditLog::create([
-            'user_id'   => Auth::id(),
-            'user_name' => Auth::user()->name,
-            'modul'     => 'Opname',
-            'aksi'      => 'Tolak Opname',
-            'detail'    => 'Sesi #' . $sesi->id . ' ditolak: ' . $request->catatan_penolakan,
-        ]);
+        try {
+            $this->opnameService->tolak($sesi, $request->catatan_penolakan, Auth::user());
+        } catch (ValidationException $e) {
+            return redirect()->route('opname.show', $id)
+                ->with('error', $e->errors()['opname'][0] ?? $e->getMessage());
+        }
 
         return redirect()->route('opname.show', $id)
             ->with('error', 'Opname ditolak. Operator dapat memperbaiki dan mengajukan ulang.');

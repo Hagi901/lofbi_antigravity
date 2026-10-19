@@ -4,31 +4,23 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreOpnameRequest;
-use App\Models\Aset;
 use App\Models\OpnameSesi;
-use App\Models\Persediaan;
 use App\Models\Ruangan;
-use Illuminate\Support\Facades\DB;
+use App\Services\Opname\OpnameService;
 
 class OpnameController extends Controller
 {
+    public function __construct(
+        protected OpnameService $opnameService
+    ) {}
+
     /**
      * Ambil daftar aset dan persediaan yang terdaftar di ruangan,
      * sebagai referensi untuk pengisian form opname.
      */
     public function ruangan(Ruangan $ruangan)
     {
-        return [
-            'ruangan' => $ruangan,
-            'aset' => Aset::with('jenisBarang')
-                ->where('ruangan_id', $ruangan->id)
-                ->orderBy('kode_aset')
-                ->get(),
-            'persediaan' => Persediaan::with(['jenisBarang', 'batches'])
-                ->where('ruangan_id', $ruangan->id)
-                ->get()
-                ->map(fn ($item) => $item->setAttribute('total_stok', $item->batches->sum('sisa_stok'))),
-        ];
+        return $this->opnameService->getReferensiRuangan($ruangan);
     }
 
     /**
@@ -37,20 +29,9 @@ class OpnameController extends Controller
      */
     public function store(StoreOpnameRequest $request)
     {
-        $data = $request->validated();
+        $sesi = $this->opnameService->simpanSesiApi($request->validated(), $request->user());
 
-        return DB::transaction(function () use ($data, $request) {
-            $sesi = OpnameSesi::create([
-                'ruangan_id' => $data['ruangan_id'],
-                'admin_id' => $request->user()->id,
-                'tanggal' => $data['tanggal'],
-                'status' => $data['status'] ?? 'selesai',
-            ]);
-
-            $sesi->details()->createMany($data['details']);
-
-            return response()->json($sesi->load(['details', 'ruangan']), 201);
-        });
+        return response()->json($sesi->load(['details', 'ruangan']), 201);
     }
 
     /**
