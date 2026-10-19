@@ -45,9 +45,27 @@ class PersediaanController extends Controller
             ->findOrFail($id);
 
         $sisaStok = $persediaan->batches->sum('sisa_stok');
-        $totalNilaiRupiah = $persediaan->batches->sum(fn($b) => $b->sisa_stok * $b->harga_satuan);
 
-        return view('inventory.show', compact('persediaan', 'sisaStok', 'totalNilaiRupiah'));
+        // Kecualikan batch dengan harga_belum_diisi=true atau harga_satuan NULL dari penjumlahan nilai
+        $batchesBerharga = $persediaan->batches
+            ->where('harga_belum_diisi', false)
+            ->whereNotNull('harga_satuan');
+
+        $totalNilaiRupiah = $batchesBerharga->sum(fn($b) => $b->sisa_stok * $b->harga_satuan);
+
+        $batchTerdampak   = $persediaan->batches
+            ->where(fn($b) => $b->harga_belum_diisi || is_null($b->harga_satuan));
+
+        $hasHargaBelumDiisi = $batchTerdampak->isNotEmpty();
+        $jumlahTerdampak    = $batchTerdampak->count();
+
+        return view('inventory.show', compact(
+            'persediaan',
+            'sisaStok',
+            'totalNilaiRupiah',
+            'hasHargaBelumDiisi',
+            'jumlahTerdampak'
+        ));
     }
 
     /**

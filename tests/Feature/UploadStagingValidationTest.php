@@ -3,7 +3,11 @@
 namespace Tests\Feature;
 
 use App\Models\BatchPersediaan;
+use App\Models\JenisBarang;
+use App\Models\Kategori;
 use App\Models\Notifikasi;
+use App\Models\OpnameDetail;
+use App\Models\OpnameSesi;
 use App\Models\Persediaan;
 use App\Models\Ruangan;
 use App\Models\UploadBaris;
@@ -259,4 +263,150 @@ class UploadStagingValidationTest extends TestCase
         $this->assertEquals(0, $paket->baris()->where('status', 'menunggu')->count());
         $this->assertEquals(3, $paket->baris()->where('status', 'disetujui')->count());
     }
+
+    public function test_operator_cannot_validate_or_approve_staging_rows(): void
+    {
+        $file = $this->createDummySaktiCsv();
+        $this->actingAs($this->operator)->post('/upload', ['file' => $file]);
+        $paket = UploadPaket::latest()->first();
+        $baris = $paket->baris()->first();
+
+        // 1. Operator mencoba setujui baris -> 403 Forbidden
+        $response = $this->actingAs($this->operator)->post("/upload/baris/{$baris->id}/setujui");
+        $response->assertStatus(403);
+
+        // 2. Operator mencoba tolak baris -> 403 Forbidden
+        $response = $this->actingAs($this->operator)->post("/upload/baris/{$baris->id}/tolak", [
+            'deskripsi_revisi' => 'Harus ditolak',
+        ]);
+        $response->assertStatus(403);
+
+        // 3. Operator mencoba setujui semua baris -> 403 Forbidden
+        $response = $this->actingAs($this->operator)->post("/upload/{$paket->id}/setujui-semua");
+        $response->assertStatus(403);
+    }
+
+    public function test_notifications_sent_to_correct_recipients_for_all_three_types(): void
+    {
+        Notifikasi::truncate();
+
+        // 1. Tipe 'upload_baru': Operator mengunggah berkas -> notifikasi terkirim ke Validator
+        $file = $this->createDummySaktiCsv();
+        $this->actingAs($this->operator)->post('/upload', ['file' => $file]);
+        $paket = UploadPaket::latest()->first();
+
+        $notifBaru = Notifikasi::where('jenis', 'upload_baru')->first();
+        $this->assertNotNull($notifBaru);
+        $this->assertEquals($this->validator->id, $notifBaru->penerima_id);
+        $this->assertNotEquals($this->operator->id, $notifBaru->penerima_id);
+
+        $barisDitolak   = $paket->baris()->first();
+        $barisDisetujui = $paket->baris()->skip(1)->first();
+
+        // 2. Tipe 'ada_ditolak': Validator menolak baris -> notifikasi terkirim ke Pengunggah (Operator)
+        $this->actingAs($this->validator)->post("/upload/baris/{$barisDitolak->id}/tolak", [
+            'deskripsi_revisi' => 'Kode barang perlu dikoreksi',
+        ]);
+
+        $notifDitolak = Notifikasi::where('jenis', 'ada_ditolak')->first();
+        $this->assertNotNull($notifDitolak);
+        $this->assertEquals($this->operator->id, $notifDitolak->penerima_id);
+        $this->assertStringContainsString('Kode barang perlu dikoreksi', $notifDitolak->pesan);
+
+        // 3. Tipe 'disetujui': Validator menyetujui baris -> notifikasi terkirim ke Pengunggah (Operator)
+        $this->actingAs($this->validator)->post("/upload/baris/{$barisDisetujui->id}/setujui");
+
+        $notifDisetujui = Notifikasi::where('jenis', 'disetujui')->first();
+        $this->assertNotNull($notifDisetujui);
+        $this->assertEquals($this->operator->id, $notifDisetujui->penerima_id);
+        $this->assertStringContainsString('disetujui', strtolower($notifDisetujui->judul));
+    }
+
+    public function test_inventory_detail_excludes_null_price_and_shows_label_and_affected_count(): void
+    {
+        $kategori = Kategori::create(['nama' => 'Persediaan Khusus', 'tipe' => 'persediaan']);
+        $jenis = JenisBarang::create(['nama_generik' => 'Kertas Segel BMN', 'kategori_id' => $kategori->id]);
+        $persediaan = Persediaan::create([
+            'jenis_barang_id' => $jenis->id,
+            'satuan'          => 'rim',
+            'stok_minimum'    => 5,
+            'ruangan_id'      => $this->ruangan->id,
+        ]);
+
+        // Batch 1: Ada harga (10 rim @ Rp 50.000 = Rp 500.000)
+        BatchPersediaan::create([
+            'persediaan_id'     => $persediaan->id,
+            'no_batch'          => 1,
+            'tanggal_masuk'     => '2026-01-01',
+            'jumlah_masuk'      => 10,
+            'harga_satuan'      => 50000,
+            'harga_belum_diisi' => false,
+            'sisa_stok'         => 10,
+        ]);
+
+        // Batch 2: Harga kosong / null dari opname fisik (20 rim @ NULL)
+        BatchPersediaan::create([
+            'persediaan_id'     => $persediaan->id,
+            'no_batch'          => 2,
+            'tanggal_masuk'     => '2026-02-01',
+            'jumlah_masuk'      => 20,
+            'harga_satuan'      => null,
+            'harga_belum_diisi' => true,
+            'sisa_stok'         => 20,
+        ]);
+
+        $response = $this->actingAs($this->admin)->get("/inventory/{$persediaan->id}");
+        $response->assertStatus(200);
+
+        // Total nilai harus Rp 500.000 (tidak nol atau error karena batch kedua null)
+        $response->assertSee('500.000');
+        // Label dan jumlah batch terdampak harus muncul di view
+        $response->assertSee('(Nilai belum lengkap - 1 batch terdampak)');
+    }
+
+    public function test_opname_detail_excludes_null_price_and_shows_label_and_affected_count(): void
+    {
+        $kategori = Kategori::create(['nama' => 'ATK Uji', 'tipe' => 'persediaan']);
+        $jenis = JenisBarang::create(['nama_generik' => 'Spidol Whiteboard', 'kategori_id' => $kategori->id]);
+        $persediaan = Persediaan::create([
+            'jenis_barang_id' => $jenis->id,
+            'satuan'          => 'buah',
+            'stok_minimum'    => 5,
+            'ruangan_id'      => $this->ruangan->id,
+        ]);
+
+        // Batch dengan harga kosong
+        BatchPersediaan::create([
+            'persediaan_id'     => $persediaan->id,
+            'no_batch'          => 1,
+            'tanggal_masuk'     => '2026-01-01',
+            'jumlah_masuk'      => 15,
+            'harga_satuan'      => null,
+            'harga_belum_diisi' => true,
+            'sisa_stok'         => 15,
+        ]);
+
+        $sesi = OpnameSesi::create([
+            'ruangan_id' => $this->ruangan->id,
+            'admin_id'   => $this->admin->id,
+            'tanggal'    => '2026-08-01',
+            'periode'    => 'Semester II 2026',
+            'status'     => 'draft',
+        ]);
+
+        OpnameDetail::create([
+            'opname_sesi_id' => $sesi->id,
+            'persediaan_id'  => $persediaan->id,
+            'stok_buku'      => 15,
+            'stok_fisik'     => 15,
+            'selisih'        => 0,
+            'satuan'         => 'buah',
+        ]);
+
+        $response = $this->actingAs($this->admin)->get("/opname/{$sesi->id}");
+        $response->assertStatus(200);
+        $response->assertSee('(Nilai belum lengkap)');
+        $response->assertSee('1');
+    }
 }
+

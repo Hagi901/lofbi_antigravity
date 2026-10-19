@@ -166,6 +166,20 @@
         </div>
     </div>
 
+    @if(!empty($hasHargaBelumDiisi))
+        <div class="col-12 mb-3">
+            <div class="alert alert-warning border-warning d-flex align-items-center justify-content-between p-2 px-3 rounded-3 shadow-sm mb-0">
+                <div class="d-flex align-items-center gap-2 small">
+                    <i class="fa-solid fa-triangle-exclamation text-warning fs-6"></i>
+                    <span>Terdapat <strong>{{ $jumlahTerdampak }}</strong> barang dengan harga belum terisi (berasal dari berkas SAKTI opname fisik tanpa nominal harga).</span>
+                </div>
+                <span class="badge bg-warning text-dark border border-warning rounded-pill">
+                    (Nilai belum lengkap)
+                </span>
+            </div>
+        </div>
+    @endif
+
     <!-- Tabel Rincian Persediaan & Perbandingan Stok SAKTI -->
     <div class="col-12">
         <div class="card border-0 shadow-sm rounded-4">

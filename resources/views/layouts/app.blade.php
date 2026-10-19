@@ -92,11 +92,7 @@
             <a href="{{ route('upload.index') }}" class="{{ request()->is('upload*') ? 'active' : '' }}">
                 <i class="fa-solid fa-cloud-arrow-up me-2"></i> Upload & Validasi
             </a>
-            @if(in_array($userRole, ['admin', 'operator']))
-            <a href="{{ route('import.index') }}" class="{{ request()->is('import*') ? 'active' : '' }}">
-                <i class="fa-solid fa-file-import me-2"></i> Input File Dokumen
-            </a>
-            @endif
+
             @if($userRole === 'admin')
             <a href="{{ route('settings.index') }}" class="{{ request()->is('settings*') ? 'active' : '' }}">
                 <i class="fa-solid fa-sliders me-2"></i> Pengaturan Sistem

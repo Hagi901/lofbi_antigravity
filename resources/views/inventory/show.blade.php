@@ -69,6 +69,11 @@
                 <div>
                     <p class="text-muted small fw-bold mb-1">Total Nilai Saldo Gudang</p>
                     <h3 class="fw-bold mb-0 text-dark">Rp {{ number_format($totalNilaiRupiah, 0, ',', '.') }}</h3>
+                    @if(!empty($hasHargaBelumDiisi))
+                        <span class="badge bg-warning-subtle text-warning border border-warning rounded-pill mt-1" style="font-size: 11px;">
+                            (Nilai belum lengkap - {{ $jumlahTerdampak ?? 0 }} batch terdampak)
+                        </span>
+                    @endif
                 </div>
             </div>
         </div>
@@ -139,11 +144,23 @@
                                             <td>{{ $b->supplier ?: 'Penyedia Barang' }}</td>
                                             <td class="text-center">{{ $b->tanggal_masuk ? \Carbon\Carbon::parse($b->tanggal_masuk)->format('d M Y') : '-' }}</td>
                                             <td class="text-center fw-bold text-dark">{{ $b->jumlah_masuk }} {{ $persediaan->satuan }}</td>
-                                            <td class="text-end">Rp {{ number_format($b->harga_satuan, 0, ',', '.') }}</td>
+                                            <td class="text-end">
+                                                @if($b->harga_belum_diisi || is_null($b->harga_satuan))
+                                                    <span class="text-muted fst-italic">Belum diisi</span>
+                                                @else
+                                                    Rp {{ number_format($b->harga_satuan, 0, ',', '.') }}
+                                                @endif
+                                            </td>
                                             <td class="text-center fw-bold {{ $b->sisa_stok > 0 ? 'text-success' : 'text-muted' }}">
                                                 {{ $b->sisa_stok }} {{ $persediaan->satuan }}
                                             </td>
-                                            <td class="text-end fw-bold">Rp {{ number_format($b->sisa_stok * $b->harga_satuan, 0, ',', '.') }}</td>
+                                            <td class="text-end fw-bold">
+                                                @if($b->harga_belum_diisi || is_null($b->harga_satuan))
+                                                    <span class="text-muted fst-italic">-</span>
+                                                @else
+                                                    Rp {{ number_format($b->sisa_stok * $b->harga_satuan, 0, ',', '.') }}
+                                                @endif
+                                            </td>
                                             <td class="text-center">
                                                 @if($b->sisa_stok > 0)
                                                     <span class="badge bg-success-subtle text-success border border-success">Tersedia</span>

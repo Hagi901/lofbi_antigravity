@@ -14,7 +14,7 @@ use App\Http\Controllers\UploadController;
 
 /*
 |--------------------------------------------------------------------------
-| Web Routes — LOFBI Fullstack Web Interface
+| Web Routes - LOFBI Fullstack Web Interface
 |--------------------------------------------------------------------------
 |
 | Role Matrix:
@@ -25,12 +25,13 @@ use App\Http\Controllers\UploadController;
 |   - Kelola Master Barang
 |   - Membuat pengajuan barang keluar
 |   - Membuat dan input Opname
-|   - Import data
+|   - Upload & validasi data staging
 |   - Pengaturan & backup
 |   - Laporan
 |
 |   validator
 |   - Melihat data Aset & Persediaan
+|   - Validasi data upload staging (setujui / tolak)
 |   - Approve / Reject pengajuan barang keluar
 |   - Approve / Reject hasil Opname
 |
@@ -63,7 +64,7 @@ Route::post('/logout', [LoginController::class, 'logout'])
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-// RUTE TERLINDUNGI — WAJIB LOGIN
+// RUTE TERLINDUNGI - WAJIB LOGIN
 // ─────────────────────────────────────────────────────────────────────────────
 
 Route::middleware(['auth'])->group(function () {
@@ -266,28 +267,6 @@ Route::middleware(['auth'])->group(function () {
         ->name('notifications.markRead');
 
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // 7. IMPORT & SINKRONISASI SIMAN / SAKTI
-    // Admin
-    // ─────────────────────────────────────────────────────────────────────────
-
-    Route::middleware('role:admin,operator')->group(function () {
-
-        Route::get('/import', [\App\Http\Controllers\ImportController::class, 'index'])
-            ->name('import.index');
-
-        Route::post('/import', [\App\Http\Controllers\ImportController::class, 'importAuto'])
-            ->name('import.auto');
-
-        Route::post('/import/sakti', [\App\Http\Controllers\ImportController::class, 'importSakti'])
-            ->name('import.sakti');
-
-        Route::post('/import/siman', [\App\Http\Controllers\ImportController::class, 'importSiman'])
-            ->name('import.siman');
-
-        Route::get('/import/template/{type}', [\App\Http\Controllers\ImportController::class, 'downloadTemplate'])
-            ->name('import.template');
-    });
 
     // ─────────────────────────────────────────────────────────────────────────
     // 7.1 MODUL UPLOAD & VALIDASI DATA (STAGING & PROMOSI)

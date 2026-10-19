@@ -94,9 +94,36 @@ class OpnameController extends Controller
         $sesi = OpnameSesi::with([
             'admin', 'approver',
             'details.persediaan.jenisBarang',
+            'details.persediaan.batches',
         ])->findOrFail($id);
 
-        return view('opname.show', compact('sesi'));
+        $jumlahTerdampak = 0;
+        $totalNilaiBuku = 0;
+        $totalNilaiSelisih = 0;
+
+        foreach ($sesi->details as $detail) {
+            $p = $detail->persediaan;
+            if (!$p) continue;
+
+            $batchKosong = $p->batches->filter(fn($b) => $b->harga_belum_diisi || is_null($b->harga_satuan));
+            if ($batchKosong->isNotEmpty()) {
+                $jumlahTerdampak++;
+            }
+
+            $batchesValid = $p->batches->filter(fn($b) => !$b->harga_belum_diisi && !is_null($b->harga_satuan));
+            $stokValid = $batchesValid->sum('sisa_stok');
+            $nilaiValid = $batchesValid->sum(fn($b) => $b->sisa_stok * $b->harga_satuan);
+            $hargaRata = $stokValid > 0 ? ($nilaiValid / $stokValid) : 0;
+
+            $totalNilaiBuku += ($detail->stok_buku * $hargaRata);
+            if ($detail->selisih !== null) {
+                $totalNilaiSelisih += ($detail->selisih * $hargaRata);
+            }
+        }
+
+        $hasHargaBelumDiisi = $jumlahTerdampak > 0;
+
+        return view('opname.show', compact('sesi', 'totalNilaiBuku', 'totalNilaiSelisih', 'hasHargaBelumDiisi', 'jumlahTerdampak'));
     }
 
     // ── 5. Form Input Fisik ──────────────────────────────────────────────
@@ -182,10 +209,11 @@ class OpnameController extends Controller
                 $p = $detail->persediaan;
                 if (!$p) continue;
 
-                // Hitung harga satuan rata-rata dari batch aktif
-                $totalNilai = $p->batches->sum(fn($b) => $b->sisa_stok * $b->harga_satuan);
-                $totalStok  = $p->batches->sum('sisa_stok');
-                $hargaRata  = $totalStok > 0 ? round($totalNilai / $totalStok) : 0;
+                // Hitung harga satuan rata-rata dari batch aktif yang memiliki harga valid
+                $batchesValid = $p->batches->filter(fn($b) => !$b->harga_belum_diisi && !is_null($b->harga_satuan));
+                $totalNilai   = $batchesValid->sum(fn($b) => $b->sisa_stok * $b->harga_satuan);
+                $totalStok    = $batchesValid->sum('sisa_stok');
+                $hargaRata    = $totalStok > 0 ? round($totalNilai / $totalStok) : 0;
 
                 TransaksiPersediaan::create([
                     'persediaan_id'      => $detail->persediaan_id,

@@ -17,13 +17,13 @@ use Illuminate\Support\Facades\Route;
 // AUTHENTICATION
 // ==========================================================================
 
-// Login — public
+// Login - public
 Route::post('/login', [AuthController::class, 'login'])
     ->middleware('throttle:6,1');
 
 
 // ==========================================================================
-// ROUTE TERLINDUNGI — WAJIB LOGIN
+// ROUTE TERLINDUNGI - WAJIB LOGIN
 // ==========================================================================
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -39,13 +39,15 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ======================================================================
     // ASET
-    // Admin      : CRUD
+    // Admin      : Edit & Hapus
+    // Operator   : Lihat
     // Validator  : Lihat
     // Pimpinan   : Lihat
+    // Viewer     : Lihat (read-only)
     // ======================================================================
 
-    // Semua role dapat melihat data Aset
-    Route::middleware('role:admin,validator,pimpinan')->group(function () {
+    // Semua role authenticated dapat melihat data Aset
+    Route::middleware('role:admin,operator,validator,pimpinan,viewer')->group(function () {
 
         Route::get('/aset/ringkas', [AsetController::class, 'ringkas']);
 
@@ -67,7 +69,7 @@ Route::middleware('auth:sanctum')->group(function () {
         );
     });
 
-    // Edit & Hapus Aset → Admin
+    // Edit & Hapus Aset -> Admin
     Route::middleware('role:admin')->group(function () {
 
         Route::put('/aset/{aset}', [AsetController::class, 'update']);
@@ -80,13 +82,15 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ======================================================================
     // PERSEDIAAN
-    // Admin      : CRUD + operasional
+    // Admin      : Edit + pengajuan-keluar
+    // Operator   : Lihat + pengajuan-keluar
     // Validator  : Lihat + validasi pengajuan keluar
     // Pimpinan   : Lihat
+    // Viewer     : Lihat (read-only)
     // ======================================================================
 
-    // Semua role dapat melihat Persediaan
-    Route::middleware('role:admin,validator,pimpinan')->group(function () {
+    // Semua role authenticated dapat melihat Persediaan
+    Route::middleware('role:admin,operator,validator,pimpinan,viewer')->group(function () {
 
         Route::get(
             '/persediaan/ringkas',
@@ -111,11 +115,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
     // ======================================================================
-    // PENGAJUAN BARANG KELUAR
-    // Admin + Validator dapat melihat
+    // PENGAJUAN BARANG KELUAR - Lihat
+    // Admin + Operator + Validator dapat melihat
     // ======================================================================
 
-    Route::middleware('role:admin,validator')->group(function () {
+    Route::middleware('role:admin,operator,validator,pimpinan')->group(function () {
 
         Route::get(
             '/persediaan/pengajuan',
@@ -126,12 +130,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ======================================================================
     // OPERASIONAL PERSEDIAAN
-    // Admin
+    // Admin + Operator - buat pengajuan keluar
+    // Admin - edit master persediaan
     // ======================================================================
 
+    // Edit master persediaan -> Admin
     Route::middleware('role:admin')->group(function () {
 
-        // Edit Persediaan
         Route::put(
             '/persediaan/{persediaan}',
             [PersediaanController::class, 'update']
@@ -141,8 +146,11 @@ Route::middleware('auth:sanctum')->group(function () {
             '/persediaan/{persediaan}',
             [PersediaanController::class, 'update']
         );
+    });
 
-        // Pengajuan Barang Keluar (Tetap Dipertahankan)
+    // Pengajuan Barang Keluar -> Admin + Operator
+    Route::middleware('role:admin,operator')->group(function () {
+
         Route::post(
             '/persediaan/{persediaan}/pengajuan-keluar',
             [PersediaanController::class, 'pengajuanKeluar']
@@ -152,10 +160,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ======================================================================
     // VALIDASI PENGAJUAN BARANG KELUAR
-    // Validator SAJA
+    // Validator + Admin (sesuai web)
     // ======================================================================
 
-    Route::middleware('role:validator')->group(function () {
+    Route::middleware('role:validator,admin')->group(function () {
 
         Route::post(
             '/persediaan/pengajuan/{transaksi}/setujui',
@@ -171,11 +179,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ======================================================================
     // MONITORING
-    // Admin + Pimpinan
-    // Pimpinan bertugas melakukan monitoring
+    // Admin + Validator + Pimpinan
     // ======================================================================
 
-    Route::middleware('role:admin,pimpinan')->group(function () {
+    Route::middleware('role:admin,validator,pimpinan')->group(function () {
 
         Route::get(
             '/monitoring/tracking',
@@ -236,11 +243,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // OPNAME
     // ======================================================================
 
-    // ----------------------------------------------------------------------
-    // Membuat Opname → Admin
-    // ----------------------------------------------------------------------
-
-    Route::middleware('role:admin')->group(function () {
+    // Membuat Opname -> Admin + Operator
+    Route::middleware('role:admin,operator')->group(function () {
 
         Route::post(
             '/opname',
@@ -249,11 +253,8 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
 
-    // ----------------------------------------------------------------------
-    // Melihat Opname → Admin, Validator, Pimpinan
-    // ----------------------------------------------------------------------
-
-    Route::middleware('role:admin,validator,pimpinan')->group(function () {
+    // Melihat Opname -> Admin, Operator, Validator, Pimpinan
+    Route::middleware('role:admin,operator,validator,pimpinan')->group(function () {
 
         Route::get(
             '/opname/riwayat',
@@ -269,10 +270,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ======================================================================
     // LAPORAN
-    // Admin + Pimpinan
+    // Admin + Validator + Pimpinan
     // ======================================================================
 
-    Route::middleware('role:admin,pimpinan')->group(function () {
+    Route::middleware('role:admin,validator,pimpinan')->group(function () {
 
         Route::get(
             '/laporan/baop',
@@ -298,10 +299,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ======================================================================
     // DASHBOARD
-    // Admin + Pimpinan
+    // Admin + Validator + Pimpinan
     // ======================================================================
 
-    Route::middleware('role:admin,pimpinan')->group(function () {
+    Route::middleware('role:admin,validator,pimpinan')->group(function () {
 
         Route::get(
             '/dashboard/summary',
@@ -312,10 +313,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ======================================================================
     // MASTER DATA
-    // Admin, Validator, Pimpinan → lihat
+    // Admin, Operator, Validator, Pimpinan -> lihat
     // ======================================================================
 
-    Route::middleware('role:admin,validator,pimpinan')->group(function () {
+    Route::middleware('role:admin,operator,validator,pimpinan')->group(function () {
 
         Route::get(
             '/ruangan',
