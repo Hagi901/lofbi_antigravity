@@ -42,6 +42,7 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('password'),
         ]);
 
+
         $pimpinan = User::updateOrCreate(['email' => 'pimpinan@lofbi.test'], [
             'name' => 'Pimpinan KSOP',
             'role' => 'pimpinan', // Pimpinan
