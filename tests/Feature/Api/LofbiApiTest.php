@@ -89,6 +89,45 @@ class LofbiApiTest extends TestCase
         $this->assertSame(5, $batch2->fresh()->sisa_stok);
     }
 
+    public function test_rejecting_already_approved_pengajuan_returns_422_and_status_unchanged(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $validator = User::factory()->create(['role' => 'validator']);
+        $kategori = Kategori::create(['nama' => 'ATK', 'tipe' => 'persediaan']);
+        $jenis = JenisBarang::create(['nama_generik' => 'Kertas A4', 'kategori_id' => $kategori->id]);
+        $persediaan = Persediaan::create([
+            'jenis_barang_id' => $jenis->id,
+            'satuan' => 'rim',
+            'stok_minimum' => 5,
+        ]);
+
+        $pengajuan = TransaksiPersediaan::create([
+            'persediaan_id' => $persediaan->id,
+            'jenis' => 'keluar',
+            'jumlah' => 2,
+            'tanggal' => '2026-07-29',
+            'unit_kerja_penerima' => 'TU',
+            'diajukan_oleh' => $admin->id,
+            'diputuskan_oleh' => $validator->id,
+            'status' => 'disetujui',
+            'tanggal_keputusan' => now(),
+        ]);
+
+        $token = $this->postJson('/api/login', [
+            'email' => $validator->email,
+            'password' => 'password',
+        ])->json('access_token');
+
+        $this->withToken($token)
+            ->postJson("/api/persediaan/pengajuan/{$pengajuan->id}/tolak", [
+                'catatan_penolakan' => 'Batal kirim',
+            ])
+            ->assertStatus(422)
+            ->assertJsonStructure(['message']);
+
+        $this->assertSame('disetujui', $pengajuan->fresh()->status);
+    }
+
     public function test_operator_can_view_persediaan_and_create_pengajuan_keluar_via_api(): void
     {
         $operator = User::factory()->create(['role' => 'operator']);

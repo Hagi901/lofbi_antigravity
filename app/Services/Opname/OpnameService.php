@@ -27,10 +27,10 @@ class OpnameService
      * - Snapshot seluruh item persediaan aktif dan saldo buku saat ini
      * - Catat ke AuditLog
      */
-    public function bukaSesiWeb(array $data, ?User $admin = null): OpnameSesi
+    public function bukaSesiWeb(array $data, User $admin): OpnameSesi
     {
-        $userId = $admin?->id ?? 1;
-        $userName = $admin?->name ?? 'Administrator';
+        $userId = $admin->id;
+        $userName = $admin->name;
 
         return DB::transaction(function () use ($data, $userId, $userName) {
             $sesi = OpnameSesi::create([
@@ -72,9 +72,9 @@ class OpnameService
      * Simpan sesi opname fisik dari API:
      * - Menerima array data dan list details langsung dari request.
      */
-    public function simpanSesiApi(array $data, ?User $admin = null): OpnameSesi
+    public function simpanSesiApi(array $data, User $admin): OpnameSesi
     {
-        $userId = $admin?->id ?? 1;
+        $userId = $admin->id;
 
         return DB::transaction(function () use ($data, $userId) {
             $sesi = OpnameSesi::create([
@@ -93,7 +93,7 @@ class OpnameService
     /**
      * Simpan hasil hitung fisik, hitung selisih, dan ubah status ke 'menunggu_persetujuan'.
      */
-    public function simpanHasilFisik(OpnameSesi $sesi, array $stokFisik, array $catatan = [], ?User $user = null): OpnameSesi
+    public function simpanHasilFisik(OpnameSesi $sesi, array $stokFisik, array $catatan, User $user): OpnameSesi
     {
         if (! in_array($sesi->status, ['draft', 'ditolak'])) {
             throw ValidationException::withMessages([
@@ -101,8 +101,8 @@ class OpnameService
             ]);
         }
 
-        $userId = $user?->id ?? 1;
-        $userName = $user?->name ?? 'Operator';
+        $userId = $user->id;
+        $userName = $user->name;
 
         return DB::transaction(function () use ($sesi, $stokFisik, $catatan, $userId, $userName) {
             foreach ($stokFisik as $detailId => $jumlahFisik) {
@@ -136,7 +136,7 @@ class OpnameService
     /**
      * Menyetujui sesi opname dan membuat transaksi penyesuaian otomatis.
      */
-    public function setujui(OpnameSesi $sesi, ?User $approver = null): OpnameSesi
+    public function setujui(OpnameSesi $sesi, User $approver): OpnameSesi
     {
         if ($sesi->status !== 'menunggu_persetujuan') {
             throw ValidationException::withMessages([
@@ -144,8 +144,8 @@ class OpnameService
             ]);
         }
 
-        $approverId = $approver?->id ?? 1;
-        $approverName = $approver?->name ?? 'Validator';
+        $approverId = $approver->id;
+        $approverName = $approver->name;
 
         return DB::transaction(function () use ($sesi, $approverId, $approverName) {
             foreach ($sesi->details as $detail) {
@@ -218,7 +218,7 @@ class OpnameService
     /**
      * Menolak sesi opname.
      */
-    public function tolak(OpnameSesi $sesi, string $catatan, ?User $approver = null): OpnameSesi
+    public function tolak(OpnameSesi $sesi, string $catatan, User $approver): OpnameSesi
     {
         if ($sesi->status !== 'menunggu_persetujuan') {
             throw ValidationException::withMessages([
@@ -226,8 +226,8 @@ class OpnameService
             ]);
         }
 
-        $approverId = $approver?->id ?? 1;
-        $approverName = $approver?->name ?? 'Validator';
+        $approverId = $approver->id;
+        $approverName = $approver->name;
 
         return DB::transaction(function () use ($sesi, $catatan, $approverId, $approverName) {
             $sesi->update([

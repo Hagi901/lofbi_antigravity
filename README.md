@@ -60,8 +60,8 @@ Matriks izin akses lengkap dapat dibaca pada [Matriks Peran (docs/role.md)](docs
 
 ### 1. Klon Repositori
 ```bash
-git clone https://github.com/Hagi901/lofbi-api.git
-cd lofbi-api
+git clone https://github.com/Hagi901/lofbi_antigravity.git
+cd lofbi_antigravity
 ```
 
 ### 2. Pasang Dependensi

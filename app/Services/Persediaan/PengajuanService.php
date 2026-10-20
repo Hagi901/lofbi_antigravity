@@ -22,10 +22,10 @@ class PengajuanService
     /**
      * Buat transaksi pengajuan barang keluar (status 'menunggu').
      */
-    public function ajukan(Persediaan $persediaan, array $data, ?User $user = null, bool $logAudit = true): TransaksiPersediaan
+    public function ajukan(Persediaan $persediaan, array $data, User $user, bool $logAudit = true): TransaksiPersediaan
     {
-        $userId = $user?->id ?? 1;
-        $userName = $user?->name ?? 'Administrator';
+        $userId = $user->id;
+        $userName = $user->name;
         $qty = (int) $data['jumlah'];
 
         return DB::transaction(function () use ($persediaan, $data, $userId, $userName, $qty, $logAudit) {
@@ -63,7 +63,7 @@ class PengajuanService
      *
      * @throws ValidationException
      */
-    public function setujui(TransaksiPersediaan $transaksi, ?User $approver = null, array $options = []): TransaksiPersediaan
+    public function setujui(TransaksiPersediaan $transaksi, User $approver, array $options = []): TransaksiPersediaan
     {
         if ($transaksi->status !== 'menunggu' || $transaksi->jenis !== 'keluar') {
             throw ValidationException::withMessages([
@@ -75,8 +75,8 @@ class PengajuanService
         $recordDetail = (bool) ($options['recordDetail'] ?? false);
         $logAudit = (bool) ($options['logAudit'] ?? false);
 
-        $approverId = $approver?->id ?? 1;
-        $approverName = $approver?->name ?? 'Validator';
+        $approverId = $approver->id;
+        $approverName = $approver->name;
 
         return DB::transaction(function () use ($transaksi, $approverId, $approverName, $orderBy, $recordDetail, $logAudit) {
             $persediaan = $transaksi->persediaan;
@@ -147,11 +147,19 @@ class PengajuanService
 
     /**
      * Menolak pengajuan barang keluar.
+     *
+     * @throws ValidationException
      */
-    public function tolak(TransaksiPersediaan $transaksi, string $alasan, ?User $approver = null, bool $logAudit = false): TransaksiPersediaan
+    public function tolak(TransaksiPersediaan $transaksi, string $alasan, User $approver, bool $logAudit = false): TransaksiPersediaan
     {
-        $approverId = $approver?->id ?? 1;
-        $approverName = $approver?->name ?? 'Validator';
+        if ($transaksi->status !== 'menunggu' || $transaksi->jenis !== 'keluar') {
+            throw ValidationException::withMessages([
+                'reject' => 'Pengajuan tidak dapat diproses atau sudah pernah ditindaklanjuti.',
+            ]);
+        }
+
+        $approverId = $approver->id;
+        $approverName = $approver->name;
 
         return DB::transaction(function () use ($transaksi, $alasan, $approverId, $approverName, $logAudit) {
             $transaksi->update([

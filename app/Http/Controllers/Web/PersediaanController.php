@@ -260,12 +260,16 @@ class PersediaanController extends Controller
     {
         $transaksi = TransaksiPersediaan::where('status', 'menunggu')->findOrFail($id);
 
-        $this->pengajuanService->tolak(
-            $transaksi,
-            $request->alasan ?? 'Ditolak oleh Validator.',
-            Auth::user(),
-            logAudit: true
-        );
+        try {
+            $this->pengajuanService->tolak(
+                $transaksi,
+                $request->alasan ?? 'Ditolak oleh Validator.',
+                Auth::user(),
+                logAudit: true
+            );
+        } catch (ValidationException $ve) {
+            return back()->withErrors(['reject' => $ve->getMessage()]);
+        }
 
         return redirect()->route('inventory.pengajuan')->with('success', 'Pengajuan berhasil ditolak.');
     }

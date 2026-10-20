@@ -63,7 +63,7 @@
         <tr>
             <td style="font-weight: bold;">Pejabat Yang Menyetujui</td>
             <td>:</td>
-            <td>{{ $sesi->approver?->name ?? 'Kasubbag Tata Usaha / KPA' }} ({{ $sesi->tanggal_persetujuan ? $sesi->tanggal_persetujuan->translatedFormat('d F Y') : 'Menunggu Approval' }})</td>
+            <td>{{ $sesi->approver?->name ?? 'Validator / KPA' }} ({{ $sesi->tanggal_persetujuan ? $sesi->tanggal_persetujuan->translatedFormat('d F Y') : 'Menunggu Approval' }})</td>
         </tr>
         @if($sesi->keterangan)
         <tr>
@@ -140,7 +140,7 @@
     <!-- TANDA TANGAN -->
     <div class="ttd-wrapper">
         <div class="ttd-box" style="float: left;">
-            <p>Menyetujui,<br><strong>Kasubbag TU / Approver (KPA)</strong></p>
+            <p>Menyetujui,<br><strong>Validator / Approver (KPA)</strong></p>
             <div class="ttd-space"></div>
             <p><strong>( {{ $sesi->approver?->name ?? '..................................................' }} )</strong><br>NIP. {{ $sesi->approver ? '19850312 201012 1 002' : '..........................................' }}</p>
         </div>

@@ -85,9 +85,7 @@ window.LofbiApi = {
     // 4. Persediaan & FIFO
     getPersediaanRingkas: () => apiRequest('/persediaan/ringkas'),
     getPersediaanDetail: (jenisId) => apiRequest(`/persediaan/jenis/${jenisId}/detail`),
-    catatBarangMasuk: (persediaanId, payload) => apiRequest(`/persediaan/${persediaanId}/barang-masuk`, 'POST', payload),
     ajukanBarangKeluar: (persediaanId, payload) => apiRequest(`/persediaan/${persediaanId}/pengajuan-keluar`, 'POST', payload),
-    transferMasuk: (payload) => apiRequest('/persediaan/transfer-masuk', 'POST', payload),
     getPengajuanList: (status = '') => apiRequest(`/persediaan/pengajuan${status ? '?status=' + status : ''}`),
     setujuiPengajuan: (transaksiId) => apiRequest(`/persediaan/pengajuan/${transaksiId}/setujui`, 'POST'),
     tolakPengajuan: (transaksiId, catatan) => apiRequest(`/persediaan/pengajuan/${transaksiId}/tolak`, 'POST', { catatan_penolakan: catatan }),
@@ -185,20 +183,9 @@ async function loadDashboard() {
 ---
 
 ### D. Halaman Persediaan (`inventory.blade.php`)
-1. **Catat Barang Masuk (Batch FIFO):**
-   ```javascript
-   const payload = {
-       no_referensi: 'REF-2026-099',
-       no_faktur: 'INV-2026-888',
-       nota_dinas: 'ND/2026/08',
-       supplier: 'PT Sinar Dunia',
-       tanggal: '2026-08-18',
-       jumlah: 50,
-       harga_satuan: 45000
-   };
-   await LofbiApi.catatBarangMasuk(persediaanId, payload);
-   ```
-2. **Ajukan Barang Keluar:**
+> Data saldo persediaan bersumber dari berkas resmi SAKTI melalui modul Upload Berkas Staging yang telah diverifikasi dan disetujui oleh Validator.
+
+1. **Ajukan Barang Keluar:**
    ```javascript
    await LofbiApi.ajukanBarangKeluar(persediaanId, {
        jumlah: 10,
@@ -206,7 +193,7 @@ async function loadDashboard() {
        unit_kerja_penerima: 'Seksi Kepegawaian'
    });
    ```
-3. **Approval Kasubbag / Validator / Pimpinan:**
+2. **Approval Validator / Admin:**
    ```javascript
    // Setujui (Pemotongan otomatis FIFO dari batch tertua)
    await LofbiApi.setujuiPengajuan(transaksiId);

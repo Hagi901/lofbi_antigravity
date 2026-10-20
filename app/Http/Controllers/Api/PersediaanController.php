@@ -89,18 +89,18 @@ class PersediaanController extends Controller
     }
 
     /**
-     * Kasubbag menyetujui pengajuan barang keluar.
+     * Validator / Admin menyetujui pengajuan barang keluar.
      * Stok dipotong secara FIFO dari batch paling awal.
-     * Proteksi role dilakukan oleh middleware 'role:admin,validator,pimpinan' di route.
+     * Proteksi role dilakukan oleh middleware 'role:validator,admin' di route.
      */
-    public function setujui(TransaksiPersediaan $transaksi)
+    public function setujui(Request $request, TransaksiPersediaan $transaksi)
     {
         if ($transaksi->status !== 'menunggu' || $transaksi->jenis !== 'keluar') {
             return response()->json(['message' => 'Pengajuan tidak dapat diproses.'], 422);
         }
 
         try {
-            $transaksi = $this->pengajuanService->setujui($transaksi, request()->user(), [
+            $transaksi = $this->pengajuanService->setujui($transaksi, $request->user(), [
                 'orderBy' => 'no_batch',
                 'recordDetail' => true,
                 'logAudit' => false,
@@ -115,9 +115,9 @@ class PersediaanController extends Controller
     }
 
     /**
-     * Kasubbag menolak pengajuan barang keluar.
+     * Validator / Admin menolak pengajuan barang keluar.
      * Catatan penolakan wajib diisi.
-     * Proteksi role dilakukan oleh middleware 'role:kasubbag' di route.
+     * Proteksi role dilakukan oleh middleware 'role:validator,admin' di route.
      */
     public function tolak(Request $request, TransaksiPersediaan $transaksi)
     {
@@ -125,12 +125,18 @@ class PersediaanController extends Controller
             'catatan_penolakan' => ['required', 'string'],
         ]);
 
-        $transaksi = $this->pengajuanService->tolak(
-            $transaksi,
-            $data['catatan_penolakan'],
-            $request->user(),
-            false
-        );
+        try {
+            $transaksi = $this->pengajuanService->tolak(
+                $transaksi,
+                $data['catatan_penolakan'],
+                $request->user(),
+                false
+            );
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => $e->errors()['reject'][0] ?? 'Pengajuan tidak dapat diproses.',
+            ], 422);
+        }
 
         return new PengajuanResource($transaksi);
     }

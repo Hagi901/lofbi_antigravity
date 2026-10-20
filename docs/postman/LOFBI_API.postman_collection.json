@@ -63,7 +63,7 @@
 					}
 				},
 				{
-					"name": "Login Kasubbag",
+					"name": "Login Validator",
 					"event": [
 						{
 							"listen": "test",
@@ -92,7 +92,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"email\": \"kasubbag@lofbi.test\",\n  \"password\": \"password\"\n}"
+							"raw": "{\n  \"email\": \"validator@lofbi.test\",\n  \"password\": \"password\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/login",
@@ -412,7 +412,7 @@
 					}
 				},
 				{
-					"name": "Approve Pengajuan Keluar (Kasubbag Only)",
+					"name": "Approve Pengajuan Keluar (Validator/Admin)",
 					"request": {
 						"method": "POST",
 						"header": [
@@ -433,7 +433,7 @@
 					}
 				},
 				{
-					"name": "Tolak Pengajuan Keluar (Kasubbag Only)",
+					"name": "Tolak Pengajuan Keluar (Validator/Admin)",
 					"request": {
 						"method": "POST",
 						"header": [
