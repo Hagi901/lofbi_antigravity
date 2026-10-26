@@ -3,77 +3,84 @@
 @section('page_title', 'Validasi Pengajuan Barang Keluar')
 
 @section('content')
+<!-- Page Header -->
+<x-page-header title="Validasi Barang Keluar" subtitle="Persetujuan pengeluaran barang persediaan oleh Validator / KPA">
+    <x-slot:actions>
+        <a href="{{ route('inventory.index') }}" class="btn btn-light btn-sm">
+            <i class="fa-solid fa-arrow-left"></i> Kembali
+        </a>
+    </x-slot:actions>
+</x-page-header>
 
 @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 rounded-3" role="alert">
+    <div class="alert alert-success alert-dismissible fade show border-0 small mb-3" role="alert">
         <i class="fa-solid fa-circle-check me-2"></i> {{ session('success') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 @endif
 
 @if($errors->has('approve'))
-    <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 rounded-3" role="alert">
+    <div class="alert alert-danger alert-dismissible fade show border-0 small mb-3" role="alert">
         <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ $errors->first('approve') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 @endif
 
-{{-- ─── ANTRIAN MENUNGGU PERSETUJUAN ───────────────────────── --}}
-<div class="card border-0 shadow-sm rounded-4 mb-4">
-    <div class="card-header bg-white py-3 border-bottom-0 d-flex justify-content-between align-items-center">
-        <h6 class="fw-bold mb-0 text-dark">
-            <i class="fa-solid fa-clock text-warning me-2"></i>Antrian Pengajuan Barang Keluar
+{{-- Antrian Menunggu Persetujuan --}}
+<div class="card-app mb-4">
+    <div class="card-header-app">
+        <div class="d-flex align-items-center gap-2">
+            <h2 class="fs-6 fw-bold mb-0 text-dark">
+                <i class="fa-solid fa-clock text-warning me-2"></i>Antrian Pengajuan Barang Keluar
+            </h2>
             @if($pengajuan->count() > 0)
-                <span class="badge bg-warning text-dark ms-1">{{ $pengajuan->count() }} Menunggu</span>
+                <span class="badge bg-warning text-dark">{{ $pengajuan->count() }} Menunggu</span>
             @endif
-        </h6>
-        <a href="{{ route('inventory.index') }}" class="btn btn-light btn-sm fw-bold shadow-sm">
-            <i class="fa-solid fa-arrow-left me-1"></i> Kembali
-        </a>
+        </div>
     </div>
-    <div class="card-body p-4 pt-0">
+    <div class="card-body-app">
         @if($pengajuan->count() > 0)
-            <div class="table-responsive mt-2">
-                <table class="table table-hover align-middle border-bottom">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle border-bottom" style="font-size: 13px;">
                     <thead class="table-light">
                         <tr>
-                            <th class="text-secondary small fw-bold">BARANG</th>
-                            <th class="text-secondary small fw-bold text-center">JML DIMINTA</th>
-                            <th class="text-secondary small fw-bold">UNIT PENERIMA</th>
-                            <th class="text-secondary small fw-bold">DIAJUKAN OLEH</th>
-                            <th class="text-secondary small fw-bold">TANGGAL</th>
-                            <th class="text-secondary small fw-bold text-center">AKSI VALIDASI</th>
+                            <th class="text-secondary small fw-bold border-0 py-2">BARANG</th>
+                            <th class="text-secondary small fw-bold text-center border-0 py-2">JML DIMINTA</th>
+                            <th class="text-secondary small fw-bold border-0 py-2">UNIT PENERIMA</th>
+                            <th class="text-secondary small fw-bold border-0 py-2">DIAJUKAN OLEH</th>
+                            <th class="text-secondary small fw-bold border-0 py-2">TANGGAL</th>
+                            <th class="text-secondary small fw-bold text-center border-0 py-2">AKSI VALIDASI</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($pengajuan as $p)
                             <tr>
-                                <td class="fw-bold text-dark">
+                                <td class="fw-bold text-dark py-2">
                                     <i class="fa-solid fa-box-open text-primary me-2"></i>
                                     {{ $p->persediaan?->name ?? 'Barang #' . $p->persediaan_id }}
                                 </td>
-                                <td class="text-center fw-bold text-danger">
+                                <td class="text-center fw-bold text-danger py-2">
                                     {{ $p->jumlah }} <span class="fw-normal text-muted small">Unit</span>
                                 </td>
-                                <td class="text-muted small">{{ $p->unit_kerja_penerima ?? '-' }}</td>
-                                <td class="small">
+                                <td class="text-muted small py-2">{{ $p->unit_kerja_penerima ?? '-' }}</td>
+                                <td class="small py-2">
                                     <i class="fa-solid fa-user me-1 text-muted"></i>
                                     {{ $p->diajukanOleh?->name ?? 'Operator' }}
                                 </td>
-                                <td class="text-muted small">{{ $p->tanggal ? \Carbon\Carbon::parse($p->tanggal)->format('d M Y') : '-' }}</td>
-                                <td class="text-center">
+                                <td class="text-muted small py-2">{{ $p->tanggal ? \Carbon\Carbon::parse($p->tanggal)->format('d M Y') : '-' }}</td>
+                                <td class="text-center py-2">
                                     <div class="d-flex gap-2 justify-content-center">
                                         {{-- Tombol Setujui --}}
                                         <form action="{{ route('inventory.approve', $p->id) }}" method="POST" class="d-inline">
                                             @csrf
                                             @method('PATCH')
-                                            <button type="submit" class="btn btn-success btn-sm fw-bold px-3 shadow-sm"
+                                            <button type="submit" class="btn btn-success btn-sm"
                                                 onclick="return confirm('Setujui pengajuan pengeluaran {{ $p->jumlah }} unit {{ addslashes($p->persediaan?->name) }}?\nStok akan dipotong otomatis menggunakan metode FIFO.')">
                                                 <i class="fa-solid fa-check me-1"></i> Setujui
                                             </button>
                                         </form>
                                         {{-- Tombol Tolak --}}
-                                        <button class="btn btn-outline-danger btn-sm fw-bold px-3 shadow-sm"
+                                        <button class="btn btn-outline-danger btn-sm"
                                             data-bs-toggle="modal" data-bs-target="#modalTolak{{ $p->id }}">
                                             <i class="fa-solid fa-xmark me-1"></i> Tolak
                                         </button>
@@ -83,9 +90,9 @@
                             {{-- Modal Tolak --}}
                             <div class="modal fade" id="modalTolak{{ $p->id }}" tabindex="-1" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content border-0 shadow rounded-4">
+                                    <div class="modal-content border-0 shadow" style="border-radius: var(--radius-lg);">
                                         <div class="modal-header border-0 pb-0">
-                                            <h5 class="modal-title fw-bold text-danger"><i class="fa-solid fa-ban me-2"></i>Tolak Pengajuan</h5>
+                                            <h3 class="modal-title fw-bold text-danger fs-6"><i class="fa-solid fa-ban me-2"></i>Tolak Pengajuan</h3>
                                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                         </div>
                                         <div class="modal-body">
@@ -94,12 +101,12 @@
                                                 @csrf
                                                 @method('PATCH')
                                                 <div class="mb-3">
-                                                    <label class="form-label small fw-bold">Alasan Penolakan</label>
-                                                    <textarea class="form-control border-0 shadow-sm bg-light" name="alasan" rows="3" placeholder="Contoh: Stok sedang dalam proses audit..."></textarea>
+                                                    <label class="form-label-app">Alasan Penolakan</label>
+                                                    <textarea class="form-control form-control-app" name="alasan" rows="3" placeholder="Contoh: Stok sedang dalam proses audit..."></textarea>
                                                 </div>
                                                 <div class="d-flex justify-content-end gap-2">
-                                                    <button type="button" class="btn btn-light fw-bold" data-bs-dismiss="modal">Batal</button>
-                                                    <button type="submit" class="btn btn-danger fw-bold px-4">
+                                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                                                    <button type="submit" class="btn btn-danger">
                                                         <i class="fa-solid fa-xmark me-1"></i> Konfirmasi Tolak
                                                     </button>
                                                 </div>
@@ -113,62 +120,56 @@
                 </table>
             </div>
         @else
-            <div class="text-center py-5 mt-2">
-                <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 90px; height: 90px;">
-                    <i class="fa-solid fa-inbox text-secondary" style="font-size: 2.5rem; opacity: 0.4;"></i>
-                </div>
-                <h6 class="fw-bold text-dark mt-2">Tidak ada pengajuan yang menunggu</h6>
-                <p class="text-muted small mb-0">Semua pengajuan barang keluar sudah diproses.</p>
-            </div>
+            <x-empty-state
+                icon="fa-solid fa-clipboard-check"
+                title="Tidak Ada Pengajuan Menunggu"
+                message="Semua pengajuan barang keluar telah selesai divalidasi."
+            />
         @endif
     </div>
 </div>
 
-{{-- ─── RIWAYAT KEPUTUSAN ───────────────────────────────────── --}}
-<div class="card border-0 shadow-sm rounded-4">
-    <div class="card-header bg-white py-3 border-bottom-0">
-        <h6 class="fw-bold mb-0 text-dark">
+{{-- Riwayat Keputusan --}}
+<div class="card-app">
+    <div class="card-header-app">
+        <h2 class="fs-6 fw-bold mb-0 text-dark">
             <i class="fa-solid fa-clock-rotate-left text-secondary me-2"></i>Riwayat Keputusan (20 Terakhir)
-        </h6>
+        </h2>
     </div>
-    <div class="card-body p-4 pt-0">
+    <div class="card-body-app">
         @if($riwayat->count() > 0)
             <div class="table-responsive">
-                <table class="table table-sm table-hover align-middle border-bottom">
+                <table class="table table-hover align-middle border-bottom" style="font-size: 13px;">
                     <thead class="table-light">
                         <tr>
-                            <th class="text-secondary small fw-bold">BARANG</th>
-                            <th class="text-secondary small fw-bold text-center">JUMLAH</th>
-                            <th class="text-secondary small fw-bold text-center">STATUS</th>
-                            <th class="text-secondary small fw-bold">DISETUJUI/DITOLAK OLEH</th>
-                            <th class="text-secondary small fw-bold">CATATAN</th>
+                            <th class="text-secondary small fw-bold border-0 py-2">BARANG</th>
+                            <th class="text-secondary small fw-bold text-center border-0 py-2">JUMLAH</th>
+                            <th class="text-secondary small fw-bold text-center border-0 py-2">STATUS</th>
+                            <th class="text-secondary small fw-bold border-0 py-2">DISETUJUI/DITOLAK OLEH</th>
+                            <th class="text-secondary small fw-bold border-0 py-2">CATATAN</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($riwayat as $r)
                             <tr>
-                                <td class="fw-bold text-dark small">{{ $r->persediaan?->name ?? '#' . $r->persediaan_id }}</td>
-                                <td class="text-center small">{{ $r->jumlah }} Unit</td>
-                                <td class="text-center">
-                                    @if($r->status === 'disetujui')
-                                        <span class="badge bg-success-subtle text-success border border-success px-2 py-1">
-                                            <i class="fa-solid fa-check me-1"></i> Disetujui
-                                        </span>
-                                    @else
-                                        <span class="badge bg-danger-subtle text-danger border border-danger px-2 py-1">
-                                            <i class="fa-solid fa-xmark me-1"></i> Ditolak
-                                        </span>
-                                    @endif
+                                <td class="fw-bold text-dark py-2">{{ $r->persediaan?->name ?? '#' . $r->persediaan_id }}</td>
+                                <td class="text-center py-2">{{ $r->jumlah }} Unit</td>
+                                <td class="text-center py-2">
+                                    <x-status-badge :status="$r->status" />
                                 </td>
-                                <td class="text-muted small">{{ $r->diputuskanOleh?->name ?? '-' }}</td>
-                                <td class="text-muted small">{{ $r->catatan_penolakan ?: '-' }}</td>
+                                <td class="text-muted small py-2">{{ $r->diputuskanOleh?->name ?? '-' }}</td>
+                                <td class="text-muted small py-2">{{ $r->catatan_penolakan ?: '-' }}</td>
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
             </div>
         @else
-            <p class="text-muted small text-center py-3 mb-0">Belum ada riwayat keputusan.</p>
+            <x-empty-state
+                icon="fa-solid fa-clock-rotate-left"
+                title="Belum Ada Riwayat Keputusan"
+                message="Belum ada riwayat persetujuan atau penolakan pengajuan barang keluar."
+            />
         @endif
     </div>
 </div>
