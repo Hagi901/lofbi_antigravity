@@ -155,16 +155,143 @@ class WebInterfaceTest extends TestCase
     {
         $this->seed();
         $validator = User::where('role', 'validator')->first();
+        $admin = User::where('role', 'admin')->first();
+        $operator = User::where('role', 'operator')->first();
         $transaksi = TransaksiPersediaan::where('status', 'menunggu')->first();
 
         $this->assertNotNull($transaksi);
 
-        // Approve request
+        // Admin mendapat 403 saat mencoba menyetujui atau menolak (hanya validator)
+        $response = $this->actingAs($admin)->patch('/inventory/'.$transaksi->id.'/approve');
+        $response->assertStatus(403);
+        $response = $this->actingAs($admin)->patch('/inventory/'.$transaksi->id.'/reject', ['alasan' => 'Ditolak admin']);
+        $response->assertStatus(403);
+        $transaksi->refresh();
+        $this->assertSame('menunggu', $transaksi->status);
+
+        // Operator mendapat 403 saat mencoba menyetujui atau menolak
+        $response = $this->actingAs($operator)->patch('/inventory/'.$transaksi->id.'/approve');
+        $response->assertStatus(403);
+        $response = $this->actingAs($operator)->patch('/inventory/'.$transaksi->id.'/reject', ['alasan' => 'Ditolak operator']);
+        $response->assertStatus(403);
+
+        // Validator berhasil menyetujui
         $response = $this->actingAs($validator)->patch('/inventory/'.$transaksi->id.'/approve');
         $response->assertRedirect('/inventory/pengajuan');
 
         $transaksi->refresh();
-        $this->assertEquals('disetujui', $transaksi->status);
+        $this->assertSame('disetujui', $transaksi->status);
+    }
+
+    public function test_admin_and_operator_cannot_approve_or_reject_opname(): void
+    {
+        $this->seed();
+        $admin = User::where('role', 'admin')->first();
+        $operator = User::where('role', 'operator')->first();
+        $validator = User::where('role', 'validator')->first();
+
+        // Buat sesi opname dengan status menunggu_persetujuan
+        $response = $this->actingAs($admin)->post('/opname', [
+            'periode' => 'Semester I 2026',
+            'tanggal' => date('Y-m-d'),
+            'keterangan' => 'Opname untuk test role',
+        ]);
+        $response->assertRedirect('/opname');
+
+        $sesi = OpnameSesi::latest()->first();
+
+        // Submit hasil fisik agar jadi menunggu_persetujuan
+        $stokFisikData = [];
+        foreach ($sesi->details as $detail) {
+            $stokFisikData[$detail->id] = $detail->stok_buku;
+        }
+        $this->actingAs($admin)->post('/opname/'.$sesi->id.'/save-fisik', [
+            'stok_fisik' => $stokFisikData,
+        ]);
+        $sesi->refresh();
+        $this->assertSame('menunggu_persetujuan', $sesi->status);
+
+        // Admin mendapat 403 saat mencoba menyetujui atau menolak opname
+        $response = $this->actingAs($admin)->post('/opname/'.$sesi->id.'/approve');
+        $response->assertStatus(403);
+        $response = $this->actingAs($admin)->post('/opname/'.$sesi->id.'/reject', ['catatan_penolakan' => 'Ditolak admin']);
+        $response->assertStatus(403);
+        $sesi->refresh();
+        $this->assertSame('menunggu_persetujuan', $sesi->status);
+
+        // Operator mendapat 403 saat mencoba menyetujui atau menolak opname
+        $response = $this->actingAs($operator)->post('/opname/'.$sesi->id.'/approve');
+        $response->assertStatus(403);
+        $response = $this->actingAs($operator)->post('/opname/'.$sesi->id.'/reject', ['catatan_penolakan' => 'Ditolak operator']);
+        $response->assertStatus(403);
+
+        // Validator berhasil menyetujui opname
+        $response = $this->actingAs($validator)->post('/opname/'.$sesi->id.'/approve');
+        $response->assertRedirect('/opname/'.$sesi->id);
+        $sesi->refresh();
+        $this->assertSame('disetujui', $sesi->status);
+    }
+
+    public function test_pengajuan_view_renders_action_buttons_only_for_validator(): void
+    {
+        $this->seed();
+        $admin = User::where('role', 'admin')->first();
+        $validator = User::where('role', 'validator')->first();
+        $transaksi = TransaksiPersediaan::where('status', 'menunggu')->first();
+
+        $this->assertNotNull($transaksi);
+
+        // Admin melihat halaman pengajuan tetapi TIDAK ada tombol Setujui/Tolak
+        $response = $this->actingAs($admin)->get('/inventory/pengajuan');
+        $response->assertStatus(200);
+        $response->assertDontSee('inventory.approve', false);
+        $response->assertSee('Menunggu validator');
+
+        // Validator melihat halaman pengajuan dengan tombol Setujui dan Tolak
+        $response = $this->actingAs($validator)->get('/inventory/pengajuan');
+        $response->assertStatus(200);
+        $response->assertSee('Setujui');
+        $response->assertSee('Tolak');
+        $response->assertDontSee('Menunggu validator');
+    }
+
+    public function test_opname_view_renders_action_buttons_only_for_validator(): void
+    {
+        $this->seed();
+        $admin = User::where('role', 'admin')->first();
+        $operator = User::where('role', 'operator')->first();
+        $validator = User::where('role', 'validator')->first();
+
+        // Buat sesi opname status menunggu_persetujuan
+        $this->actingAs($admin)->post('/opname', [
+            'periode' => 'Semester I 2026',
+            'tanggal' => date('Y-m-d'),
+            'keterangan' => 'Opname view test',
+        ]);
+        $sesi = OpnameSesi::latest()->first();
+        $stokFisikData = [];
+        foreach ($sesi->details as $detail) {
+            $stokFisikData[$detail->id] = $detail->stok_buku;
+        }
+        $this->actingAs($admin)->post('/opname/'.$sesi->id.'/save-fisik', ['stok_fisik' => $stokFisikData]);
+        $sesi->refresh();
+
+        // Admin dan Operator TIDAK melihat tombol Setujui Opname maupun modal Tolak
+        $responseAdmin = $this->actingAs($admin)->get('/opname/'.$sesi->id);
+        $responseAdmin->assertStatus(200);
+        $responseAdmin->assertDontSee('Setujui Opname');
+        $responseAdmin->assertDontSee('modalRejectOpname');
+
+        $responseOperator = $this->actingAs($operator)->get('/opname/'.$sesi->id);
+        $responseOperator->assertStatus(200);
+        $responseOperator->assertDontSee('Setujui Opname');
+        $responseOperator->assertDontSee('modalRejectOpname');
+
+        // Validator melihat tombol Setujui Opname dan modal Tolak
+        $responseValidator = $this->actingAs($validator)->get('/opname/'.$sesi->id);
+        $responseValidator->assertStatus(200);
+        $responseValidator->assertSee('Setujui Opname');
+        $responseValidator->assertSee('modalRejectOpname');
     }
 
     public function test_operator_can_access_dashboard_assets_inventory_opname_reports_and_create_pengajuan(): void
@@ -355,8 +482,8 @@ class WebInterfaceTest extends TestCase
 
         $sesi = OpnameSesi::latest()->first();
         $this->assertNotNull($sesi);
-        $this->assertEquals('draft', $sesi->status);
-        $this->assertEquals('Semester I 2026', $sesi->periode);
+        $this->assertSame('draft', $sesi->status);
+        $this->assertSame('Semester I 2026', $sesi->periode);
         $this->assertGreaterThan(0, $sesi->details->count());
 
         // 2. Akses halaman Input Fisik
@@ -376,15 +503,15 @@ class WebInterfaceTest extends TestCase
         $response->assertRedirect('/opname/'.$sesi->id);
 
         $sesi->refresh();
-        $this->assertEquals('menunggu_persetujuan', $sesi->status);
+        $this->assertSame('menunggu_persetujuan', $sesi->status);
 
         // 4. Validator Menyetujui Opname (status: disetujui)
         $response = $this->actingAs($validator)->post('/opname/'.$sesi->id.'/approve');
         $response->assertRedirect('/opname/'.$sesi->id);
 
         $sesi->refresh();
-        $this->assertEquals('disetujui', $sesi->status);
-        $this->assertEquals($validator->id, $sesi->approver_id);
+        $this->assertSame('disetujui', $sesi->status);
+        $this->assertSame($validator->id, $sesi->approver_id);
 
         // 5. Show opname details
         $response = $this->actingAs($admin)->get('/opname/'.$sesi->id);

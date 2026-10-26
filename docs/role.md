@@ -96,8 +96,8 @@ Dokumen ini memuat matriks lengkap izin akses pengguna pada aplikasi LOFBI (*Lay
 | | `/api/persediaan/{persediaan}` | PUT | Ya | Ya | Tidak | Tidak |
 | | `/api/persediaan/{persediaan}/pengajuan-keluar` | POST | Ya | Ya | Tidak | Tidak |
 | | `/api/persediaan/pengajuan` | GET | Ya | Tidak | Ya | Tidak |
-| | `/api/persediaan/pengajuan/{transaksi}/setujui` | POST | Ya | Tidak | Ya | Tidak |
-| | `/api/persediaan/pengajuan/{transaksi}/tolak` | POST | Ya | Tidak | Ya | Tidak |
+| | `/api/persediaan/pengajuan/{transaksi}/setujui` | POST | Tidak | Tidak | Ya | Tidak |
+| | `/api/persediaan/pengajuan/{transaksi}/tolak` | POST | Tidak | Tidak | Ya | Tidak |
 | **Stok Opname** | `/api/opname/ruangan/{ruangan}` | GET | Ya | Ya | Ya | Tidak |
 | | `/api/opname` | POST | Ya | Ya | Tidak | Tidak |
 | | `/api/opname/riwayat` | GET | Ya | Ya | Ya | Tidak |

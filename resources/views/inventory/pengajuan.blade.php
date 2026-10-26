@@ -3,6 +3,10 @@
 @section('page_title', 'Validasi Pengajuan Barang Keluar')
 
 @section('content')
+@php
+    $userRole = Auth::user()->role ?? '';
+@endphp
+
 <!-- Page Header -->
 <x-page-header title="Validasi Barang Keluar" subtitle="Persetujuan pengeluaran barang persediaan oleh Validator / KPA">
     <x-slot:actions>
@@ -49,7 +53,11 @@
                             <th class="text-secondary small fw-bold border-0 py-2">UNIT PENERIMA</th>
                             <th class="text-secondary small fw-bold border-0 py-2">DIAJUKAN OLEH</th>
                             <th class="text-secondary small fw-bold border-0 py-2">TANGGAL</th>
-                            <th class="text-secondary small fw-bold text-center border-0 py-2">AKSI VALIDASI</th>
+                            @if($userRole === 'validator')
+                                <th class="text-secondary small fw-bold text-center border-0 py-2">AKSI VALIDASI</th>
+                            @else
+                                <th class="text-secondary small fw-bold text-center border-0 py-2">STATUS</th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody>
@@ -69,25 +77,32 @@
                                 </td>
                                 <td class="text-muted small py-2">{{ $p->tanggal ? \Carbon\Carbon::parse($p->tanggal)->format('d M Y') : '-' }}</td>
                                 <td class="text-center py-2">
-                                    <div class="d-flex gap-2 justify-content-center">
-                                        {{-- Tombol Setujui --}}
-                                        <form action="{{ route('inventory.approve', $p->id) }}" method="POST" class="d-inline">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit" class="btn btn-success btn-sm"
-                                                onclick="return confirm('Setujui pengajuan pengeluaran {{ $p->jumlah }} unit {{ addslashes($p->persediaan?->name) }}?\nStok akan dipotong otomatis menggunakan metode FIFO.')">
-                                                <i class="fa-solid fa-check me-1"></i> Setujui
+                                    @if($userRole === 'validator')
+                                        <div class="d-flex gap-2 justify-content-center">
+                                            {{-- Tombol Setujui --}}
+                                            <form action="{{ route('inventory.approve', $p->id) }}" method="POST" class="d-inline">
+                                                @csrf
+                                                @method('PATCH')
+                                                <button type="submit" class="btn btn-success btn-sm"
+                                                    onclick="return confirm('Setujui pengajuan pengeluaran {{ $p->jumlah }} unit {{ addslashes($p->persediaan?->name) }}?\nStok akan dipotong otomatis menggunakan metode FIFO.')">
+                                                    <i class="fa-solid fa-check me-1"></i> Setujui
+                                                </button>
+                                            </form>
+                                            {{-- Tombol Tolak --}}
+                                            <button class="btn btn-outline-danger btn-sm"
+                                                data-bs-toggle="modal" data-bs-target="#modalTolak{{ $p->id }}">
+                                                <i class="fa-solid fa-xmark me-1"></i> Tolak
                                             </button>
-                                        </form>
-                                        {{-- Tombol Tolak --}}
-                                        <button class="btn btn-outline-danger btn-sm"
-                                            data-bs-toggle="modal" data-bs-target="#modalTolak{{ $p->id }}">
-                                            <i class="fa-solid fa-xmark me-1"></i> Tolak
-                                        </button>
-                                    </div>
+                                        </div>
+                                    @else
+                                        <span class="badge-app badge-app-warning">
+                                            <i class="fa-solid fa-clock me-1"></i> Menunggu validator
+                                        </span>
+                                    @endif
                                 </td>
                             </tr>
-                            {{-- Modal Tolak --}}
+                            {{-- Modal Tolak (hanya dirender untuk validator) --}}
+                            @if($userRole === 'validator')
                             <div class="modal fade" id="modalTolak{{ $p->id }}" tabindex="-1" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content border-0 shadow" style="border-radius: var(--radius-lg);">
@@ -115,6 +130,7 @@
                                     </div>
                                 </div>
                             </div>
+                            @endif
                         @endforeach
                     </tbody>
                 </table>

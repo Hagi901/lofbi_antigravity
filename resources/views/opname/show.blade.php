@@ -46,7 +46,7 @@
                 </a>
             @endif
 
-            @if($sesi->status === 'menunggu_persetujuan' && in_array($userRole, ['admin', 'validator']))
+            @if($sesi->status === 'menunggu_persetujuan' && $userRole === 'validator')
                 <form action="{{ route('opname.approve', $sesi->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin menyetujui hasil Opname Fisik ini? Penyesuaian stok akan diproses otomatis.');">
                     @csrf
                     <button type="submit" class="btn btn-success btn-sm">
@@ -223,7 +223,7 @@
     </div>
 </div>
 
-@if($sesi->status === 'menunggu_persetujuan' && in_array($userRole, ['admin', 'validator']))
+@if($sesi->status === 'menunggu_persetujuan' && $userRole === 'validator')
 <!-- Modal Tolak Opname -->
 <div class="modal fade" id="modalRejectOpname" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">

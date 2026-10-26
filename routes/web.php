@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Route;
 |      * Profil & notifikasi
 |    - Khusus role admin:
 |      * Pengaturan sistem & unduh backup (/settings, /settings/backup)
-|      * Melihat daftar pengajuan barang keluar
+|      * Melihat daftar pengajuan barang keluar (read-only, tanpa tombol validasi)
 |
 | 2. Validator (role: validator)
 |    - Dashboard (lihat)

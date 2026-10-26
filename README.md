@@ -32,12 +32,10 @@ Aplikasi menerapkan pemisahan tugas (*segregation of duties*) yang ketat dengan 
 
 1. **Administrator (`admin` & `operator`)**:
    - Memiliki hak operasional penuh: mengelola data aset dan master persediaan (lihat, ubah, hapus), membuat pengajuan barang keluar, membuka sesi opname dan menginput hasil hitung fisik, serta mengunggah berkas staging dan mengirimkan revisi.
-   - Pembeda hak: Khusus akun `admin` memiliki akses eksklusif ke Pengaturan Sistem (`/settings`), Backup Database, dan Audit Trail. Role `operator` dibatasi (HTTP 403) dari kedua fitur tersebut.
-   - Administrator dilarang memvalidasi, menyetujui, atau menolak baris unggahan staging.
+   - Pembeda hak: Khusus akun `admin` memiliki akses eksklusif ke Pengaturan Sistem (`/settings`), Backup Database, dan Audit Trail, serta dapat melihat daftar pengajuan barang keluar secara *read-only*. Role `operator` dibatasi (HTTP 403) dari fitur-fitur tersebut.
+   - Administrator dan operator dilarang memvalidasi, menyetujui, atau menolak baris unggahan staging, pengajuan barang keluar, maupun sesi opname fisik.
 2. **Validator (`validator`)**:
-   - Satu-satunya peran yang berwenang menyetujui atau menolak baris unggahan staging (per baris atau sekaligus).
-   - Berwenang menyetujui atau menolak pengajuan pengeluaran barang persediaan (eksekusi pemotongan FIFO).
-   - Berwenang memeriksa dan menyetujui atau menolak hasil sesi stok opname fisik.
+   - Satu-satunya peran yang berwenang menyetujui atau menolak: (1) baris unggahan staging (per baris atau sekaligus), (2) pengajuan pengeluaran barang persediaan (eksekusi pemotongan FIFO), dan (3) hasil sesi stok opname fisik.
    - Memiliki hak lihat pada dashboard, data aset, data persediaan, daftar pengajuan, dan seluruh laporan.
 3. **Pimpinan (`pimpinan`)**:
    - Peran pemantauan eksekutif dengan hak baca penuh (*read-only*): dashboard statistik, katalog aset, katalog persediaan, dan seluruh laporan resmi.

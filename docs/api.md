@@ -67,8 +67,8 @@ Seluruh saldo persediaan bersumber dari berkas resmi SAKTI yang disetujui. Penge
 | `PUT` | `/api/persediaan/{persediaan}` | Admin, Operator | Pembaruan data master persediaan (merk, satuan, stok minimum). |
 | `POST`| `/api/persediaan/{persediaan}/pengajuan-keluar` | Admin, Operator | Pengajuan pengeluaran barang (validasi stok fisik di awal). |
 | `GET` | `/api/persediaan/pengajuan` | Admin, Validator | Daftar antrean pengajuan pengeluaran barang keluar. |
-| `POST`| `/api/persediaan/pengajuan/{transaksi}/setujui` | Validator, Admin | Persetujuan pengeluaran dan pemotongan stok otomatis FIFO. |
-| `POST`| `/api/persediaan/pengajuan/{transaksi}/tolak` | Validator, Admin | Penolakan pengeluaran barang (wajib `catatan_penolakan`). |
+| `POST`| `/api/persediaan/pengajuan/{transaksi}/setujui` | Validator | Persetujuan pengeluaran dan pemotongan stok otomatis FIFO. |
+| `POST`| `/api/persediaan/pengajuan/{transaksi}/tolak` | Validator | Penolakan pengeluaran barang (wajib `catatan_penolakan`). |
 
 ---
 

@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Route;
 | - Lihat Persediaan: admin, operator, validator, pimpinan
 | - Edit Master Persediaan & Buat Pengajuan: admin, operator
 | - Lihat Daftar Pengajuan: admin, validator
-| - Validasi Pengajuan (Setujui/Tolak): validator, admin
+| - Validasi Pengajuan (Setujui/Tolak): validator saja
 |
 */
 
@@ -36,8 +36,8 @@ Route::middleware('role:admin,operator')->group(function () {
     Route::post('/persediaan/{persediaan}/pengajuan-keluar', [PersediaanController::class, 'pengajuanKeluar']);
 });
 
-// Validasi Pengajuan Barang Keluar -> Validator & Admin
-Route::middleware('role:validator,admin')->group(function () {
+// Validasi Pengajuan Barang Keluar -> Validator saja
+Route::middleware('role:validator')->group(function () {
     Route::post('/persediaan/pengajuan/{transaksi}/setujui', [PersediaanController::class, 'setujui']);
     Route::post('/persediaan/pengajuan/{transaksi}/tolak', [PersediaanController::class, 'tolak']);
 });

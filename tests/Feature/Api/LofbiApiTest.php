@@ -277,4 +277,116 @@ class LofbiApiTest extends TestCase
         // Validator DILARANG mengakses settings
         $this->withToken($token)->getJson('/api/settings')->assertForbidden();
     }
+
+    public function test_admin_and_operator_cannot_approve_or_reject_pengajuan_via_api(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $operator = User::factory()->create(['role' => 'operator']);
+        $validator = User::factory()->create(['role' => 'validator']);
+        $kategori = Kategori::create(['nama' => 'ATK', 'tipe' => 'persediaan']);
+        $jenis = JenisBarang::create(['nama_generik' => 'Stabilo', 'kategori_id' => $kategori->id]);
+        $persediaan = Persediaan::create([
+            'jenis_barang_id' => $jenis->id,
+            'satuan' => 'pcs',
+            'stok_minimum' => 2,
+        ]);
+        BatchPersediaan::create([
+            'persediaan_id' => $persediaan->id,
+            'no_batch' => 1,
+            'tanggal_masuk' => '2026-01-01',
+            'jumlah_masuk' => 10,
+            'harga_satuan' => 5000,
+            'sisa_stok' => 10,
+        ]);
+
+        $pengajuan = TransaksiPersediaan::create([
+            'persediaan_id' => $persediaan->id,
+            'jenis' => 'keluar',
+            'jumlah' => 2,
+            'tanggal' => '2026-08-10',
+            'unit_kerja_penerima' => 'TU',
+            'diajukan_oleh' => $operator->id,
+            'status' => 'menunggu',
+        ]);
+
+        // Admin mendapat 403 saat mencoba menyetujui via API
+        $adminToken = $this->postJson('/api/login', [
+            'email' => $admin->email,
+            'password' => 'password',
+        ])->json('access_token');
+
+        $this->withToken($adminToken)
+            ->postJson("/api/persediaan/pengajuan/{$pengajuan->id}/setujui")
+            ->assertForbidden();
+
+        $this->withToken($adminToken)
+            ->postJson("/api/persediaan/pengajuan/{$pengajuan->id}/tolak", [
+                'catatan_penolakan' => 'Admin coba tolak',
+            ])
+            ->assertForbidden();
+
+        // Pastikan status tidak berubah
+        $this->assertSame('menunggu', $pengajuan->fresh()->status);
+
+        // Operator mendapat 403 (karena tidak ada di middleware role:validator untuk setujui/tolak)
+        $this->flushHeaders();
+        $operatorToken = $this->postJson('/api/login', [
+            'email' => $operator->email,
+            'password' => 'password',
+        ])->json('access_token');
+
+        $this->withToken($operatorToken)
+            ->postJson("/api/persediaan/pengajuan/{$pengajuan->id}/setujui")
+            ->assertForbidden();
+
+        $this->withToken($operatorToken)
+            ->postJson("/api/persediaan/pengajuan/{$pengajuan->id}/tolak", [
+                'catatan_penolakan' => 'Operator coba tolak',
+            ])
+            ->assertForbidden();
+
+        // Pastikan status tetap menunggu
+        $this->assertSame('menunggu', $pengajuan->fresh()->status);
+    }
+
+    public function test_validator_can_approve_pengajuan_via_api(): void
+    {
+        $operator = User::factory()->create(['role' => 'operator']);
+        $validator = User::factory()->create(['role' => 'validator']);
+        $kategori = Kategori::create(['nama' => 'ATK', 'tipe' => 'persediaan']);
+        $jenis = JenisBarang::create(['nama_generik' => 'Buku Kas', 'kategori_id' => $kategori->id]);
+        $persediaan = Persediaan::create([
+            'jenis_barang_id' => $jenis->id,
+            'satuan' => 'buku',
+            'stok_minimum' => 2,
+        ]);
+        BatchPersediaan::create([
+            'persediaan_id' => $persediaan->id,
+            'no_batch' => 1,
+            'tanggal_masuk' => '2026-01-01',
+            'jumlah_masuk' => 10,
+            'harga_satuan' => 15000,
+            'sisa_stok' => 10,
+        ]);
+
+        $pengajuan = TransaksiPersediaan::create([
+            'persediaan_id' => $persediaan->id,
+            'jenis' => 'keluar',
+            'jumlah' => 2,
+            'tanggal' => '2026-08-10',
+            'unit_kerja_penerima' => 'Keuangan',
+            'diajukan_oleh' => $operator->id,
+            'status' => 'menunggu',
+        ]);
+
+        $validatorToken = $this->postJson('/api/login', [
+            'email' => $validator->email,
+            'password' => 'password',
+        ])->json('access_token');
+
+        $this->withToken($validatorToken)
+            ->postJson("/api/persediaan/pengajuan/{$pengajuan->id}/setujui")
+            ->assertOk()
+            ->assertJsonPath('data.status', 'disetujui');
+    }
 }

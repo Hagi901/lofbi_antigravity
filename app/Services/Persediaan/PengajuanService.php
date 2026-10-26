@@ -10,6 +10,7 @@ use App\Models\TransaksiPersediaan;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**
  * PengajuanService
@@ -61,10 +62,15 @@ class PengajuanService
      * - 'recordDetail': bool (true untuk mencatat DetailPemotonganBatch pada API).
      * - 'logAudit': bool (true untuk mencatat riwayat pemotongan ke AuditLog pada Web).
      *
+     * @throws HttpException bila $approver bukan validator.
      * @throws ValidationException
      */
     public function setujui(TransaksiPersediaan $transaksi, User $approver, array $options = []): TransaksiPersediaan
     {
+        if ($approver->role !== 'validator') {
+            abort(403, 'Hanya role validator yang diizinkan menyetujui pengajuan barang keluar.');
+        }
+
         if ($transaksi->status !== 'menunggu' || $transaksi->jenis !== 'keluar') {
             throw ValidationException::withMessages([
                 'approve' => 'Pengajuan tidak dapat diproses atau sudah pernah ditindaklanjuti.',
@@ -148,10 +154,15 @@ class PengajuanService
     /**
      * Menolak pengajuan barang keluar.
      *
+     * @throws HttpException bila $approver bukan validator.
      * @throws ValidationException
      */
     public function tolak(TransaksiPersediaan $transaksi, string $alasan, User $approver, bool $logAudit = false): TransaksiPersediaan
     {
+        if ($approver->role !== 'validator') {
+            abort(403, 'Hanya role validator yang diizinkan menolak pengajuan barang keluar.');
+        }
+
         if ($transaksi->status !== 'menunggu' || $transaksi->jenis !== 'keluar') {
             throw ValidationException::withMessages([
                 'reject' => 'Pengajuan tidak dapat diproses atau sudah pernah ditindaklanjuti.',

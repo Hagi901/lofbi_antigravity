@@ -12,6 +12,7 @@ use App\Models\TransaksiPersediaan;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**
  * OpnameService
@@ -135,9 +136,16 @@ class OpnameService
 
     /**
      * Menyetujui sesi opname dan membuat transaksi penyesuaian otomatis.
+     *
+     * @throws HttpException bila $approver bukan validator.
+     * @throws ValidationException
      */
     public function setujui(OpnameSesi $sesi, User $approver): OpnameSesi
     {
+        if ($approver->role !== 'validator') {
+            abort(403, 'Hanya role validator yang diizinkan menyetujui sesi opname.');
+        }
+
         if ($sesi->status !== 'menunggu_persetujuan') {
             throw ValidationException::withMessages([
                 'opname' => 'Sesi ini tidak dalam status menunggu persetujuan.',
@@ -217,9 +225,16 @@ class OpnameService
 
     /**
      * Menolak sesi opname.
+     *
+     * @throws HttpException bila $approver bukan validator.
+     * @throws ValidationException
      */
     public function tolak(OpnameSesi $sesi, string $catatan, User $approver): OpnameSesi
     {
+        if ($approver->role !== 'validator') {
+            abort(403, 'Hanya role validator yang diizinkan menolak sesi opname.');
+        }
+
         if ($sesi->status !== 'menunggu_persetujuan') {
             throw ValidationException::withMessages([
                 'opname' => 'Sesi ini tidak dalam status menunggu persetujuan.',
