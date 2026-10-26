@@ -321,6 +321,9 @@ h1, h2, h3, h4, h5, h6 {
 .content-area {
     padding: 1.75rem;
     flex-grow: 1;
+    max-width: 1600px;
+    width: 100%;
+    margin: 0 auto;
 }
 
 /* ── Cards ── */
@@ -820,6 +823,21 @@ h1, h2, h3, h4, h5, h6 {
     margin: 0.25rem 0 0 0;
 }
 
+/* ── Notification Drawer Responsive ── */
+.notification-drawer-offcanvas {
+    width: 50vw !important;
+    min-width: 320px;
+    max-width: 600px;
+}
+
+@media (max-width: 767.98px) {
+    .notification-drawer-offcanvas {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 100% !important;
+    }
+}
+
 /* ── Responsive Mobile ── */
 @media (max-width: 991.98px) {
     .sidebar {
@@ -851,6 +869,42 @@ h1, h2, h3, h4, h5, h6 {
     .dataTables_paginate {
         text-align: left;
         margin-top: 0.5rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .content-area {
+        padding: 0.85rem !important;
+    }
+
+    .card-body-app {
+        padding: 1rem;
+    }
+
+    .page-header-widget {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+
+    .page-header-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        width: 100%;
+    }
+
+    .page-header-actions .btn {
+        flex: 1 1 auto;
+    }
+
+    .table-responsive {
+        -webkit-overflow-scrolling: touch;
+        margin-bottom: 0;
+    }
+
+    .modal-dialog {
+        margin: 0.5rem;
     }
 }
 

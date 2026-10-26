@@ -199,7 +199,7 @@
     </div>
 
     <!-- NOTIFICATION OFFCANVAS DRAWER -->
-    <div class="offcanvas offcanvas-end border-0 shadow-lg" tabindex="-1" id="notificationDrawer" aria-labelledby="notificationDrawerLabel" style="width: 50vw; min-width: 320px; max-width: 600px;">
+    <div class="offcanvas offcanvas-end border-0 shadow-lg notification-drawer-offcanvas" tabindex="-1" id="notificationDrawer" aria-labelledby="notificationDrawerLabel">
         <div class="offcanvas-header border-bottom p-3 px-4">
             <div class="d-flex align-items-center gap-2">
                 <div class="stat-icon" style="width: 36px; height: 36px; border-radius: var(--radius-md); background: var(--color-primary-light); color: var(--color-primary); display: flex; align-items: center; justify-content: center;">
