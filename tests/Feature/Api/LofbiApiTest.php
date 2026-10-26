@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api;
 
+use App\Models\Aset;
 use App\Models\BatchPersediaan;
 use App\Models\JenisBarang;
 use App\Models\Kategori;
@@ -388,5 +389,168 @@ class LofbiApiTest extends TestCase
             ->postJson("/api/persediaan/pengajuan/{$pengajuan->id}/setujui")
             ->assertOk()
             ->assertJsonPath('data.status', 'disetujui');
+    }
+
+    public function test_laporan_nilai_buku_api_returns_correct_structure_for_authorized_roles_and_rejects_other_roles(): void
+    {
+        $kategori = Kategori::create(['nama' => 'Peralatan & Mesin', 'tipe' => 'aset']);
+        $jenis = JenisBarang::create(['nama_generik' => 'Laptop', 'kategori_id' => $kategori->id]);
+        $aset = Aset::create([
+            'jenis_barang_id' => $jenis->id,
+            'kode_aset' => 'AST-001',
+            'nup' => 1,
+            'nilai_perolehan' => 12000000,
+            'tanggal_perolehan' => now()->subYears(2)->toDateString(),
+            'masa_manfaat' => 5,
+            'kondisi' => 'baik',
+        ]);
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $validator = User::factory()->create(['role' => 'validator']);
+        $pimpinan = User::factory()->create(['role' => 'pimpinan']);
+        $tamu = User::factory()->create(['role' => 'tamu']);
+
+        // 1. Admin dapat mengakses dan struktur respons paginasi sesuai
+        $adminToken = $this->postJson('/api/login', [
+            'email' => $admin->email,
+            'password' => 'password',
+        ])->json('access_token');
+
+        $responseAdmin = $this->withToken($adminToken)->getJson('/api/laporan/nilai-buku');
+        $responseAdmin->assertOk()
+            ->assertJsonStructure([
+                'current_page',
+                'data' => [
+                    '*' => [
+                        'id',
+                        'kode_aset',
+                        'nup',
+                        'nilai_perolehan',
+                        'masa_manfaat',
+                        'tanggal_perolehan',
+                        'terakhir_dihitung_semester',
+                        'akumulasi_penyusutan',
+                        'nilai_buku',
+                        'total_nilai_buku',
+                        'jenis_barang' => [
+                            'id',
+                            'nama_generik',
+                            'kategori_id',
+                            'kategori' => [
+                                'id',
+                                'nama',
+                                'tipe',
+                            ],
+                        ],
+                    ],
+                ],
+                'first_page_url',
+                'from',
+                'last_page',
+                'last_page_url',
+                'path',
+                'per_page',
+                'to',
+                'total',
+            ]);
+
+        // Verifikasi nilai buku dinamis terisi
+        $item = $responseAdmin->json('data.0');
+        $this->assertEquals('AST-001', $item['kode_aset']);
+        $this->assertGreaterThan(0, (float) $item['nilai_buku']);
+        $this->assertGreaterThan(0, (float) $item['akumulasi_penyusutan']);
+        $this->assertEquals($item['nilai_buku'], $item['total_nilai_buku']);
+
+        // 2. Validator dapat mengakses
+        $this->flushHeaders();
+        $validatorToken = $this->postJson('/api/login', [
+            'email' => $validator->email,
+            'password' => 'password',
+        ])->json('access_token');
+
+        $this->withToken($validatorToken)
+            ->getJson('/api/laporan/nilai-buku')
+            ->assertOk();
+
+        // 3. Pimpinan dapat mengakses
+        $this->flushHeaders();
+        $pimpinanToken = $this->postJson('/api/login', [
+            'email' => $pimpinan->email,
+            'password' => 'password',
+        ])->json('access_token');
+
+        $this->withToken($pimpinanToken)
+            ->getJson('/api/laporan/nilai-buku')
+            ->assertOk();
+
+        // 4. Role lain (misalnya tamu) ditolak 403
+        $this->flushHeaders();
+        $this->app['auth']->forgetGuards();
+        $tamuToken = $this->postJson('/api/login', [
+            'email' => $tamu->email,
+            'password' => 'password',
+        ])->json('access_token');
+
+        $this->app['auth']->forgetGuards();
+        $this->withToken($tamuToken)
+            ->getJson('/api/laporan/nilai-buku')
+            ->assertForbidden();
+
+        // 5. Unauthenticated ditolak 401
+        $this->flushHeaders();
+        $this->app['auth']->forgetGuards();
+        $this->getJson('/api/laporan/nilai-buku')
+            ->assertUnauthorized();
+    }
+
+    public function test_laporan_nilai_buku_api_filter_by_kategori_id_works(): void
+    {
+        $kat1 = Kategori::create(['nama' => 'Peralatan Kantor', 'tipe' => 'aset']);
+        $kat2 = Kategori::create(['nama' => 'Kendaraan Bermotor', 'tipe' => 'aset']);
+
+        $jenis1 = JenisBarang::create(['nama_generik' => 'Meja Kerja', 'kategori_id' => $kat1->id]);
+        $jenis2 = JenisBarang::create(['nama_generik' => 'Sepeda Motor', 'kategori_id' => $kat2->id]);
+
+        Aset::create([
+            'jenis_barang_id' => $jenis1->id,
+            'kode_aset' => 'AST-MEJA-01',
+            'nup' => 1,
+            'nilai_perolehan' => 2000000,
+            'tanggal_perolehan' => now()->subYear()->toDateString(),
+            'masa_manfaat' => 4,
+            'kondisi' => 'baik',
+        ]);
+
+        Aset::create([
+            'jenis_barang_id' => $jenis2->id,
+            'kode_aset' => 'AST-MOTOR-01',
+            'nup' => 1,
+            'nilai_perolehan' => 25000000,
+            'tanggal_perolehan' => now()->subYear()->toDateString(),
+            'masa_manfaat' => 7,
+            'kondisi' => 'baik',
+        ]);
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $token = $this->postJson('/api/login', [
+            'email' => $admin->email,
+            'password' => 'password',
+        ])->json('access_token');
+
+        // Filter kategori 1
+        $resKat1 = $this->withToken($token)
+            ->getJson("/api/laporan/nilai-buku?kategori_id={$kat1->id}")
+            ->assertOk();
+
+        $this->assertCount(1, $resKat1->json('data'));
+        $this->assertEquals('AST-MEJA-01', $resKat1->json('data.0.kode_aset'));
+
+        // Filter kategori 2
+        $resKat2 = $this->withToken($token)
+            ->getJson("/api/laporan/nilai-buku?kategori_id={$kat2->id}")
+            ->assertOk();
+
+        $this->assertCount(1, $resKat2->json('data'));
+        $this->assertEquals('AST-MOTOR-01', $resKat2->json('data.0.kode_aset'));
     }
 }

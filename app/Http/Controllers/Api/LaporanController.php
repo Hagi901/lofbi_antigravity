@@ -33,24 +33,14 @@ class LaporanController extends Controller
     {
         $hasil = Aset::with(['jenisBarang.kategori'])
             ->when($request->kategori_id, fn ($q, $id) => $q->whereHas('jenisBarang', fn ($inner) => $inner->where('kategori_id', $id)))
-            ->select('id', 'jenis_barang_id', 'kode_aset', 'nilai_perolehan', 'masa_manfaat', 'tanggal_perolehan', 'terakhir_dihitung_semester')
+            ->select('id', 'jenis_barang_id', 'kode_aset', 'nup', 'nilai_perolehan', 'masa_manfaat', 'tanggal_perolehan', 'terakhir_dihitung_semester')
             ->orderBy('kode_aset')
             ->paginate(50);
 
-        $hasil->getCollection()->transform(function ($item) use ($applyFilters) {
-            $q = $applyFilters(
-                Aset::where('jenis_barang_id', $item->jenis_barang_id)
-            );
-
-            dump($item->nama_generik, $item->jenis_barang_id, $q->toSql(), $q->getBindings());
-
-            $rows = $q->get(['nilai_perolehan', 'masa_manfaat', 'tanggal_perolehan']);
-
-            dump($rows->toArray());
-
-            $item->total_nilai_buku = $rows->sum(fn ($a) => $a->nilai_buku_dinamis);
-
-            dump($item->total_nilai_buku);
+        $hasil->getCollection()->transform(function ($item) {
+            $item->akumulasi_penyusutan = $item->akumulasi_dinamis;
+            $item->nilai_buku = $item->nilai_buku_dinamis;
+            $item->total_nilai_buku = $item->nilai_buku_dinamis;
 
             return $item;
         });
