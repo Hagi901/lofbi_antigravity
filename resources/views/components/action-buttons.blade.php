@@ -8,7 +8,7 @@
     'id' => null,
 ])
 
-<div class="d-inline-flex align-items-center gap-1">
+<div class="d-inline-flex flex-wrap align-items-center justify-content-center gap-1">
     {{ $slot }}
 
     @if($viewUrl)
@@ -18,13 +18,14 @@
     @endif
 
     @if($canEdit && $editUrl)
-        <a href="{{ $editUrl }}" class="btn btn-sm btn-light btn-action-icon" title="Edit Data" data-bs-toggle="tooltip">
-            <i class="fa-regular fa-pen-to-square text-secondary"></i>
+        <a href="{{ $editUrl }}" class="btn btn-sm btn-outline-primary" title="Edit Data">
+            <i class="fa-regular fa-pen-to-square"></i>
+            <span>Edit</span>
         </a>
     @endif
 
     @if($canDelete && $deleteAction)
-        <form action="{{ $deleteAction }}" method="POST" class="d-inline" onsubmit="return confirm('{{ $deleteConfirm }}');">
+        <form action="{{ $deleteAction }}" method="POST" class="d-inline m-0 p-0" onsubmit="return confirm('{{ $deleteConfirm }}');">
             @csrf
             @method('DELETE')
             <button type="submit" class="btn btn-sm btn-light btn-action-icon text-danger" title="Hapus Data" data-bs-toggle="tooltip">
