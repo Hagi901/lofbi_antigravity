@@ -4,18 +4,21 @@
 
 @section('content')
 <div class="row justify-content-center">
-    <div class="col-lg-7">
-        <div class="card border-0 shadow-sm rounded-4">
-            <div class="card-header bg-white py-3 d-flex align-items-center border-bottom-0">
-                <a href="{{ route('opname.index') }}" class="btn btn-light btn-sm me-3 rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 35px; height: 35px;">
-                    <i class="fa-solid fa-arrow-left"></i>
-                </a>
-                <h6 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-clipboard-check text-primary me-2"></i>Buka Sesi Opname Fisik Persediaan</h6>
+    <div class="col-lg-7 mb-4">
+        <div class="card-app">
+            <div class="card-header-app">
+                <div class="d-flex align-items-center gap-3">
+                    <a href="{{ route('opname.index') }}" class="btn btn-light btn-sm btn-action-icon" title="Kembali">
+                        <i class="fa-solid fa-arrow-left text-secondary"></i>
+                    </a>
+                    <h1 class="fw-bold mb-0 text-dark fs-6">
+                        <i class="fa-solid fa-clipboard-check text-primary me-2"></i>Buka Sesi Opname Fisik Persediaan
+                    </h1>
+                </div>
             </div>
-            <div class="card-body p-4 pt-2">
-
+            <div class="card-body-app">
                 @if($errors->any())
-                    <div class="alert alert-danger shadow-sm border-0 small rounded-3">
+                    <div class="alert alert-danger border-0 small mb-3">
                         <ul class="mb-0">
                             @foreach($errors->all() as $error)
                                 <li>{{ $error }}</li>
@@ -28,36 +31,35 @@
                     @csrf
 
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-secondary">Periode Opname <span class="text-danger">*</span></label>
-                        <select class="form-select border-0 shadow-sm bg-light" name="periode" required>
+                        <label class="form-label-app">Periode Opname <span class="text-danger">*</span></label>
+                        <select class="form-select form-select-app" name="periode" required>
                             <option value="">-- Pilih Periode --</option>
                             @foreach($periodes as $p)
                                 <option value="{{ $p }}" {{ old('periode') == $p ? 'selected' : '' }}>{{ $p }}</option>
                             @endforeach
                         </select>
-                        <small class="text-muted">Sesuai ketentuan SAKTI: opname dilakukan tiap akhir semester.</small>
+                        <small class="text-muted" style="font-size: 11px;">Sesuai ketentuan SAKTI: opname dilakukan tiap akhir semester.</small>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-secondary">Tanggal Pelaksanaan <span class="text-danger">*</span></label>
-                        <input type="date" class="form-control border-0 shadow-sm bg-light" name="tanggal" required value="{{ old('tanggal', date('Y-m-d')) }}">
+                        <label class="form-label-app">Tanggal Pelaksanaan <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control form-control-app" name="tanggal" required value="{{ old('tanggal', date('Y-m-d')) }}">
                     </div>
 
-                    <div class="mb-4">
-                        <label class="form-label small fw-bold text-secondary">Keterangan / Dasar Pelaksanaan</label>
-                        <textarea class="form-control border-0 shadow-sm bg-light" name="keterangan" rows="3"
+                    <div class="mb-3">
+                        <label class="form-label-app">Keterangan / Dasar Pelaksanaan</label>
+                        <textarea class="form-control form-control-app" name="keterangan" rows="3"
                             placeholder="Contoh: Opname fisik akhir Semester I TA 2026 berdasarkan SE Kemenkeu...">{{ old('keterangan') }}</textarea>
                     </div>
 
-                    {{-- Info otomatis --}}
-                    <div class="alert alert-info border-0 shadow-sm small rounded-3 py-3">
+                    <div class="alert alert-info border-0 small rounded-3 py-3 mb-4">
                         <i class="fa-solid fa-circle-info me-2 text-info fs-5"></i>
-                        Setelah klik <strong>"Buka Sesi Opname"</strong>, sistem akan otomatis memuat seluruh jenis barang persediaan yang aktif beserta <strong>stok buku (snapshot)</strong> saat ini. Anda kemudian dapat mengisi hasil hitung fisik per barang.
+                        Setelah klik <strong>Buka Sesi Opname</strong>, sistem akan otomatis memuat seluruh jenis barang persediaan yang aktif beserta <strong>stok buku (snapshot)</strong> saat ini. Anda kemudian dapat mengisi hasil hitung fisik per barang.
                     </div>
 
-                    <div class="d-flex justify-content-end border-top pt-4 mt-2">
-                        <a href="{{ route('opname.index') }}" class="btn btn-light me-2 fw-bold shadow-sm rounded-pill px-4">Batal</a>
-                        <button type="submit" class="btn btn-primary fw-bold px-4 shadow-sm rounded-pill">
+                    <div class="d-flex justify-content-end border-top pt-4">
+                        <a href="{{ route('opname.index') }}" class="btn btn-light me-2">Batal</a>
+                        <button type="submit" class="btn btn-primary">
                             <i class="fa-solid fa-folder-open me-2"></i>Buka Sesi Opname
                         </button>
                     </div>
@@ -67,16 +69,18 @@
     </div>
 
     {{-- Panel Panduan --}}
-    <div class="col-lg-4 mt-4 mt-lg-0">
-        <div class="card border-0 shadow-sm rounded-4">
-            <div class="card-body p-4">
-                <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-list-check text-primary me-2"></i>Alur Opname SAKTI</h6>
-                <ol class="list-unstyled mb-0" style="line-height: 2;">
-                    <li><span class="badge bg-secondary-subtle text-secondary border me-2">1</span> <strong>Buka Sesi</strong>: sistem snapshot stok buku</li>
-                    <li><span class="badge bg-warning-subtle text-warning border me-2">2</span> <strong>Input Fisik</strong>: isi jumlah hasil hitung</li>
-                    <li><span class="badge bg-warning-subtle text-warning border me-2">3</span> <strong>Ajukan</strong>: kirim ke Validator (KPA)</li>
-                    <li><span class="badge bg-success-subtle text-success border me-2">4</span> <strong>Disetujui</strong>: stok disesuaikan otomatis</li>
-                    <li><span class="badge bg-dark text-white me-2">5</span> <strong>Cetak</strong> Berita Acara Opname Fisik</li>
+    <div class="col-lg-4 mb-4">
+        <div class="card-app h-100">
+            <div class="card-header-app">
+                <h2 class="fw-bold text-dark mb-0 fs-6"><i class="fa-solid fa-list-check text-primary me-2"></i>Alur Opname SAKTI</h2>
+            </div>
+            <div class="card-body-app">
+                <ol class="list-unstyled mb-0" style="line-height: 2.2; font-size: 13px;">
+                    <li><span class="badge-app badge-app-secondary me-2">1</span> <strong>Buka Sesi</strong>: snapshot stok buku</li>
+                    <li><span class="badge-app badge-app-warning me-2">2</span> <strong>Input Fisik</strong>: isi hasil hitung fisik</li>
+                    <li><span class="badge-app badge-app-warning me-2">3</span> <strong>Ajukan</strong>: kirim ke Validator / KPA</li>
+                    <li><span class="badge-app badge-app-success me-2">4</span> <strong>Disetujui</strong>: stok otomatis disesuaikan</li>
+                    <li><span class="badge-app badge-app-primary me-2">5</span> <strong>Cetak</strong>: unduh Berita Acara resmi</li>
                 </ol>
             </div>
         </div>
