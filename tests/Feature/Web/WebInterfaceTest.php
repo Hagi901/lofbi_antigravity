@@ -541,4 +541,122 @@ class WebInterfaceTest extends TestCase
         $response = $this->actingAs($operator)->get('/opname/'.$sesi->id.'/input-fisik');
         $response->assertStatus(200);
     }
+
+    public function test_dashboard_mutation_chart_renders_real_database_data_for_last_six_months(): void
+    {
+        $this->seed();
+        $admin = User::where('role', 'admin')->first() ?? User::factory()->create(['role' => 'admin']);
+        $persediaan = Persediaan::first() ?? Persediaan::create([
+            'jenis_barang_id' => 1,
+            'satuan' => 'buah',
+            'stok_minimum' => 5,
+        ]);
+
+        // Bersihkan transaksi persediaan agar data chart terkontrol penuh dalam tes
+        TransaksiPersediaan::query()->delete();
+
+        $namaBulan = [
+            1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr',
+            5 => 'Mei', 6 => 'Jun', 7 => 'Jul', 8 => 'Ags',
+            9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des',
+        ];
+
+        $expectedLabels = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $month = now()->startOfMonth()->subMonths($i);
+            $expectedLabels[] = $namaBulan[(int) $month->format('n')];
+        }
+
+        // 1. Transaksi bulan berjalan: masuk = 45, keluar disetujui = 20, keluar menunggu = 99 (tidak boleh dihitung)
+        TransaksiPersediaan::create([
+            'persediaan_id' => $persediaan->id,
+            'jenis' => 'masuk',
+            'jumlah' => 45,
+            'tanggal' => now()->format('Y-m-d'),
+            'status' => 'disetujui',
+        ]);
+        TransaksiPersediaan::create([
+            'persediaan_id' => $persediaan->id,
+            'jenis' => 'keluar',
+            'jumlah' => 20,
+            'tanggal' => now()->format('Y-m-d'),
+            'status' => 'disetujui',
+        ]);
+        TransaksiPersediaan::create([
+            'persediaan_id' => $persediaan->id,
+            'jenis' => 'keluar',
+            'jumlah' => 99,
+            'tanggal' => now()->format('Y-m-d'),
+            'status' => 'menunggu',
+        ]);
+
+        // 2. Transaksi 2 bulan lalu: masuk = 30, keluar disetujui = 10
+        $twoMonthsAgo = now()->startOfMonth()->subMonths(2)->addDays(5);
+        TransaksiPersediaan::create([
+            'persediaan_id' => $persediaan->id,
+            'jenis' => 'masuk',
+            'jumlah' => 30,
+            'tanggal' => $twoMonthsAgo->format('Y-m-d'),
+            'status' => 'disetujui',
+        ]);
+        TransaksiPersediaan::create([
+            'persediaan_id' => $persediaan->id,
+            'jenis' => 'keluar',
+            'jumlah' => 10,
+            'tanggal' => $twoMonthsAgo->format('Y-m-d'),
+            'status' => 'disetujui',
+        ]);
+
+        // 3. Transaksi 7 bulan lalu (di luar jendela 6 bulan): tidak boleh masuk hitungan
+        $sevenMonthsAgo = now()->startOfMonth()->subMonths(7);
+        TransaksiPersediaan::create([
+            'persediaan_id' => $persediaan->id,
+            'jenis' => 'masuk',
+            'jumlah' => 500,
+            'tanggal' => $sevenMonthsAgo->format('Y-m-d'),
+            'status' => 'disetujui',
+        ]);
+
+        $response = $this->actingAs($admin)->get('/dashboard');
+        $response->assertStatus(200);
+
+        // Pastikan variabel view berisi data dinamis
+        $response->assertViewHas('chartLabels', $expectedLabels);
+        $chartMasuk = $response->viewData('chartMasuk');
+        $chartKeluar = $response->viewData('chartKeluar');
+
+        $this->assertCount(6, $chartMasuk);
+        $this->assertCount(6, $chartKeluar);
+
+        // Index 5 adalah bulan berjalan
+        $this->assertSame(45, $chartMasuk[5]);
+        $this->assertSame(20, $chartKeluar[5]);
+
+        // Index 3 adalah 2 bulan lalu
+        $this->assertSame(30, $chartMasuk[3]);
+        $this->assertSame(10, $chartKeluar[3]);
+
+        // Index 4 adalah 1 bulan lalu (tanpa transaksi = 0)
+        $this->assertSame(0, $chartMasuk[4]);
+        $this->assertSame(0, $chartKeluar[4]);
+
+        // Pastikan view HTML tidak lagi memuat fallback statis lama
+        $response->assertDontSee('[10, 25, 50, 40, 30, 93]', false);
+        $response->assertDontSee('[5, 12, 20, 15, 25, 0]', false);
+    }
+
+    public function test_logout_requires_post_and_get_is_disallowed(): void
+    {
+        $this->seed();
+        $user = User::first() ?? User::factory()->create();
+
+        // GET /logout tidak diizinkan (405 Method Not Allowed)
+        $getResponse = $this->actingAs($user)->get('/logout');
+        $getResponse->assertStatus(405);
+
+        // POST /logout berhasil mengeluarkan pengguna dan me-redirect ke login
+        $postResponse = $this->actingAs($user)->post('/logout');
+        $postResponse->assertRedirect('/login');
+        $this->assertGuest();
+    }
 }

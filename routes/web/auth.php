@@ -24,11 +24,8 @@ Route::post('/login', [LoginController::class, 'login'])
     ->middleware('throttle:6,1')
     ->name('login.post');
 
-Route::get('/logout', [LoginController::class, 'logout'])
-    ->name('logout');
-
 Route::post('/logout', [LoginController::class, 'logout'])
-    ->name('logout.post');
+    ->name('logout');
 
 // Rute Profil & Notifikasi (Semua Role Terautentikasi)
 Route::middleware('auth')->group(function () {

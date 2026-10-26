@@ -8,6 +8,7 @@ use App\Models\AuditLog;
 use App\Models\BatchPersediaan;
 use App\Models\Persediaan;
 use App\Models\TransaksiPersediaan;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -37,10 +38,43 @@ class DashboardController extends Controller
 
         $recentLogs = AuditLog::latest()->take(5)->get();
 
-        // Data chart mutasi 6 bulan terakhir
-        $chartLabels = ['Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags'];
-        $chartMasuk = [10, 25, 50, 40, 30, (int) TransaksiPersediaan::where('jenis', 'masuk')->sum('jumlah')];
-        $chartKeluar = [5, 12, 20, 15, 25, (int) TransaksiPersediaan::where('jenis', 'keluar')->where('status', 'disetujui')->sum('jumlah')];
+        // Data chart mutasi 6 bulan terakhir (berakhir di bulan berjalan)
+        $namaBulan = [
+            1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr',
+            5 => 'Mei', 6 => 'Jun', 7 => 'Jul', 8 => 'Ags',
+            9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des',
+        ];
+
+        $chartLabels = [];
+        $chartMasuk = [];
+        $chartKeluar = [];
+
+        $startPeriod = now()->startOfMonth()->subMonths(5);
+        $transaksis = TransaksiPersediaan::where('tanggal', '>=', $startPeriod->toDateString())
+            ->where(function ($q) {
+                $q->where('jenis', 'masuk')
+                    ->orWhere(function ($q2) {
+                        $q2->where('jenis', 'keluar')->where('status', 'disetujui');
+                    });
+            })
+            ->get();
+
+        for ($i = 5; $i >= 0; $i--) {
+            $monthCarbon = now()->startOfMonth()->subMonths($i);
+            $yearMonth = $monthCarbon->format('Y-m');
+            $chartLabels[] = $namaBulan[(int) $monthCarbon->format('n')];
+
+            $totalMasuk = (int) $transaksis->filter(function ($t) use ($yearMonth) {
+                return $t->jenis === 'masuk' && Carbon::parse($t->tanggal)->format('Y-m') === $yearMonth;
+            })->sum('jumlah');
+
+            $totalKeluar = (int) $transaksis->filter(function ($t) use ($yearMonth) {
+                return $t->jenis === 'keluar' && $t->status === 'disetujui' && Carbon::parse($t->tanggal)->format('Y-m') === $yearMonth;
+            })->sum('jumlah');
+
+            $chartMasuk[] = $totalMasuk;
+            $chartKeluar[] = $totalKeluar;
+        }
 
         return view('dashboard', compact(
             'totalAset',

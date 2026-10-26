@@ -183,9 +183,12 @@
                         @endif
                         <li><hr class="dropdown-divider my-1"></li>
                         <li>
-                            <a class="dropdown-item py-2 text-danger" href="{{ route('logout') }}">
-                                <i class="fa-solid fa-right-from-bracket me-2"></i> Keluar
-                            </a>
+                            <form method="POST" action="{{ route('logout') }}" class="m-0">
+                                @csrf
+                                <button type="submit" class="dropdown-item py-2 text-danger">
+                                    <i class="fa-solid fa-right-from-bracket me-2"></i> Keluar
+                                </button>
+                            </form>
                         </li>
                     </ul>
                 </div>

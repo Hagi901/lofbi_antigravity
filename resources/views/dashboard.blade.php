@@ -183,11 +183,11 @@
         new Chart(ctx, {
             type: 'line',
             data: {
-                labels: {!! json_encode($chartLabels ?? ['Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags']) !!},
+                labels: {!! json_encode($chartLabels) !!},
                 datasets: [
                     {
                         label: 'Barang Masuk (Unit)',
-                        data: {!! json_encode($chartMasuk ?? [10, 25, 50, 40, 30, 93]) !!},
+                        data: {!! json_encode($chartMasuk) !!},
                         borderColor: '#1E40AF',
                         backgroundColor: 'rgba(30, 64, 175, 0.08)',
                         borderWidth: 2,
@@ -197,7 +197,7 @@
                     }, 
                     {
                         label: 'Barang Keluar (Unit)',
-                        data: {!! json_encode($chartKeluar ?? [5, 12, 20, 15, 25, 0]) !!},
+                        data: {!! json_encode($chartKeluar) !!},
                         borderColor: '#D97706',
                         backgroundColor: 'rgba(217, 119, 6, 0.08)',
                         borderWidth: 2,
