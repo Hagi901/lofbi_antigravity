@@ -59,7 +59,7 @@
                 </a>
 
                 <!-- Manajemen Aset -->
-                <a href="{{ url('/assets*') }}" class="sidebar-link {{ request()->is('assets*') ? 'active' : '' }}">
+                <a href="{{ url('/assets') }}" class="sidebar-link {{ request()->is('assets*') ? 'active' : '' }}">
                     <i class="fa-solid fa-boxes-stacked nav-icon"></i>
                     <span>Manajemen Aset</span>
                 </a>
