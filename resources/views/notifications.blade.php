@@ -4,7 +4,7 @@
 
 @section('content')
 <!-- Page Header -->
-<x-page-header title="Pusat Notifikasi &amp; Peringatan" subtitle="Pemberitahuan alur validasi, peringatan stok, dan catatan aktivitas sistem">
+<x-page-header title="Pusat Notifikasi & Peringatan" subtitle="Pemberitahuan alur validasi, peringatan stok, dan catatan aktivitas sistem">
     <x-slot:actions>
         @if(isset($notifikasiSistem) && $notifikasiSistem->count() > 0)
             <form action="{{ route('notifications.markAllRead') }}" method="POST">

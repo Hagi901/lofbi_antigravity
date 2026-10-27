@@ -708,4 +708,16 @@ class WebInterfaceTest extends TestCase
         $chartMasukAfter = $resAfter->viewData('chartMasuk');
         $this->assertSame(75, $chartMasukAfter[5]);
     }
+
+    public function test_pages_do_not_contain_double_escaped_ampersand(): void
+    {
+        $this->seed();
+        $admin = User::where('role', 'admin')->first() ?? User::factory()->create(['role' => 'admin']);
+
+        foreach (['/notifications', '/upload', '/reports'] as $uri) {
+            $response = $this->actingAs($admin)->get($uri);
+            $response->assertStatus(200);
+            $response->assertDontSee('&amp;amp;', false);
+        }
+    }
 }

@@ -678,4 +678,96 @@ class UploadStagingValidationTest extends TestCase
         $response->assertSee('Kode akun salah');
         $response->assertSee('Satuan barang bukan BUAH melainkan PACK');
     }
+
+    public function test_command_rapikan_notifikasi_upload_cleans_duplicates_updates_count_and_is_idempotent(): void
+    {
+        Notifikasi::truncate();
+
+        $paket = UploadPaket::create([
+            'nama_file' => 'paket_command_test.xlsx',
+            'path_file' => 'uploads/paket_command_test.xlsx',
+            'jenis' => 'sakti',
+            'diunggah_oleh' => $this->operator->id,
+            'jumlah_baris' => 10,
+            'status' => 'disetujui_sebagian',
+        ]);
+
+        // Buat 4 baris yang disetujui di paket
+        for ($i = 1; $i <= 4; $i++) {
+            UploadBaris::create([
+                'upload_paket_id' => $paket->id,
+                'nomor_baris' => $i,
+                'kode_barang_lengkap' => '1010301014'.str_pad((string) $i, 6, '0', STR_PAD_LEFT),
+                'nama_barang' => "Barang Disetujui {$i}",
+                'satuan' => 'BUAH',
+                'saldo_sistem' => 10,
+                'status' => 'disetujui',
+            ]);
+        }
+
+        // Buat 5 notifikasi jenis 'disetujui' lama yang menumpuk untuk paket yang sama
+        for ($i = 1; $i <= 5; $i++) {
+            Notifikasi::create([
+                'penerima_id' => $this->operator->id,
+                'jenis' => 'disetujui',
+                'judul' => 'Data Disetujui: Paket #'.$paket->id,
+                'pesan' => "Lama {$i} baris disetujui",
+                'tautan' => '/inventory',
+                'data' => [
+                    'paket_id' => $paket->id,
+                    'disetujui_count' => $i,
+                    'total_baris' => 10,
+                ],
+                'dibaca_pada' => $i === 5 ? null : now()->subMinutes(10),
+            ]);
+        }
+
+        // Buat juga notifikasi 'ada_ditolak' dan 'upload_baru' untuk memastikan tidak tersentuh
+        $notifDitolak = Notifikasi::create([
+            'penerima_id' => $this->operator->id,
+            'jenis' => 'ada_ditolak',
+            'judul' => 'Baris Ditolak',
+            'pesan' => 'Baris ditolak',
+            'data' => ['paket_id' => $paket->id],
+        ]);
+
+        $notifBaru = Notifikasi::create([
+            'penerima_id' => $this->validator->id,
+            'jenis' => 'upload_baru',
+            'judul' => 'Upload Baru',
+            'pesan' => 'Berkas baru',
+            'data' => ['paket_id' => $paket->id],
+        ]);
+
+        // Jalankan command pertama kali
+        $this->artisan('lofbi:rapikan-notifikasi-upload')
+            ->expectsOutputToContain('4 notifikasi duplikat berhasil dihapus')
+            ->assertExitCode(0);
+
+        // Verifikasi hanya tersisa 1 notifikasi 'disetujui' untuk paket itu
+        $disetujuiNotifs = Notifikasi::where('jenis', 'disetujui')
+            ->where('penerima_id', $this->operator->id)
+            ->get();
+        $this->assertCount(1, $disetujuiNotifs);
+
+        $keptNotif = $disetujuiNotifs->first();
+        // Jumlah baris disetujui harus dihitung ulang (4 baris)
+        $this->assertSame(4, $keptNotif->data['disetujui_count']);
+        $this->assertSame(10, $keptNotif->data['total_baris']);
+        $this->assertStringContainsString('4 dari 10 baris pada paket paket_command_test.xlsx telah disetujui', $keptNotif->pesan);
+        // Status dibaca mengikuti notifikasi terbaru (null)
+        $this->assertNull($keptNotif->dibaca_pada);
+
+        // Notifikasi 'ada_ditolak' dan 'upload_baru' tidak berubah
+        $this->assertNotNull(Notifikasi::find($notifDitolak->id));
+        $this->assertNotNull(Notifikasi::find($notifBaru->id));
+
+        // Jalankan command kedua kali (idempoten)
+        $this->artisan('lofbi:rapikan-notifikasi-upload')
+            ->expectsOutputToContain('0 notifikasi duplikat berhasil dihapus')
+            ->assertExitCode(0);
+
+        // Hasil tetap sama
+        $this->assertCount(1, Notifikasi::where('jenis', 'disetujui')->where('penerima_id', $this->operator->id)->get());
+    }
 }

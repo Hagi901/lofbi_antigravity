@@ -4,7 +4,7 @@
 
 @section('content')
 <!-- Page Header -->
-<x-page-header title="Pusat Laporan &amp; Ekspor" subtitle="Unduh laporan berkala aset BMN, buku persediaan FIFO, dan Berita Acara Opname Fisik">
+<x-page-header title="Pusat Laporan & Ekspor" subtitle="Unduh laporan berkala aset BMN, buku persediaan FIFO, dan Berita Acara Opname Fisik">
 </x-page-header>
 
 @if(session('success'))

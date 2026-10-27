@@ -8,7 +8,7 @@
 @endphp
 
 <!-- Header Halaman -->
-<x-page-header title="Upload &amp; Validasi Data" subtitle="Data persediaan SAKTI masuk ke antrean staging untuk diverifikasi sebelum resmi masuk ke inventaris">
+<x-page-header title="Upload & Validasi Data" subtitle="Data persediaan SAKTI masuk ke antrean staging untuk diverifikasi sebelum resmi masuk ke inventaris">
     <x-slot:actions>
         @if(in_array($userRole, ['admin', 'operator']))
             <a href="#formUpload" class="btn btn-primary btn-sm">
