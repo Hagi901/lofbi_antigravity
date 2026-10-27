@@ -3,6 +3,10 @@
 @section('page_title', 'Persediaan Barang (Metode FIFO)')
 
 @section('content')
+@push('styles')
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+@endpush
+
 @php
     $userRole = Auth::user()->role ?? '';
     $totalItemCount = $totalItems ?? $items->count();
@@ -92,7 +96,7 @@
         @endif
 
         <div class="table-responsive">
-            <table class="table table-hover align-middle border-bottom" style="font-size: 13px;">
+            <table id="tabelPersediaan" class="table table-hover table-sm align-middle border-bottom w-100" style="font-size: 12.5px;">
                 <thead class="table-light">
                     <tr>
                         <th class="text-secondary small fw-bold border-0 py-2" width="12%">KODE / ID</th>
@@ -101,7 +105,7 @@
                         <th class="text-secondary small fw-bold border-0 py-2 text-center" width="14%">SISA STOK (FIFO)</th>
                         <th class="text-secondary small fw-bold border-0 py-2 text-end" width="14%">NILAI SALDO (Rp)</th>
                         <th class="text-secondary small fw-bold border-0 py-2 text-center" width="8%">STATUS</th>
-                        <th class="text-secondary small fw-bold border-0 py-2 text-center" width="6%">AKSI</th>
+                        <th class="text-secondary small fw-bold border-0 py-2 text-center" width="6%" data-orderable="false" data-searchable="false">AKSI</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -114,16 +118,49 @@
                             if ($sisaStok > $minStok) {
                                 $statusBadgeType = 'success';
                                 $statusLabel = 'Aman';
+                                $statusOrder = 3;
                             } elseif ($sisaStok > 0) {
                                 $statusBadgeType = 'warning';
                                 $statusLabel = 'Menipis';
+                                $statusOrder = 2;
                             } else {
                                 $statusBadgeType = 'danger';
                                 $statusLabel = 'Habis';
+                                $statusOrder = 1;
                             }
+
+                            // Kumpulkan seluruh kode SAKTI (dengan titik dan tanpa titik) untuk pencarian
+                            $saktiKeywords = [];
+                            if (!empty($item->kode_barang_lengkap)) {
+                                $raw = trim($item->kode_barang_lengkap);
+                                $saktiKeywords[] = $raw;
+                                $saktiKeywords[] = str_replace('.', '', $raw);
+                            }
+                            foreach ($item->batches as $b) {
+                                if (!empty($b->kode_barang_lengkap)) {
+                                    $raw = trim($b->kode_barang_lengkap);
+                                    $cleanDigits = str_replace('.', '', $raw);
+                                    $saktiKeywords[] = $raw;
+                                    $saktiKeywords[] = $cleanDigits;
+                                    if (strlen($cleanDigits) === 16 && !str_contains($raw, '.')) {
+                                        $saktiKeywords[] = substr($cleanDigits, 0, 1) . '.' .
+                                            substr($cleanDigits, 1, 2) . '.' .
+                                            substr($cleanDigits, 3, 2) . '.' .
+                                            substr($cleanDigits, 5, 2) . '.' .
+                                            substr($cleanDigits, 7, 3) . '.' .
+                                            substr($cleanDigits, 10, 6);
+                                    }
+                                }
+                                if (!empty($b->kb_lvl1) && !empty($b->kb_seq)) {
+                                    $dotted = "{$b->kb_lvl1}.{$b->kb_lvl2}.{$b->kb_lvl3}.{$b->kb_lvl4}.{$b->kb_lvl5}.{$b->kb_seq}";
+                                    $saktiKeywords[] = $dotted;
+                                    $saktiKeywords[] = str_replace('.', '', $dotted);
+                                }
+                            }
+                            $saktiSearchText = implode(' ', array_values(array_unique(array_filter($saktiKeywords))));
                         @endphp
                         <tr>
-                            <td class="py-2">
+                            <td class="py-2" data-order="{{ $item->id }}">
                                 <span class="badge bg-white text-dark border px-2 py-1" style="font-size: 11px;">
                                     INV-{{ str_pad($item->id, 3, '0', STR_PAD_LEFT) }}
                                 </span>
@@ -135,19 +172,22 @@
                                 @if($item->merk)
                                     <div class="text-muted small" style="font-size: 11px;">{{ $item->merk }}</div>
                                 @endif
+                                @if($saktiSearchText !== '')
+                                    <span class="visually-hidden">{{ $saktiSearchText }}</span>
+                                @endif
                             </td>
                             <td class="py-2">
                                 <span class="badge-app badge-app-secondary">
                                     {{ $item->jenisBarang?->kategori?->nama ?? 'Persediaan' }}
                                 </span>
                             </td>
-                            <td class="text-center fw-bold py-2 {{ $sisaStok <= 0 ? 'text-danger' : '' }}">
+                            <td class="text-center fw-bold py-2 {{ $sisaStok <= 0 ? 'text-danger' : '' }}" data-order="{{ $sisaStok }}">
                                 {{ number_format($sisaStok) }} <span class="fw-normal small text-muted">{{ $item->satuan }}</span>
                             </td>
-                            <td class="text-end fw-bold text-dark py-2">
+                            <td class="text-end fw-bold text-dark py-2" data-order="{{ $nilaiSaldo }}">
                                 Rp {{ number_format($nilaiSaldo, 0, ',', '.') }}
                             </td>
-                            <td class="text-center py-2">
+                            <td class="text-center py-2" data-order="{{ $statusOrder }}">
                                 <x-status-badge :status="$statusLabel" :type="$statusBadgeType" />
                             </td>
                             <td class="text-center py-2">
@@ -162,22 +202,31 @@
                             </td>
                         </tr>
                     @empty
-                        <tr>
-                            <td colspan="7" class="p-0 border-0">
-                                <x-empty-state
-                                    icon="fa-solid fa-boxes-packing"
-                                    title="Belum Ada Data Barang Persediaan"
-                                    message="Data master persediaan belum tercatat. Silakan unggah berkas SAKTI / SIMAN melalui menu Upload & Validasi."
-                                    actionText="Upload Berkas"
-                                    :actionUrl="route('upload.index')"
-                                    :actionPermission="in_array($userRole, ['admin', 'operator'])"
-                                />
-                            </td>
-                        </tr>
+                        {{-- DataTables handles empty state --}}
                     @endforelse
                 </tbody>
             </table>
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#tabelPersediaan').DataTable({
+            language: Object.assign({}, window.DataTablesIndonesian || {}, {
+                searchPlaceholder: "Cari nama, kode, atau kategori"
+            }),
+            pageLength: 25,
+            lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+            order: [[0, 'asc']],
+            columnDefs: [
+                { orderable: false, searchable: false, targets: 6 }
+            ]
+        });
+    });
+</script>
+@endpush
 @endsection

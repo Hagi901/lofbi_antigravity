@@ -84,7 +84,7 @@
                         <th class="text-secondary small fw-bold border-0 py-2 text-end" width="14%">NILAI PEROLEHAN</th>
                         <th class="text-secondary small fw-bold border-0 py-2 text-end" width="13%">PENYUSUTAN</th>
                         <th class="text-secondary small fw-bold border-0 py-2 text-end" width="13%">NILAI BUKU</th>
-                        <th class="text-secondary small fw-bold border-0 py-2 text-center" width="4%">AKSI</th>
+                        <th class="text-secondary small fw-bold border-0 py-2 text-center" width="4%" data-orderable="false" data-searchable="false">AKSI</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -177,9 +177,14 @@
 <script>
     $(document).ready(function() {
         $('#tabelAset').DataTable({
-            language: window.DataTablesIndonesian || {},
+            language: Object.assign({}, window.DataTablesIndonesian || {}, {
+                searchPlaceholder: "Cari nama, kode, atau kategori"
+            }),
             ordering: true,
             pageLength: 10,
+            columnDefs: [
+                { orderable: false, searchable: false, targets: 6 }
+            ]
         });
     });
 </script>

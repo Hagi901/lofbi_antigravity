@@ -720,4 +720,31 @@ class WebInterfaceTest extends TestCase
             $response->assertDontSee('&amp;amp;', false);
         }
     }
+
+    public function test_inventory_index_renders_datatables_and_hidden_sakti_search_code(): void
+    {
+        $this->seed();
+        $admin = User::where('role', 'admin')->first() ?? User::factory()->create(['role' => 'admin']);
+
+        $item = Persediaan::first();
+        BatchPersediaan::create([
+            'persediaan_id' => $item->id,
+            'no_batch' => 999,
+            'no_faktur' => 'SAKTI-TEST-999',
+            'tanggal_masuk' => now()->toDateString(),
+            'jumlah_masuk' => 10,
+            'sisa_stok' => 10,
+            'harga_satuan' => 15000,
+            'harga_belum_diisi' => false,
+            'kode_barang_lengkap' => '1.01.01.08.047.000001',
+        ]);
+
+        $response = $this->actingAs($admin)->get('/inventory');
+
+        $response->assertStatus(200);
+        $response->assertSee('id="tabelPersediaan"', false);
+        $response->assertSee('Cari nama, kode, atau kategori');
+        $response->assertSee('1010108047000001');
+        $response->assertSee('visually-hidden');
+    }
 }

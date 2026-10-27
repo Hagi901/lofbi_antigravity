@@ -674,7 +674,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .dataTables_filter input {
-    width: 260px !important;
+    width: 290px !important;
     max-width: 100%;
     padding: 0.42rem 0.85rem;
     font-size: 13px;
@@ -686,7 +686,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .dataTables_filter input:focus {
-    width: 300px !important;
+    width: 320px !important;
     border-color: var(--color-primary);
     outline: none;
     box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.15);

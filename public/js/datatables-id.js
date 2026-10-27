@@ -12,7 +12,7 @@ window.DataTablesIndonesian = {
     loadingRecords: "Sedang memuat data...",
     processing: "Sedang memproses...",
     search: "Cari:",
-    searchPlaceholder: "Ketik kata kunci pencarian...",
+    searchPlaceholder: "Cari nama, kode, atau kategori",
     zeroRecords: "Tidak ditemukan data yang sesuai",
     paginate: {
         first: "Pertama",
