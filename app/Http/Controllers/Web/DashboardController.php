@@ -59,14 +59,33 @@ class DashboardController extends Controller
             })
             ->get();
 
+        $batches = BatchPersediaan::where('tanggal_masuk', '>=', $startPeriod->toDateString())
+            ->whereNotNull('upload_baris_id')
+            ->get();
+
         for ($i = 5; $i >= 0; $i--) {
             $monthCarbon = now()->startOfMonth()->subMonths($i);
             $yearMonth = $monthCarbon->format('Y-m');
             $chartLabels[] = $namaBulan[(int) $monthCarbon->format('n')];
 
-            $totalMasuk = (int) $transaksis->filter(function ($t) use ($yearMonth) {
+            $totalMasukTransaksi = (int) $transaksis->filter(function ($t) use ($yearMonth) {
                 return $t->jenis === 'masuk' && Carbon::parse($t->tanggal)->format('Y-m') === $yearMonth;
             })->sum('jumlah');
+
+            $totalMasukBatch = (int) $batches->filter(function ($b) use ($yearMonth, $transaksis) {
+                if (Carbon::parse($b->tanggal_masuk)->format('Y-m') !== $yearMonth) {
+                    return false;
+                }
+
+                // Cegah hitung ganda bila batch sudah memiliki transaksi masuk terkait
+                if ($b->no_referensi && $transaksis->where('jenis', 'masuk')->where('no_referensi', $b->no_referensi)->isNotEmpty()) {
+                    return false;
+                }
+
+                return true;
+            })->sum('jumlah_masuk');
+
+            $totalMasuk = $totalMasukTransaksi + $totalMasukBatch;
 
             $totalKeluar = (int) $transaksis->filter(function ($t) use ($yearMonth) {
                 return $t->jenis === 'keluar' && $t->status === 'disetujui' && Carbon::parse($t->tanggal)->format('Y-m') === $yearMonth;

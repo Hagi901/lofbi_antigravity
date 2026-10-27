@@ -3,12 +3,15 @@
 namespace Tests\Feature\Web;
 
 use App\Models\Aset;
+use App\Models\BatchPersediaan;
 use App\Models\Kategori;
 use App\Models\OpnameSesi;
 use App\Models\Persediaan;
 use App\Models\Ruangan;
 use App\Models\Setting;
 use App\Models\TransaksiPersediaan;
+use App\Models\UploadBaris;
+use App\Models\UploadPaket;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -554,6 +557,7 @@ class WebInterfaceTest extends TestCase
 
         // Bersihkan transaksi persediaan agar data chart terkontrol penuh dalam tes
         TransaksiPersediaan::query()->delete();
+        BatchPersediaan::whereNotNull('upload_baris_id')->delete();
 
         $namaBulan = [
             1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr',
@@ -658,5 +662,50 @@ class WebInterfaceTest extends TestCase
         $postResponse = $this->actingAs($user)->post('/logout');
         $postResponse->assertRedirect('/login');
         $this->assertGuest();
+    }
+
+    public function test_dashboard_mutation_chart_includes_approved_upload_batches_in_current_month(): void
+    {
+        $this->seed();
+        $admin = User::where('role', 'admin')->first() ?? User::factory()->create(['role' => 'admin']);
+        $validator = User::where('role', 'validator')->first() ?? User::factory()->create(['role' => 'validator']);
+        $operator = User::where('role', 'operator')->first() ?? User::factory()->create(['role' => 'operator']);
+
+        // Bersihkan transaksi dan batch upload
+        TransaksiPersediaan::query()->delete();
+        BatchPersediaan::whereNotNull('upload_baris_id')->delete();
+
+        // 1. Buat paket dan baris unggahan
+        $paket = UploadPaket::create([
+            'nama_file' => 'bahan_opname_chart_test.xlsx',
+            'path_file' => 'uploads/bahan_opname_chart_test.xlsx',
+            'jenis' => 'sakti',
+            'diunggah_oleh' => $operator->id,
+            'jumlah_baris' => 1,
+            'status' => 'menunggu',
+        ]);
+
+        $baris = UploadBaris::create([
+            'upload_paket_id' => $paket->id,
+            'nomor_baris' => 1,
+            'kode_barang_lengkap' => '1010301014000088',
+            'nama_barang' => 'Barang Masuk Lewat Unggahan',
+            'satuan' => 'BUAH',
+            'saldo_sistem' => 75,
+            'status' => 'menunggu',
+        ]);
+
+        // Sebelum disetujui, chart bulan berjalan = 0
+        $resBefore = $this->actingAs($admin)->get('/dashboard');
+        $chartMasukBefore = $resBefore->viewData('chartMasuk');
+        $this->assertSame(0, $chartMasukBefore[5]);
+
+        // 2. Validator menyetujui baris unggahan
+        $this->actingAs($validator)->post("/upload/baris/{$baris->id}/setujui");
+
+        // 3. Setelah disetujui, grafik bulan berjalan memuat jumlah batch tersebut (75)
+        $resAfter = $this->actingAs($admin)->get('/dashboard');
+        $chartMasukAfter = $resAfter->viewData('chartMasuk');
+        $this->assertSame(75, $chartMasukAfter[5]);
     }
 }
