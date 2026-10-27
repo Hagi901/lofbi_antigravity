@@ -703,6 +703,75 @@ h1, h2, h3, h4, h5, h6 {
     text-align: right;
 }
 
+/* ── Pagination Global (Bootstrap 5 & Laravel Paginator) ── */
+.pagination {
+    margin-bottom: 0;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.pagination .page-item:first-child .page-link,
+.pagination .page-item:last-child .page-link,
+.pagination .page-link {
+    border-radius: var(--radius-sm);
+    padding: 0.35rem 0.75rem;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-text-main);
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    transition: all 0.15s ease-in-out;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pagination .page-link:hover {
+    background-color: var(--color-primary-light);
+    color: var(--color-primary);
+    border-color: var(--color-primary-border);
+}
+
+.pagination .page-link:focus {
+    box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.15);
+    border-color: var(--color-primary);
+}
+
+.pagination .page-item.active .page-link {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.pagination .page-item.disabled .page-link {
+    color: var(--color-text-subtle);
+    background-color: var(--color-surface-muted);
+    border-color: var(--color-border);
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.pagination svg {
+    width: 14px;
+    height: 14px;
+    max-width: 14px;
+    max-height: 14px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+@media (max-width: 576px) {
+    .pagination {
+        justify-content: center;
+        gap: 3px;
+    }
+    .pagination .page-link {
+        padding: 0.3rem 0.55rem;
+        font-size: 12px;
+    }
+}
+
 .dataTables_paginate .pagination {
     margin-bottom: 0;
     gap: 3px;

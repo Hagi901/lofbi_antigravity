@@ -52,15 +52,45 @@
                                                 {{ $notif->created_at->diffForHumans() }}
                                             </span>
                                         </div>
-                                        <p class="mb-2 small {{ is_null($notif->dibaca_pada) ? 'text-secondary' : 'text-muted' }}" style="font-size: 12.5px; line-height: 1.45;">
+                                        <p class="mb-2 small {{ is_null($notif->dibaca_pada) ? 'text-secondary' : 'text-muted' }}" style="font-size: 12.5px; line-height: 1.45; word-break: break-word;">
                                             {{ $notif->pesan }}
                                         </p>
+
+                                        @if($notif->jenis === 'ada_ditolak')
+                                            @php
+                                                $notifData = $notif->data ?? [];
+                                                $nomorBaris = $notifData['nomor_baris'] ?? null;
+                                                $namaBarang = $notifData['nama_barang'] ?? null;
+                                                $kodeBarang = $notifData['kode_barang'] ?? null;
+                                                $catatan = $notifData['deskripsi_revisi'] ?? null;
+                                            @endphp
+                                            <div class="mb-3 p-2 px-3 rounded-2 bg-light border border-danger-subtle small" style="word-break: break-word; font-size: 12px;">
+                                                @if($nomorBaris || $namaBarang || $kodeBarang)
+                                                    <div class="mb-1 text-muted">
+                                                        @if($nomorBaris)
+                                                            <span class="badge bg-white text-dark border me-1">Baris #{{ $nomorBaris }}</span>
+                                                        @endif
+                                                        @if($namaBarang)
+                                                            <strong class="text-dark">{{ $namaBarang }}</strong>
+                                                        @endif
+                                                        @if($kodeBarang)
+                                                            <span class="text-muted">({{ $kodeBarang }})</span>
+                                                        @endif
+                                                    </div>
+                                                @endif
+                                                @if($catatan)
+                                                    <div class="fw-semibold text-danger mb-0">Catatan penolakan:</div>
+                                                    <div class="text-secondary text-wrap" style="line-height: 1.45;">{{ $catatan }}</div>
+                                                @endif
+                                            </div>
+                                        @endif
+
                                         @if($notif->tautan)
                                             <a href="{{ $notif->tautan }}" class="btn btn-sm btn-primary">
                                                 @if($notif->jenis === 'upload_baru')
                                                     <i class="fa-solid fa-magnifying-glass me-1"></i> Periksa Berkas
                                                 @elseif($notif->jenis === 'ada_ditolak')
-                                                    <i class="fa-solid fa-filter me-1"></i> Lihat yang Ditolak
+                                                    <i class="fa-solid fa-wrench me-1"></i> Perbaiki
                                                 @elseif($notif->jenis === 'disetujui')
                                                     <i class="fa-solid fa-boxes-stacked me-1"></i> Lihat Data
                                                 @else

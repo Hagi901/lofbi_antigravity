@@ -225,13 +225,13 @@ class UploadService
     /**
      * Setujui satu baris staging dan promosikan ke tabel resmi batch_persediaans.
      */
-    public function setujuiBaris(UploadBaris $baris, User $validator, ?int $ruanganId = null): BatchPersediaan
+    public function setujuiBaris(UploadBaris $baris, User $validator, ?int $ruanganId = null, bool $kirimNotifikasi = true): BatchPersediaan
     {
         if ($validator->role !== 'validator') {
             abort(403, 'Hanya role validator yang diizinkan memvalidasi baris.');
         }
 
-        return DB::transaction(function () use ($baris, $validator, $ruanganId) {
+        return DB::transaction(function () use ($baris, $validator, $ruanganId, $kirimNotifikasi) {
             if ($baris->status === 'disetujui' && $baris->batch_persediaan_id) {
                 return $baris->batchPersediaan;
             }
@@ -311,8 +311,10 @@ class UploadService
             $paket = $baris->paket;
             $paket->refreshStatus();
 
-            // 8. Kirim notifikasi 'disetujui' ke pengunggah jika paket selesai atau disetujui
-            $this->kirimNotifikasiPersetujuanJikaPerlu($paket);
+            // 8. Kirim notifikasi 'disetujui' ke pengunggah jika diminta
+            if ($kirimNotifikasi) {
+                $this->kirimNotifikasiPersetujuanJikaPerlu($paket);
+            }
 
             return $batch;
         });
@@ -357,6 +359,8 @@ class UploadService
                     'data' => [
                         'paket_id' => $paket->id,
                         'nomor_baris' => $baris->nomor_baris,
+                        'nama_barang' => $baris->nama_barang,
+                        'kode_barang' => $baris->kode_barang_lengkap,
                         'deskripsi_revisi' => $deskripsiClean,
                     ],
                 ]);
@@ -388,11 +392,15 @@ class UploadService
             $approvedCount = 0;
 
             foreach ($pendingRows as $baris) {
-                $this->setujuiBaris($baris, $validator, $ruanganId);
+                $this->setujuiBaris($baris, $validator, $ruanganId, false);
                 $approvedCount++;
             }
 
             $paket->refreshStatus();
+
+            if ($approvedCount > 0) {
+                $this->kirimNotifikasiPersetujuanJikaPerlu($paket);
+            }
 
             AuditLog::create([
                 'user_id' => $validator->id,
@@ -408,8 +416,9 @@ class UploadService
 
     /**
      * Kirim notifikasi 'disetujui' ke pengunggah ketika ada baris yang disetujui atau paket selesai.
+     * Menggunakan pendekatan upsert: satu notifikasi per paket per pengunggah.
      */
-    private function kirimNotifikasiPersetujuanJikaPerlu(UploadPaket $paket): void
+    public function kirimNotifikasiPersetujuanJikaPerlu(UploadPaket $paket): void
     {
         $pengunggah = $paket->pengunggah;
         if (! $pengunggah) {
@@ -417,19 +426,47 @@ class UploadService
         }
 
         $disetujuiCount = $paket->baris()->where('status', 'disetujui')->count();
+        $totalBaris = $paket->jumlah_baris ?: $paket->baris()->count();
 
-        // Buat notifikasi dengan tautan langsung ke tabel Persediaan
-        Notifikasi::create([
-            'penerima_id' => $pengunggah->id,
-            'jenis' => 'disetujui',
-            'judul' => 'Data Disetujui: Paket #'.$paket->id,
-            'pesan' => 'Data pada paket '.$paket->nama_file.' telah disetujui ('.$disetujuiCount.' baris). Klik Lihat Data untuk memeriksa inventaris.',
-            'tautan' => route('inventory.index', ['upload_paket_id' => $paket->id]),
-            'data' => [
-                'paket_id' => $paket->id,
-                'disetujui_count' => $disetujuiCount,
-                'status_paket' => $paket->status,
-            ],
-        ]);
+        $judul = 'Data Disetujui: Paket #'.$paket->id;
+        $pesan = $disetujuiCount.' dari '.$totalBaris.' baris pada paket '.$paket->nama_file.' telah disetujui';
+        $tautan = route('inventory.index', ['upload_paket_id' => $paket->id]);
+
+        $payload = [
+            'paket_id' => $paket->id,
+            'nama_file' => $paket->nama_file,
+            'disetujui_count' => $disetujuiCount,
+            'total_baris' => $totalBaris,
+            'status_paket' => $paket->status,
+        ];
+
+        // Cari notifikasi jenis 'disetujui' milik pengunggah untuk paket ini
+        $notifikasi = Notifikasi::where('penerima_id', $pengunggah->id)
+            ->where('jenis', 'disetujui')
+            ->where(function ($q) use ($paket) {
+                $q->where('data->paket_id', $paket->id)
+                    ->orWhere('data->paket_id', (string) $paket->id);
+            })
+            ->first();
+
+        if ($notifikasi) {
+            $notifikasi->update([
+                'judul' => $judul,
+                'pesan' => $pesan,
+                'tautan' => $tautan,
+                'data' => $payload,
+                'dibaca_pada' => null,
+            ]);
+        } else {
+            Notifikasi::create([
+                'penerima_id' => $pengunggah->id,
+                'jenis' => 'disetujui',
+                'judul' => $judul,
+                'pesan' => $pesan,
+                'tautan' => $tautan,
+                'data' => $payload,
+                'dibaca_pada' => null,
+            ]);
+        }
     }
 }

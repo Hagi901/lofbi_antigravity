@@ -10,6 +10,7 @@ use App\Models\OpnameDetail;
 use App\Models\OpnameSesi;
 use App\Models\Persediaan;
 use App\Models\Ruangan;
+use App\Models\UploadBaris;
 use App\Models\UploadPaket;
 use App\Models\User;
 use App\Services\Upload\UploadService;
@@ -480,5 +481,201 @@ class UploadStagingValidationTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('(Nilai belum lengkap)');
         $response->assertSee('1');
+    }
+
+    public function test_pagination_renders_bootstrap_five_with_indonesian_text_and_no_showing_text(): void
+    {
+        // 1. Tes GET /upload dengan > 25 paket
+        for ($i = 1; $i <= 26; $i++) {
+            UploadPaket::create([
+                'nama_file' => "paket_test_{$i}.xlsx",
+                'path_file' => "uploads/paket_test_{$i}.xlsx",
+                'jenis' => 'sakti',
+                'diunggah_oleh' => $this->operator->id,
+                'jumlah_baris' => 10,
+                'status' => 'menunggu',
+            ]);
+        }
+
+        $responseUpload = $this->actingAs($this->admin)->get('/upload');
+        $responseUpload->assertStatus(200);
+        $responseUpload->assertSee('pagination');
+        $responseUpload->assertSee('Menampilkan');
+        $responseUpload->assertDontSee('Showing');
+
+        // 2. Tes GET /upload/{id} dengan > 25 baris (30 baris)
+        $paket = UploadPaket::first();
+        for ($i = 1; $i <= 30; $i++) {
+            UploadBaris::create([
+                'upload_paket_id' => $paket->id,
+                'nomor_baris' => $i,
+                'kode_barang_lengkap' => '1010301014'.str_pad((string) $i, 6, '0', STR_PAD_LEFT),
+                'nama_barang' => "Barang Uji {$i}",
+                'satuan' => 'BUAH',
+                'saldo_sistem' => 10,
+                'status' => 'menunggu',
+            ]);
+        }
+
+        $responseShow = $this->actingAs($this->admin)->get("/upload/{$paket->id}");
+        $responseShow->assertStatus(200);
+        $responseShow->assertSee('pagination');
+        $responseShow->assertSee('Menampilkan');
+        $responseShow->assertDontSee('Showing');
+    }
+
+    public function test_approving_rows_one_by_one_upserts_single_notification_with_updated_count_and_unread_state(): void
+    {
+        Notifikasi::truncate();
+
+        $paket = UploadPaket::create([
+            'nama_file' => 'paket_upsert_test.xlsx',
+            'path_file' => 'uploads/paket_upsert_test.xlsx',
+            'jenis' => 'sakti',
+            'diunggah_oleh' => $this->operator->id,
+            'jumlah_baris' => 3,
+            'status' => 'menunggu',
+        ]);
+
+        $baris1 = UploadBaris::create([
+            'upload_paket_id' => $paket->id,
+            'nomor_baris' => 1,
+            'kode_barang_lengkap' => '1010301014000001',
+            'nama_barang' => 'Barang Satu',
+            'satuan' => 'BUAH',
+            'saldo_sistem' => 10,
+            'status' => 'menunggu',
+        ]);
+
+        $baris2 = UploadBaris::create([
+            'upload_paket_id' => $paket->id,
+            'nomor_baris' => 2,
+            'kode_barang_lengkap' => '1010301014000002',
+            'nama_barang' => 'Barang Dua',
+            'satuan' => 'BUAH',
+            'saldo_sistem' => 20,
+            'status' => 'menunggu',
+        ]);
+
+        // Setujui baris 1
+        $this->actingAs($this->validator)->post("/upload/baris/{$baris1->id}/setujui");
+
+        // Tepat 1 notifikasi disetujui untuk operator
+        $notifs = Notifikasi::where('jenis', 'disetujui')->where('penerima_id', $this->operator->id)->get();
+        $this->assertCount(1, $notifs);
+        $this->assertSame(1, $notifs->first()->data['disetujui_count']);
+        $this->assertNull($notifs->first()->dibaca_pada);
+        $this->assertStringContainsString('1 dari 3 baris pada paket paket_upsert_test.xlsx telah disetujui', $notifs->first()->pesan);
+
+        // Tandai notifikasi sebagai sudah dibaca
+        $notifs->first()->update(['dibaca_pada' => now()]);
+        $this->assertNotNull($notifs->first()->fresh()->dibaca_pada);
+
+        // Setujui baris 2
+        $this->actingAs($this->validator)->post("/upload/baris/{$baris2->id}/setujui");
+
+        // Masih tetap tepat 1 notifikasi disetujui (upsert), dengan jumlah terbarui dan status kembali belum dibaca
+        $notifsAfter = Notifikasi::where('jenis', 'disetujui')->where('penerima_id', $this->operator->id)->get();
+        $this->assertCount(1, $notifsAfter);
+        $notifUpdated = $notifsAfter->first();
+        $this->assertSame(2, $notifUpdated->data['disetujui_count']);
+        $this->assertNull($notifUpdated->dibaca_pada);
+        $this->assertStringContainsString('2 dari 3 baris pada paket paket_upsert_test.xlsx telah disetujui', $notifUpdated->pesan);
+    }
+
+    public function test_setujui_semua_produces_single_approved_notification(): void
+    {
+        Notifikasi::truncate();
+
+        $paket = UploadPaket::create([
+            'nama_file' => 'paket_bulk_test.xlsx',
+            'path_file' => 'uploads/paket_bulk_test.xlsx',
+            'jenis' => 'sakti',
+            'diunggah_oleh' => $this->operator->id,
+            'jumlah_baris' => 10,
+            'status' => 'menunggu',
+        ]);
+
+        for ($i = 1; $i <= 10; $i++) {
+            UploadBaris::create([
+                'upload_paket_id' => $paket->id,
+                'nomor_baris' => $i,
+                'kode_barang_lengkap' => '1010301014'.str_pad((string) $i, 6, '0', STR_PAD_LEFT),
+                'nama_barang' => "Barang Bulk {$i}",
+                'satuan' => 'BUAH',
+                'saldo_sistem' => 5,
+                'status' => 'menunggu',
+            ]);
+        }
+
+        $this->actingAs($this->validator)->post("/upload/{$paket->id}/setujui-semua");
+
+        $notifs = Notifikasi::where('jenis', 'disetujui')->where('penerima_id', $this->operator->id)->get();
+        $this->assertCount(1, $notifs);
+        $this->assertSame(10, $notifs->first()->data['disetujui_count']);
+        $this->assertSame(10, $notifs->first()->data['total_baris']);
+        $this->assertNull($notifs->first()->dibaca_pada);
+        $this->assertStringContainsString('10 dari 10 baris pada paket paket_bulk_test.xlsx telah disetujui', $notifs->first()->pesan);
+    }
+
+    public function test_rejecting_rows_produces_separate_notification_per_row_with_rejection_notes_and_displays_on_page(): void
+    {
+        Notifikasi::truncate();
+
+        $paket = UploadPaket::create([
+            'nama_file' => 'paket_reject_test.xlsx',
+            'path_file' => 'uploads/paket_reject_test.xlsx',
+            'jenis' => 'sakti',
+            'diunggah_oleh' => $this->operator->id,
+            'jumlah_baris' => 3,
+            'status' => 'menunggu',
+        ]);
+
+        $barisList = [];
+        for ($i = 1; $i <= 3; $i++) {
+            $barisList[] = UploadBaris::create([
+                'upload_paket_id' => $paket->id,
+                'nomor_baris' => $i,
+                'kode_barang_lengkap' => '101030101400000'.$i,
+                'nama_barang' => "Barang Ditolak {$i}",
+                'satuan' => 'BUAH',
+                'saldo_sistem' => 10,
+                'status' => 'menunggu',
+            ]);
+        }
+
+        $rejectionNotes = [
+            'Alasan penolakan baris 1: Spesifikasi tidak sesuai anggaran',
+            'Alasan penolakan baris 2: Kode akun salah',
+            'Alasan penolakan baris 3: Satuan barang bukan BUAH melainkan PACK',
+        ];
+
+        foreach ($barisList as $idx => $b) {
+            $this->actingAs($this->validator)->post("/upload/baris/{$b->id}/tolak", [
+                'deskripsi_revisi' => $rejectionNotes[$idx],
+            ]);
+        }
+
+        // Menolak 3 baris menghasilkan 3 notifikasi 'ada_ditolak'
+        $notifsDitolak = Notifikasi::where('jenis', 'ada_ditolak')->where('penerima_id', $this->operator->id)->get();
+        $this->assertCount(3, $notifsDitolak);
+
+        foreach ($notifsDitolak as $idx => $n) {
+            $this->assertEquals($this->operator->id, $n->penerima_id);
+            $this->assertNotNull($n->data['deskripsi_revisi'] ?? null);
+            $this->assertNotNull($n->data['nama_barang'] ?? null);
+            $this->assertNotNull($n->data['kode_barang'] ?? null);
+            $this->assertNotNull($n->data['nomor_baris'] ?? null);
+            $this->assertEquals($rejectionNotes[$idx], $n->data['deskripsi_revisi']);
+        }
+
+        // Tampil di halaman notifications
+        $response = $this->actingAs($this->operator)->get('/notifications');
+        $response->assertStatus(200);
+        $response->assertSee('Catatan penolakan:');
+        $response->assertSee('Perbaiki');
+        $response->assertSee('Spesifikasi tidak sesuai anggaran');
+        $response->assertSee('Kode akun salah');
+        $response->assertSee('Satuan barang bukan BUAH melainkan PACK');
     }
 }

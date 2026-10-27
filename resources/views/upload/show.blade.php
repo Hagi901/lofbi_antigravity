@@ -212,7 +212,7 @@
             </table>
         </div>
         @if($barisList->hasPages())
-            <div class="p-3 border-top d-flex justify-content-end">
+            <div class="p-3 border-top">
                 {{ $barisList->links() }}
             </div>
         @endif
